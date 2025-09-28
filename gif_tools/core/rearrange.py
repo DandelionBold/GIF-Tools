@@ -412,20 +412,34 @@ class GifRearranger:
                 duration = gif.info.get('duration', 100)  # Default 100ms
                 durations.append(duration)
             
-            # Create new GIF
+            # Create new GIF with proper frame handling
             if frames:
+                # Create a new GIF with the rearranged frames
                 new_gif = frames[0].copy()
+                
+                # Save with proper GIF parameters
                 new_gif.save(
                     'temp_rearrange.gif',
                     save_all=True,
                     append_images=frames[1:],
                     duration=durations,
                     loop=gif.info.get('loop', 0),
-                    optimize=True
+                    optimize=False,  # Disable optimization to prevent frame loss
+                    disposal=2,  # Restore to background
+                    transparency=0  # No transparency
                 )
                 
-                # Load the saved GIF
-                return Image.open('temp_rearrange.gif')
+                # Load the saved GIF and return
+                result_gif = Image.open('temp_rearrange.gif')
+                
+                # Clean up temp file
+                import os
+                try:
+                    os.remove('temp_rearrange.gif')
+                except:
+                    pass
+                
+                return result_gif
             else:
                 return gif.copy()
                 
