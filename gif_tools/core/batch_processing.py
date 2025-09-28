@@ -24,7 +24,7 @@ from ..utils import (
 class GifBatchProcessor:
     """GIF batch processing utility class."""
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize GIF batch processor."""
         self.image_processor = get_image_processor()
         self._supported_formats = SUPPORTED_ANIMATED_FORMATS
@@ -33,7 +33,7 @@ class GifBatchProcessor:
                      input_dir: Union[str, Path],
                      output_dir: Union[str, Path],
                      operation: str,
-                     **kwargs) -> Dict[str, Any]:
+                     **kwargs: Any) -> Dict[str, Any]:
         """
         Process multiple GIF files with specified operation.
         
@@ -86,7 +86,7 @@ class GifBatchProcessor:
                     results['success_files'].append(result)
                 else:
                     results['failed_files'] += 1
-                    results['failed_files'].append(result)
+                    results['failed_files_list'].append(result)
                     
             except Exception as e:
                 results['failed_files'] += 1
@@ -189,7 +189,7 @@ class GifBatchProcessor:
                     input_dir: Union[str, Path],
                     output_dir: Union[str, Path],
                     operation_func: Callable[[Path, Path], Path],
-                    **kwargs) -> Dict[str, Any]:
+                    **kwargs: Any) -> Dict[str, Any]:
         """
         Process batch with custom operation function.
         

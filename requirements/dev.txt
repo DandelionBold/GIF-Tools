@@ -28,7 +28,7 @@ sphinx-autodoc-typehints>=1.24.0
 tox>=4.11.0
 coverage>=7.3.0
 bandit>=1.7.5  # Security linting
-safety>=2.3.5  # Security vulnerability scanning
+safety>=3.0.0  # Security vulnerability scanning
 
 # Performance profiling
 memory-profiler>=0.61.0

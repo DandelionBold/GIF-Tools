@@ -26,7 +26,7 @@ from ..utils import (
 class GifTextAdder:
     """GIF text addition utility class."""
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize GIF text adder."""
         self.image_processor = get_image_processor()
         self._font_cache: Dict[str, ImageFont.FreeTypeFont] = {}
@@ -36,14 +36,14 @@ class GifTextAdder:
                  output_path: Union[str, Path],
                  text: str,
                  position: Tuple[int, int] = (10, 10),
-                 font_family: str = DEFAULT_TEXT['font_family'],
-                 font_size: int = DEFAULT_TEXT['font_size'],
-                 color: Union[str, Tuple[int, int, int], Tuple[int, int, int, int]] = DEFAULT_TEXT['color'],
-                 alignment: str = DEFAULT_TEXT['alignment'],
+                 font_family: str = 'Arial',
+                 font_size: int = 24,
+                 color: Union[str, Tuple[int, int, int], Tuple[int, int, int, int]] = (255, 255, 255),
+                 alignment: str = 'left',
                  background_color: Optional[Union[str, Tuple[int, int, int], Tuple[int, int, int, int]]] = None,
-                 background_opacity: float = DEFAULT_TEXT['background_opacity'],
-                 stroke_width: int = DEFAULT_TEXT['stroke_width'],
-                 stroke_color: Union[str, Tuple[int, int, int], Tuple[int, int, int, int]] = DEFAULT_TEXT['stroke_color'],
+                 background_opacity: float = 0.0,
+                 stroke_width: int = 0,
+                 stroke_color: Union[str, Tuple[int, int, int], Tuple[int, int, int, int]] = (0, 0, 0),
                  quality: int = 85) -> Path:
         """
         Add text to GIF.
@@ -262,7 +262,7 @@ class GifTextAdder:
         
         try:
             # Get frame count
-            frame_count = gif.n_frames
+            frame_count = getattr(gif, 'n_frames', 1) if hasattr(gif, 'n_frames') else 1
             
             for frame_idx in range(frame_count):
                 gif.seek(frame_idx)
@@ -333,7 +333,7 @@ class GifTextAdder:
         
         try:
             # Get frame count
-            frame_count = gif.n_frames
+            frame_count = getattr(gif, 'n_frames', 1) if hasattr(gif, 'n_frames') else 1
             
             for frame_idx in range(frame_count):
                 gif.seek(frame_idx)
@@ -402,7 +402,7 @@ class GifTextAdder:
         
         try:
             # Get frame count
-            frame_count = gif.n_frames
+            frame_count = getattr(gif, 'n_frames', 1) if hasattr(gif, 'n_frames') else 1
             
             for frame_idx in range(frame_count):
                 gif.seek(frame_idx)
