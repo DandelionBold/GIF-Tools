@@ -1,0 +1,16 @@
+# Web API requirements
+# Includes base requirements plus web-specific dependencies
+
+-r base.txt
+
+# Web framework
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+
+# File handling for web
+python-multipart>=0.0.6
+aiofiles>=23.2.0
+
+# Additional web utilities
+python-jose[cryptography]>=3.3.0  # For JWT tokens if needed
+python-dotenv>=1.0.0  # For environment variables
