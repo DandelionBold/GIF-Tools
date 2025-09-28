@@ -5,7 +5,7 @@ GIF-Tools Desktop Application
 A comprehensive desktop GUI application for GIF manipulation with 17 powerful tools.
 Built with Tkinter for cross-platform compatibility.
 
-Author: DandelionBold
+Author: Kamal Nady
 License: MIT
 """
 
@@ -761,7 +761,7 @@ Features:
 • Extract frames, loop settings, format conversion
 • Batch processing and watermarking
 
-Author: DandelionBold
+Author: Kamal Nady
 License: MIT
         """
         messagebox.showinfo("About GIF-Tools", about_text)

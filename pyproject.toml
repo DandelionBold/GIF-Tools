@@ -9,10 +9,10 @@ description = "A comprehensive library and GUI application for GIF processing an
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
-    {name = "DandelionBold", email = "dandelionbold@example.com"}
+    {name = "Kamal Nady", email = "kamalnady@example.com"}
 ]
 maintainers = [
-    {name = "DandelionBold", email = "dandelionbold@example.com"}
+    {name = "Kamal Nady", email = "kamalnady@example.com"}
 ]
 keywords = [
     "gif",
@@ -77,11 +77,11 @@ all = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/DandelionBold/GIF-Tools"
+Homepage = "https://github.com/KamalNady/GIF-Tools"
 Documentation = "https://gif-tools.readthedocs.io"
-Repository = "https://github.com/DandelionBold/GIF-Tools.git"
-Issues = "https://github.com/DandelionBold/GIF-Tools/issues"
-Changelog = "https://github.com/DandelionBold/GIF-Tools/blob/main/CHANGELOG.md"
+Repository = "https://github.com/KamalNady/GIF-Tools.git"
+Issues = "https://github.com/KamalNady/GIF-Tools/issues"
+Changelog = "https://github.com/KamalNady/GIF-Tools/blob/main/CHANGELOG.md"
 
 [project.scripts]
 gif-tools = "desktop_app.main:main"

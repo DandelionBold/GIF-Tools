@@ -59,7 +59,7 @@ For development installation:
 
 .. code-block:: bash
 
-   git clone https://github.com/DandelionBold/GIF-Tools.git
+   git clone https://github.com/KamalNady/GIF-Tools.git
    cd GIF-Tools
    pip install -e .
 
