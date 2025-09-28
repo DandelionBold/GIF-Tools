@@ -33,6 +33,9 @@ from gif_tools.core import (
     extract_gif_frames, set_gif_loop_count, convert_gif_format, 
     process_gif_batch, add_watermark_to_gif
 )
+from desktop_app.gui.tool_panels import (
+    ResizePanel, AddTextPanel, VideoToGifPanel, RotatePanel, CropPanel
+)
 from gif_tools.utils import validate_animated_file, get_supported_extensions
 
 
@@ -363,6 +366,100 @@ class GifToolsApp:
         self.progress_var.set(0)
         messagebox.showerror("Error", f"Processing failed: {result['error']}")
     
+    def process_tool(self, tool_name: str, settings: dict, input_file: Optional[str] = None):
+        """Process a tool operation."""
+        if not self.current_file and not input_file:
+            messagebox.showwarning("Warning", "No file loaded!")
+            return
+        
+        input_path = input_file or self.current_file
+        if not input_path:
+            messagebox.showwarning("Warning", "No input file specified!")
+            return
+        
+        # Get output path
+        if not self.output_dir_var.get():
+            messagebox.showwarning("Warning", "Please select an output directory!")
+            return
+        
+        output_dir = Path(self.output_dir_var.get())
+        output_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Generate output filename
+        input_file_path = Path(input_path)
+        output_filename = f"{input_file_path.stem}_{tool_name}{input_file_path.suffix}"
+        output_path = output_dir / output_filename
+        
+        # Add to processing queue
+        task = {
+            'function': self._execute_tool,
+            'args': (tool_name, str(input_path), str(output_path), settings),
+            'task_id': f"{tool_name}_{int(time.time())}"
+        }
+        
+        self.processing_queue.put(task)
+        self.status_var.set(f"Processing {tool_name}...")
+        self.progress_var.set(0)
+    
+    def _execute_tool(self, tool_name: str, input_path: str, output_path: str, settings: dict):
+        """Execute a specific tool."""
+        try:
+            if tool_name == 'resize':
+                return resize_gif(input_path, output_path, 
+                                (settings['width'], settings['height']),
+                                maintain_aspect=settings.get('maintain_aspect', True),
+                                method=settings.get('method', 'lanczos'),
+                                quality=settings.get('quality', 85))
+            
+            elif tool_name == 'add_text':
+                return add_text_to_gif(input_path, output_path,
+                                     settings['text'],
+                                     position=settings.get('position', (10, 10)),
+                                     font_family=settings.get('font_family', 'Arial'),
+                                     font_size=settings.get('font_size', 24),
+                                     color=settings.get('color', 'white'),
+                                     alignment=settings.get('alignment', 'left'),
+                                     background_color=settings.get('background_color'),
+                                     background_opacity=settings.get('background_opacity'),
+                                     stroke_width=settings.get('stroke_width', 0),
+                                     stroke_color=settings.get('stroke_color'),
+                                     quality=settings.get('quality', 85))
+            
+            elif tool_name == 'video_to_gif':
+                return convert_video_to_gif(input_path, output_path,
+                                          duration=settings.get('duration', 5),
+                                          start_time=settings.get('start_time', 0),
+                                          fps=settings.get('fps', 10),
+                                          width=settings.get('width', 320),
+                                          height=settings.get('height', 240),
+                                          quality=settings.get('quality', 85),
+                                          loop_count=settings.get('loop_count', 0),
+                                          optimize=settings.get('optimize', True))
+            
+            elif tool_name == 'rotate':
+                return rotate_gif(input_path, output_path,
+                                angle=settings['angle'],
+                                quality=settings.get('quality', 85),
+                                expand=settings.get('expand', True),
+                                flip=settings.get('flip'),
+                                background_color=settings.get('background_color'))
+            
+            elif tool_name == 'crop':
+                return crop_gif(input_path, output_path,
+                              x=settings['x'],
+                              y=settings['y'],
+                              width=settings['width'],
+                              height=settings['height'],
+                              mode=settings.get('mode', 'exact'),
+                              quality=settings.get('quality', 85),
+                              background_color=settings.get('background_color'))
+            
+            else:
+                raise ValueError(f"Unknown tool: {tool_name}")
+                
+        except Exception as e:
+            raise Exception(f"Tool execution failed: {e}")
+    
     # File operations
     def open_file(self):
         """Open a GIF file."""
@@ -409,22 +506,44 @@ class GifToolsApp:
             self.output_dir_var.set(dir_path)
             self.output_dir = Path(dir_path)
     
-    # Tool dialog methods (placeholders for now)
+    # Tool dialog methods
     def open_video_to_gif_dialog(self):
         """Open video to GIF conversion dialog."""
-        messagebox.showinfo("Video to GIF", "Video to GIF tool - Coming soon!")
+        self._open_tool_dialog("Video to GIF", VideoToGifPanel)
     
     def open_resize_dialog(self):
         """Open resize dialog."""
-        messagebox.showinfo("Resize", "Resize tool - Coming soon!")
+        self._open_tool_dialog("Resize GIF", ResizePanel)
     
     def open_rotate_dialog(self):
         """Open rotate dialog."""
-        messagebox.showinfo("Rotate", "Rotate tool - Coming soon!")
+        self._open_tool_dialog("Rotate GIF", RotatePanel)
     
     def open_crop_dialog(self):
         """Open crop dialog."""
-        messagebox.showinfo("Crop", "Crop tool - Coming soon!")
+        self._open_tool_dialog("Crop GIF", CropPanel)
+    
+    def _open_tool_dialog(self, title: str, panel_class):
+        """Open a tool dialog with the specified panel."""
+        # Create dialog window
+        dialog = tk.Toplevel(self.root)
+        dialog.title(title)
+        dialog.geometry("500x600")
+        dialog.resizable(True, True)
+        
+        # Create panel
+        panel = panel_class(dialog, on_process=self.process_tool)
+        panel.get_widget().pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Center the dialog
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Center on parent
+        dialog.update_idletasks()
+        x = (dialog.winfo_screenwidth() // 2) - (dialog.winfo_width() // 2)
+        y = (dialog.winfo_screenheight() // 2) - (dialog.winfo_height() // 2)
+        dialog.geometry(f"+{x}+{y}")
     
     def open_split_dialog(self):
         """Open split dialog."""
@@ -436,7 +555,7 @@ class GifToolsApp:
     
     def open_add_text_dialog(self):
         """Open add text dialog."""
-        messagebox.showinfo("Add Text", "Add Text tool - Coming soon!")
+        self._open_tool_dialog("Add Text to GIF", AddTextPanel)
     
     def open_rearrange_dialog(self):
         """Open rearrange dialog."""
