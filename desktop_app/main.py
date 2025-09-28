@@ -446,13 +446,16 @@ class GifToolsApp:
         # Generate output filename
         input_file_path = Path(input_path)
         
-        # Special handling for video to GIF - output should be .gif
+        # Special handling for different tools
         if tool_name == 'video_to_gif':
             output_filename = f"{input_file_path.stem}_{tool_name}.gif"
+            output_path = output_dir / output_filename
+        elif tool_name == 'split':
+            # Split tool outputs to a directory, not a single file
+            output_path = output_dir / f"{input_file_path.stem}_frames"
         else:
             output_filename = f"{input_file_path.stem}_{tool_name}{input_file_path.suffix}"
-        
-        output_path = output_dir / output_filename
+            output_path = output_dir / output_filename
         
         # Add to processing queue
         task = {
@@ -524,6 +527,17 @@ class GifToolsApp:
                     width=settings.get('width', 100),
                     height=settings.get('height', 100),
                     quality=settings.get('quality', 85),
+                    progress_callback=progress_callback
+                )
+            elif tool_name == 'split':
+                return split_gif(
+                    input_path=input_path,
+                    output_dir=output_path,
+                    start_frame=settings.get('start_frame', 0),
+                    end_frame=settings.get('end_frame', 10),
+                    output_format=settings.get('output_format', 'png'),
+                    quality=settings.get('quality', 95),
+                    naming_pattern=settings.get('naming_pattern', 'frame_{:04d}'),
                     progress_callback=progress_callback
                 )
             else:
@@ -644,7 +658,21 @@ class GifToolsApp:
     
     def open_split_dialog(self):
         """Open split dialog."""
-        messagebox.showinfo("Split", "Split tool - Coming soon!")
+        from desktop_app.gui.tool_panels.split_panel import SplitPanel
+        
+        dialog = tk.Toplevel(self.root)
+        dialog.title("GIF Split Tool - Media Player")
+        dialog.geometry("900x700")
+        dialog.resizable(True, True)
+        dialog.minsize(900, 700)
+        
+        # Center the dialog
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Create split panel
+        split_panel = SplitPanel(dialog, self.process_tool, self.current_file)
+        split_panel.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
     
     def open_merge_dialog(self):
         """Open merge dialog."""
