@@ -232,42 +232,9 @@ class SplitPanel(ttk.Frame):
             )
             btn.grid(row=0, column=i, padx=(0, 15), sticky=tk.W)
         
-        # Output format (only for image extraction)
-        self.format_frame = ttk.Frame(options_frame)
-        self.format_frame.grid(row=1, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=5)
-        
-        ttk.Label(self.format_frame, text="Output Format:").grid(row=0, column=0, sticky=tk.W, pady=5)
-        self.output_format_var = tk.StringVar(value="gif")
-        format_combo = ttk.Combobox(
-            self.format_frame, 
-            textvariable=self.output_format_var,
-            values=["gif", "png", "jpg", "bmp", "tiff"],
-            state="readonly",
-            width=15
-        )
-        format_combo.grid(row=0, column=1, sticky=tk.W, padx=(5, 0), pady=5)
-        
-        # Quality (for lossy formats)
-        ttk.Label(self.format_frame, text="Quality:").grid(row=1, column=0, sticky=tk.W, pady=5)
-        self.quality_var = tk.IntVar(value=95)
-        quality_scale = ttk.Scale(
-            self.format_frame, 
-            from_=1, 
-            to=100, 
-            variable=self.quality_var,
-            orient=tk.HORIZONTAL,
-            length=200
-        )
-        quality_scale.grid(row=1, column=1, sticky=tk.W, padx=(5, 0), pady=5)
-        
-        self.quality_label = ttk.Label(self.format_frame, text="95")
-        self.quality_label.grid(row=1, column=2, sticky=tk.W, padx=(5, 0), pady=5)
-        quality_scale.configure(command=self.update_quality_label)
-        
-        # Naming pattern (only for image extraction)
-        ttk.Label(self.format_frame, text="Naming Pattern:").grid(row=2, column=0, sticky=tk.W, pady=5)
-        self.naming_var = tk.StringVar(value="frame_{index:04d}")
-        ttk.Entry(self.format_frame, textvariable=self.naming_var, width=20).grid(row=2, column=1, columnspan=2, sticky=tk.W, padx=(5, 0), pady=5)
+        # All modes now output GIF files only
+        info_label = ttk.Label(options_frame, text="Output: GIF files only", font=("Arial", 9, "italic"))
+        info_label.grid(row=1, column=0, columnspan=3, sticky=tk.W, pady=5)
         
         # Split button
         self.split_btn = ttk.Button(
@@ -703,22 +670,17 @@ class SplitPanel(ttk.Frame):
         """Update speed label when scale changes."""
         self.speed_label.config(text=f"{float(value):.1f}x")
     
-    def update_quality_label(self, value):
-        """Update quality label when scale changes."""
-        self.quality_label.config(text=str(int(float(value))))
     
     def update_split_mode(self):
         """Update UI based on selected split mode."""
         mode = self.split_mode_var.get()
         
         if mode == "split_two":
-            # For splitting into two GIFs, hide format options and update timeline
-            self.format_frame.grid_remove()
+            # For splitting into two GIFs, update timeline
             self.split_btn.config(text="Split into Two GIFs")
             self.update_timeline_for_split_two()
         else:
-            # For extract/remove modes, show format options and normal timeline
-            self.format_frame.grid()
+            # For extract/remove modes, update timeline
             if mode == "extract_selected":
                 self.split_btn.config(text="Extract Selected Region")
             else:  # remove_selected
@@ -734,7 +696,7 @@ class SplitPanel(ttk.Frame):
                 'split_mode': mode,
                 'start_frame': self.current_frame,  # Split point
                 'end_frame': self.current_frame,    # Same as start for split point
-                'output_format': 'gif',  # Always GIF for split_two
+                'output_format': 'gif',  # Always GIF
                 'quality': 95,
                 'naming_pattern': 'frame_{index:04d}'
             }
@@ -743,9 +705,9 @@ class SplitPanel(ttk.Frame):
                 'split_mode': mode,
                 'start_frame': self.start_marker,
                 'end_frame': self.end_marker,
-                'output_format': self.output_format_var.get(),
-                'quality': self.quality_var.get(),
-                'naming_pattern': self.naming_var.get()
+                'output_format': 'gif',  # Always GIF
+                'quality': 95,
+                'naming_pattern': 'frame_{index:04d}'
             }
     
     def process_split(self):

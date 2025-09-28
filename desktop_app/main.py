@@ -361,6 +361,7 @@ class GifToolsApp:
         # Disable/enable process and stop buttons
         if hasattr(self, 'process_btn'):
             # Process button was removed, no action needed
+            pass
         if hasattr(self, 'stop_btn'):
             # Stop button is enabled when processing, disabled when not
             self.stop_btn.config(state="normal" if not enabled else "disabled")
@@ -515,13 +516,13 @@ class GifToolsApp:
                     # Split into two GIFs at the start frame
                     return split_gif_into_two(
                         input_path=input_path,
-                        output_dir=output_path,
+                        output_dir=Path(output_path),
                         split_frame=settings.get('start_frame', 0),
                         progress_callback=progress_callback
                     )
                 elif split_mode == 'extract_selected':
                     # Extract selected region as GIF
-                    output_file = output_path / f"{Path(input_path).stem}_extracted.gif"
+                    output_file = Path(output_path) / f"{Path(input_path).stem}_extracted.gif"
                     return extract_gif_region(
                         input_path=input_path,
                         output_path=output_file,
@@ -531,7 +532,7 @@ class GifToolsApp:
                     )
                 elif split_mode == 'remove_selected':
                     # Remove selected region, keep the rest as GIF
-                    output_file = output_path / f"{Path(input_path).stem}_removed.gif"
+                    output_file = Path(output_path) / f"{Path(input_path).stem}_removed.gif"
                     return remove_gif_region(
                         input_path=input_path,
                         output_path=output_file,
@@ -543,7 +544,7 @@ class GifToolsApp:
                     # Fallback to original split (extract frames as images)
                     return split_gif(
                         input_path=input_path,
-                        output_dir=output_path,
+                        output_dir=Path(output_path),
                         start_frame=settings.get('start_frame', 0),
                         end_frame=settings.get('end_frame', 10),
                         output_format=settings.get('output_format', 'png'),
