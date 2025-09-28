@@ -37,14 +37,14 @@ Installing GIF-Tools
 **From source:**
 .. code-block:: bash
 
-   git clone https://github.com/DandelionBold/GIF-Tools.git
+   git clone https://github.com/KamalNady/GIF-Tools.git
    cd GIF-Tools
    pip install -e .
 
 **Development installation:**
 .. code-block:: bash
 
-   git clone https://github.com/DandelionBold/GIF-Tools.git
+   git clone https://github.com/KamalNady/GIF-Tools.git
    cd GIF-Tools
    pip install -r requirements/dev.txt
    pip install -e .

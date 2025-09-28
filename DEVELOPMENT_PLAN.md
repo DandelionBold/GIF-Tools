@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**Repository**: [https://github.com/DandelionBold/GIF-Tools.git](https://github.com/DandelionBold/GIF-Tools.git)  
+**Repository**: [https://github.com/KamalNady/GIF-Tools.git](https://github.com/KamalNady/GIF-Tools.git)  
 **License**: MIT  
 **Architecture**: Modular design with core library, desktop GUI, and future web API  
 **Testing Strategy**: Unit tests, integration tests, and performance benchmarks

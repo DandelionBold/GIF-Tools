@@ -6,8 +6,8 @@ including conversion, editing, optimization, and various transformations.
 """
 
 __version__ = "0.1.0"
-__author__ = "DandelionBold"
-__email__ = "dandelionbold@example.com"
+__author__ = "Kamal Nady"
+__email__ = "kamalnady@example.com"
 __license__ = "MIT"
 
 # Import core modules

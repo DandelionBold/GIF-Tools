@@ -10,6 +10,7 @@ A comprehensive library and desktop application for GIF processing and manipulat
 ## 🚀 Features
 
 ### ✅ **IMPLEMENTED TOOLS** (Ready to Use)
+
 - **Video to GIF** - Convert video files to animated GIFs with auto-optimization
 - **Resize** - Change GIF dimensions with aspect ratio control and quality settings
 - **Rotate** - Rotate GIFs by 90°, 180°, or 270° degrees with progress tracking
@@ -17,11 +18,13 @@ A comprehensive library and desktop application for GIF processing and manipulat
 - **Rearrange** - Advanced drag-and-drop frame reordering with visual preview
 
 ### 🔄 **IN PROGRESS** (Partially Implemented)
+
 - **Split** - Extract individual frames from GIFs
 - **Merge** - Combine multiple GIFs or images into one
 - **Add Text** - Overlay text with customizable fonts and colors
 
 ### 📋 **PLANNED TOOLS** (Coming Soon)
+
 - **Reverse** - Play GIF animations backwards
 - **Optimize** - Reduce file size while maintaining quality
 - **Speed Control** - Adjust playback speed
@@ -33,6 +36,7 @@ A comprehensive library and desktop application for GIF processing and manipulat
 - **Watermark** - Add image or text watermarks
 
 ### 🎨 **Desktop Application Features**
+
 - **Modern GUI** - Professional interface built with tkinter
 - **Visual Crop Tool** - Click-and-drag cropping with 15+ aspect ratio presets
 - **Auto-Loading** - Tools automatically load selected GIFs from main dashboard
@@ -42,6 +46,7 @@ A comprehensive library and desktop application for GIF processing and manipulat
 - **Aspect Ratio Presets** - Free, Square, Classic, Camera, Widescreen, Portrait, Vertical, and more
 
 ### 🌐 **Future Web API**
+
 - RESTful API for web integration
 - Async processing for large files
 - Docker containerization ready
@@ -49,12 +54,14 @@ A comprehensive library and desktop application for GIF processing and manipulat
 ## 📊 **Current Development Status**
 
 ### **Phase 1: Core Infrastructure** ✅ **COMPLETED**
+
 - Project structure and architecture
 - Core library with modular design
 - Desktop GUI framework
 - Basic tool integration
 
 ### **Phase 2: Basic Tools** ✅ **COMPLETED**
+
 - Video to GIF conversion with auto-optimization
 - Resize tool with aspect ratio control
 - Rotate tool with progress tracking
@@ -62,11 +69,13 @@ A comprehensive library and desktop application for GIF processing and manipulat
 - Advanced rearrange tool with drag-and-drop
 
 ### **Phase 3: Advanced Tools** 🔄 **IN PROGRESS**
+
 - Split tool (frames extraction)
 - Merge tool (combine GIFs)
 - Add Text tool (text overlay)
 
 ### **Phase 4: Polish & Optimization** 📋 **PLANNED**
+
 - Performance optimization
 - Additional effects and filters
 - Batch processing
@@ -75,13 +84,15 @@ A comprehensive library and desktop application for GIF processing and manipulat
 ## 📦 Installation
 
 ### Prerequisites
+
 - Python 3.8 or higher
 - FFmpeg (for video processing)
 
 ### Quick Start
+
 ```bash
 # Clone the repository
-git clone https://github.com/DandelionBold/GIF-Tools.git
+git clone https://github.com/KamalNady/GIF-Tools.git
 cd GIF-Tools
 
 # Create virtual environment
@@ -101,6 +112,7 @@ python -m desktop_app.main
 ```
 
 ### Development Installation
+
 ```bash
 # Install development dependencies
 pip install -r requirements/dev.txt
@@ -118,11 +130,13 @@ flake8 gif_tools desktop_app web_api tests
 ## 🛠️ Usage
 
 ### Desktop Application
+
 ```bash
 python -m desktop_app.main
 ```
 
 ### Python Library
+
 ```python
 from gif_tools import video_to_gif, resize, rotate
 
@@ -199,10 +213,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- 🐛 [Report a bug](https://github.com/DandelionBold/GIF-Tools/issues)
-- 💡 [Request a feature](https://github.com/DandelionBold/GIF-Tools/issues)
-- 📧 [Contact us](mailto:dandelionbold@example.com)
+- 🐛 [Report a bug](https://github.com/KamalNady/GIF-Tools/issues)
+- 💡 [Request a feature](https://github.com/KamalNady/GIF-Tools/issues)
+- 📧 [Contact us](mailto:kamalnady@example.com)
 
 ---
 
-**Made with ❤️ by DandelionBold**
+**Made with ❤️ by Kamal Nady**

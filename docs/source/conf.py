@@ -7,8 +7,8 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = 'GIF-Tools'
-copyright = '2025, DandelionBold'
-author = 'DandelionBold'
+copyright = '2025, Kamal Nady'
+author = 'Kamal Nady'
 release = '0.1.0'
 
 # -- General configuration ---------------------------------------------------
