@@ -240,7 +240,7 @@ class SplitPanel(ttk.Frame):
         
         # Naming pattern
         ttk.Label(options_frame, text="Naming Pattern:").grid(row=2, column=0, sticky=tk.W, pady=5)
-        self.naming_var = tk.StringVar(value="frame_{:04d}")
+        self.naming_var = tk.StringVar(value="frame_{index:04d}")
         ttk.Entry(options_frame, textvariable=self.naming_var, width=20).grid(row=2, column=1, columnspan=2, sticky=tk.W, padx=(5, 0), pady=5)
         
         # Split button

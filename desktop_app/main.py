@@ -536,8 +536,7 @@ class GifToolsApp:
                     start_frame=settings.get('start_frame', 0),
                     end_frame=settings.get('end_frame', 10),
                     output_format=settings.get('output_format', 'png'),
-                    quality=settings.get('quality', 95),
-                    naming_pattern=settings.get('naming_pattern', 'frame_{:04d}'),
+                    naming_pattern=settings.get('naming_pattern', 'frame_{index:04d}'),
                     progress_callback=progress_callback
                 )
             else:

@@ -36,7 +36,8 @@ class GifSplitter:
               naming_pattern: str = 'frame_{index:04d}',
               include_metadata: bool = True,
               start_frame: Optional[int] = None,
-              end_frame: Optional[int] = None) -> List[Path]:
+              end_frame: Optional[int] = None,
+              progress_callback: Optional[callable] = None) -> List[Path]:
         """
         Split GIF into individual frames.
         
@@ -48,6 +49,7 @@ class GifSplitter:
             include_metadata: Whether to include frame metadata
             start_frame: Start frame index (None for beginning)
             end_frame: End frame index (None for end)
+            progress_callback: Optional callback for progress updates
             
         Returns:
             List of output file paths
@@ -85,7 +87,7 @@ class GifSplitter:
                 # Split frames
                 return self._split_frames(
                     gif, output_dir, output_format, naming_pattern,
-                    include_metadata, start_idx, end_idx
+                    include_metadata, start_idx, end_idx, progress_callback
                 )
                 
         except Exception as e:
@@ -281,7 +283,8 @@ class GifSplitter:
     
     def _split_frames(self, gif: Image.Image, output_dir: Path, 
                      output_format: str, naming_pattern: str,
-                     include_metadata: bool, start_idx: int, end_idx: int) -> List[Path]:
+                     include_metadata: bool, start_idx: int, end_idx: int,
+                     progress_callback: Optional[callable] = None) -> List[Path]:
         """
         Split animated GIF frames.
         
@@ -293,13 +296,18 @@ class GifSplitter:
             include_metadata: Whether to include metadata
             start_idx: Start frame index
             end_idx: End frame index
+            progress_callback: Optional callback for progress updates
             
         Returns:
             List of output file paths
         """
         output_paths = []
+        total_frames = end_idx - start_idx + 1
         
-        for frame_idx in range(start_idx, end_idx + 1):
+        if progress_callback:
+            progress_callback(0, "Starting GIF split...")
+        
+        for i, frame_idx in enumerate(range(start_idx, end_idx + 1)):
             gif.seek(frame_idx)
             
             # Create output filename
@@ -313,6 +321,15 @@ class GifSplitter:
                 gif.save(output_path, format=output_format.upper(), optimize=True)
             
             output_paths.append(output_path)
+            
+            # Update progress
+            if progress_callback:
+                progress = int((i + 1) / total_frames * 100)
+                message = f"Splitting frame {i + 1}/{total_frames} ({frame_idx + 1})"
+                progress_callback(progress, message)
+        
+        if progress_callback:
+            progress_callback(100, f"Split complete! Saved {len(output_paths)} frames")
         
         return output_paths
 
@@ -323,7 +340,8 @@ def split_gif(input_path: Union[str, Path],
              naming_pattern: str = 'frame_{index:04d}',
              include_metadata: bool = True,
              start_frame: Optional[int] = None,
-             end_frame: Optional[int] = None) -> List[Path]:
+             end_frame: Optional[int] = None,
+             progress_callback: Optional[callable] = None) -> List[Path]:
     """
     Split GIF into individual frames.
     
@@ -335,6 +353,7 @@ def split_gif(input_path: Union[str, Path],
         include_metadata: Whether to include frame metadata
         start_frame: Start frame index (None for beginning)
         end_frame: End frame index (None for end)
+        progress_callback: Optional callback for progress updates
         
     Returns:
         List of output file paths
@@ -342,7 +361,7 @@ def split_gif(input_path: Union[str, Path],
     splitter = GifSplitter()
     return splitter.split(
         input_path, output_dir, output_format, naming_pattern,
-        include_metadata, start_frame, end_frame
+        include_metadata, start_frame, end_frame, progress_callback
     )
 
 
