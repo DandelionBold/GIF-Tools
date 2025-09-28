@@ -349,8 +349,8 @@ class RearrangePanel:
             frame_widget = ttk.Frame(self.frame_container, relief=tk.RAISED, borderwidth=1)
             frame_widget.grid(row=row, column=col, padx=2, pady=2)
             
-            # Frame number label
-            frame_label = ttk.Label(frame_widget, text=f"Frame {frame_idx}")
+            # Frame number label with grid index and frame number
+            frame_label = ttk.Label(frame_widget, text=f"#{i+1} Frame {frame_idx}")
             frame_label.pack()
             
             # Thumbnail label
