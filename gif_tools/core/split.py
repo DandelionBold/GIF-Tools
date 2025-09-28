@@ -332,6 +332,219 @@ class GifSplitter:
             progress_callback(100, f"Split complete! Saved {len(output_paths)} frames")
         
         return output_paths
+    
+    def split_into_two(self, input_path: Union[str, Path], output_dir: Union[str, Path], 
+                      split_frame: int, progress_callback: Optional[callable] = None) -> List[Path]:
+        """
+        Split GIF into two separate GIFs at the specified frame.
+        
+        Args:
+            input_path: Path to input GIF file
+            output_dir: Directory to save the two GIFs
+            split_frame: Frame number to split at
+            progress_callback: Optional callback for progress updates
+            
+        Returns:
+            List of output file paths (2 GIFs)
+        """
+        input_path = validate_animated_file(input_path)
+        output_dir = Path(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        
+        try:
+            with Image.open(input_path) as gif:
+                frame_count = getattr(gif, 'n_frames', 1)
+                is_animated = getattr(gif, 'is_animated', False)
+                
+                if not is_animated or frame_count <= 1:
+                    raise ValidationError("Cannot split single frame GIF")
+                
+                if split_frame < 0 or split_frame >= frame_count:
+                    raise ValidationError(f"Invalid split frame: {split_frame}")
+                
+                if progress_callback:
+                    progress_callback(0, "Splitting GIF into two parts...")
+                
+                # Create output paths
+                input_name = Path(input_path).stem
+                output1_path = output_dir / f"{input_name}_part1.gif"
+                output2_path = output_dir / f"{input_name}_part2.gif"
+                
+                # Split into two parts
+                frames1 = []
+                frames2 = []
+                durations1 = []
+                durations2 = []
+                
+                for frame_idx in range(frame_count):
+                    gif.seek(frame_idx)
+                    frame = gif.copy()
+                    
+                    if frame_idx < split_frame:
+                        frames1.append(frame)
+                        durations1.append(gif.info.get('duration', 100))
+                    else:
+                        frames2.append(frame)
+                        durations2.append(gif.info.get('duration', 100))
+                
+                # Save first part
+                if frames1:
+                    frames1[0].save(
+                        output1_path,
+                        save_all=True,
+                        append_images=frames1[1:],
+                        duration=durations1,
+                        loop=0,
+                        disposal=2,
+                        transparency=0
+                    )
+                
+                # Save second part
+                if frames2:
+                    frames2[0].save(
+                        output2_path,
+                        save_all=True,
+                        append_images=frames2[1:],
+                        duration=durations2,
+                        loop=0,
+                        disposal=2,
+                        transparency=0
+                    )
+                
+                if progress_callback:
+                    progress_callback(100, f"Split complete! Created 2 GIFs")
+                
+                return [output1_path, output2_path]
+                
+        except Exception as e:
+            raise ValidationError(f"GIF split into two failed: {e}")
+    
+    def extract_region(self, input_path: Union[str, Path], output_path: Union[str, Path],
+                      start_frame: int, end_frame: int, progress_callback: Optional[callable] = None) -> Path:
+        """
+        Extract a region from GIF and save as new GIF.
+        
+        Args:
+            input_path: Path to input GIF file
+            output_path: Path to save extracted GIF
+            start_frame: Start frame index
+            end_frame: End frame index
+            progress_callback: Optional callback for progress updates
+            
+        Returns:
+            Path to output GIF file
+        """
+        input_path = validate_animated_file(input_path)
+        output_path = Path(output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        try:
+            with Image.open(input_path) as gif:
+                frame_count = getattr(gif, 'n_frames', 1)
+                is_animated = getattr(gif, 'is_animated', False)
+                
+                if not is_animated:
+                    raise ValidationError("Cannot extract region from single frame GIF")
+                
+                if start_frame < 0 or end_frame >= frame_count or start_frame > end_frame:
+                    raise ValidationError(f"Invalid frame range: {start_frame}-{end_frame}")
+                
+                if progress_callback:
+                    progress_callback(0, "Extracting selected region...")
+                
+                # Extract frames
+                frames = []
+                durations = []
+                
+                for frame_idx in range(start_frame, end_frame + 1):
+                    gif.seek(frame_idx)
+                    frame = gif.copy()
+                    frames.append(frame)
+                    durations.append(gif.info.get('duration', 100))
+                
+                # Save extracted region
+                if frames:
+                    frames[0].save(
+                        output_path,
+                        save_all=True,
+                        append_images=frames[1:],
+                        duration=durations,
+                        loop=0,
+                        disposal=2,
+                        transparency=0
+                    )
+                
+                if progress_callback:
+                    progress_callback(100, f"Region extracted! Saved {len(frames)} frames")
+                
+                return output_path
+                
+        except Exception as e:
+            raise ValidationError(f"GIF region extraction failed: {e}")
+    
+    def remove_region(self, input_path: Union[str, Path], output_path: Union[str, Path],
+                     start_frame: int, end_frame: int, progress_callback: Optional[callable] = None) -> Path:
+        """
+        Remove a region from GIF and save as new GIF.
+        
+        Args:
+            input_path: Path to input GIF file
+            output_path: Path to save modified GIF
+            start_frame: Start frame index to remove
+            end_frame: End frame index to remove
+            progress_callback: Optional callback for progress updates
+            
+        Returns:
+            Path to output GIF file
+        """
+        input_path = validate_animated_file(input_path)
+        output_path = Path(output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        try:
+            with Image.open(input_path) as gif:
+                frame_count = getattr(gif, 'n_frames', 1)
+                is_animated = getattr(gif, 'is_animated', False)
+                
+                if not is_animated:
+                    raise ValidationError("Cannot remove region from single frame GIF")
+                
+                if start_frame < 0 or end_frame >= frame_count or start_frame > end_frame:
+                    raise ValidationError(f"Invalid frame range: {start_frame}-{end_frame}")
+                
+                if progress_callback:
+                    progress_callback(0, "Removing selected region...")
+                
+                # Extract frames (excluding the region to remove)
+                frames = []
+                durations = []
+                
+                for frame_idx in range(frame_count):
+                    if frame_idx < start_frame or frame_idx > end_frame:
+                        gif.seek(frame_idx)
+                        frame = gif.copy()
+                        frames.append(frame)
+                        durations.append(gif.info.get('duration', 100))
+                
+                # Save modified GIF
+                if frames:
+                    frames[0].save(
+                        output_path,
+                        save_all=True,
+                        append_images=frames[1:],
+                        duration=durations,
+                        loop=0,
+                        disposal=2,
+                        transparency=0
+                    )
+                
+                if progress_callback:
+                    progress_callback(100, f"Region removed! Saved {len(frames)} frames")
+                
+                return output_path
+                
+        except Exception as e:
+            raise ValidationError(f"GIF region removal failed: {e}")
 
 
 def split_gif(input_path: Union[str, Path],
@@ -403,6 +616,70 @@ def split_gif_with_info(input_path: Union[str, Path],
     return splitter.split_with_info(input_path, output_dir, output_format)
 
 
+def split_gif_into_two(input_path: Union[str, Path],
+                      output_dir: Union[str, Path],
+                      split_frame: int,
+                      progress_callback: Optional[callable] = None) -> List[Path]:
+    """
+    Split GIF into two separate GIFs at the specified frame.
+    
+    Args:
+        input_path: Path to input GIF file
+        output_dir: Directory to save the two GIFs
+        split_frame: Frame number to split at
+        progress_callback: Optional callback for progress updates
+        
+    Returns:
+        List of output file paths (2 GIFs)
+    """
+    splitter = GifSplitter()
+    return splitter.split_into_two(input_path, output_dir, split_frame, progress_callback)
+
+
+def extract_gif_region(input_path: Union[str, Path],
+                      output_path: Union[str, Path],
+                      start_frame: int,
+                      end_frame: int,
+                      progress_callback: Optional[callable] = None) -> Path:
+    """
+    Extract a region from GIF and save as new GIF.
+    
+    Args:
+        input_path: Path to input GIF file
+        output_path: Path to save extracted GIF
+        start_frame: Start frame index
+        end_frame: End frame index
+        progress_callback: Optional callback for progress updates
+        
+    Returns:
+        Path to output GIF file
+    """
+    splitter = GifSplitter()
+    return splitter.extract_region(input_path, output_path, start_frame, end_frame, progress_callback)
+
+
+def remove_gif_region(input_path: Union[str, Path],
+                     output_path: Union[str, Path],
+                     start_frame: int,
+                     end_frame: int,
+                     progress_callback: Optional[callable] = None) -> Path:
+    """
+    Remove a region from GIF and save as new GIF.
+    
+    Args:
+        input_path: Path to input GIF file
+        output_path: Path to save modified GIF
+        start_frame: Start frame index to remove
+        end_frame: End frame index to remove
+        progress_callback: Optional callback for progress updates
+        
+    Returns:
+        Path to output GIF file
+    """
+    splitter = GifSplitter()
+    return splitter.remove_region(input_path, output_path, start_frame, end_frame, progress_callback)
+
+
 def get_split_info(input_path: Union[str, Path]) -> Dict[str, Any]:
     """
     Get split information for GIF.
@@ -423,5 +700,8 @@ __all__ = [
     'split_gif',
     'split_gif_to_images',
     'split_gif_with_info',
-    'get_split_info'
+    'get_split_info',
+    'split_gif_into_two',
+    'extract_gif_region',
+    'remove_gif_region'
 ]

@@ -209,23 +209,49 @@ class SplitPanel(ttk.Frame):
         options_frame.grid(row=2, column=0, sticky=(tk.W, tk.E))
         options_frame.grid_columnconfigure(1, weight=1)
         
-        # Output format
-        ttk.Label(options_frame, text="Output Format:").grid(row=0, column=0, sticky=tk.W, pady=5)
-        self.output_format_var = tk.StringVar(value="png")
+        # Split mode selection
+        ttk.Label(options_frame, text="Split Mode:").grid(row=0, column=0, sticky=tk.W, pady=5)
+        self.split_mode_var = tk.StringVar(value="extract_selected")
+        mode_frame = ttk.Frame(options_frame)
+        mode_frame.grid(row=0, column=1, columnspan=2, sticky=(tk.W, tk.E), pady=5)
+        
+        # Mode options
+        mode_options = [
+            ("Split into Two GIFs", "split_two"),
+            ("Extract Selected Region", "extract_selected"),
+            ("Remove Selected Region", "remove_selected")
+        ]
+        
+        for i, (text, value) in enumerate(mode_options):
+            btn = ttk.Radiobutton(
+                mode_frame, 
+                text=text, 
+                variable=self.split_mode_var, 
+                value=value,
+                command=self.update_split_mode
+            )
+            btn.grid(row=0, column=i, padx=(0, 15), sticky=tk.W)
+        
+        # Output format (only for image extraction)
+        self.format_frame = ttk.Frame(options_frame)
+        self.format_frame.grid(row=1, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=5)
+        
+        ttk.Label(self.format_frame, text="Output Format:").grid(row=0, column=0, sticky=tk.W, pady=5)
+        self.output_format_var = tk.StringVar(value="gif")
         format_combo = ttk.Combobox(
-            options_frame, 
+            self.format_frame, 
             textvariable=self.output_format_var,
-            values=["png", "jpg", "bmp", "tiff"],
+            values=["gif", "png", "jpg", "bmp", "tiff"],
             state="readonly",
             width=15
         )
         format_combo.grid(row=0, column=1, sticky=tk.W, padx=(5, 0), pady=5)
         
         # Quality (for lossy formats)
-        ttk.Label(options_frame, text="Quality:").grid(row=1, column=0, sticky=tk.W, pady=5)
+        ttk.Label(self.format_frame, text="Quality:").grid(row=1, column=0, sticky=tk.W, pady=5)
         self.quality_var = tk.IntVar(value=95)
         quality_scale = ttk.Scale(
-            options_frame, 
+            self.format_frame, 
             from_=1, 
             to=100, 
             variable=self.quality_var,
@@ -234,14 +260,14 @@ class SplitPanel(ttk.Frame):
         )
         quality_scale.grid(row=1, column=1, sticky=tk.W, padx=(5, 0), pady=5)
         
-        self.quality_label = ttk.Label(options_frame, text="95")
+        self.quality_label = ttk.Label(self.format_frame, text="95")
         self.quality_label.grid(row=1, column=2, sticky=tk.W, padx=(5, 0), pady=5)
         quality_scale.configure(command=self.update_quality_label)
         
-        # Naming pattern
-        ttk.Label(options_frame, text="Naming Pattern:").grid(row=2, column=0, sticky=tk.W, pady=5)
+        # Naming pattern (only for image extraction)
+        ttk.Label(self.format_frame, text="Naming Pattern:").grid(row=2, column=0, sticky=tk.W, pady=5)
         self.naming_var = tk.StringVar(value="frame_{index:04d}")
-        ttk.Entry(options_frame, textvariable=self.naming_var, width=20).grid(row=2, column=1, columnspan=2, sticky=tk.W, padx=(5, 0), pady=5)
+        ttk.Entry(self.format_frame, textvariable=self.naming_var, width=20).grid(row=2, column=1, columnspan=2, sticky=tk.W, padx=(5, 0), pady=5)
         
         # Split button
         self.split_btn = ttk.Button(
@@ -260,6 +286,9 @@ class SplitPanel(ttk.Frame):
             mode='indeterminate'
         )
         self.progress_bar.grid(row=4, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=5)
+        
+        # Initialize mode
+        self.update_split_mode()
     
     def auto_load_gif(self, file_path: str):
         """Auto-load GIF when file path is provided."""
@@ -596,9 +625,26 @@ class SplitPanel(ttk.Frame):
         """Update quality label when scale changes."""
         self.quality_label.config(text=str(int(float(value))))
     
+    def update_split_mode(self):
+        """Update UI based on selected split mode."""
+        mode = self.split_mode_var.get()
+        
+        if mode == "split_two":
+            # For splitting into two GIFs, hide format options
+            self.format_frame.grid_remove()
+            self.split_btn.config(text="Split into Two GIFs")
+        else:
+            # For extract/remove modes, show format options
+            self.format_frame.grid()
+            if mode == "extract_selected":
+                self.split_btn.config(text="Extract Selected Region")
+            else:  # remove_selected
+                self.split_btn.config(text="Remove Selected Region")
+    
     def get_settings(self) -> dict:
         """Get current split settings."""
         return {
+            'split_mode': self.split_mode_var.get(),
             'start_frame': self.start_marker,
             'end_frame': self.end_marker,
             'output_format': self.output_format_var.get(),

@@ -31,7 +31,9 @@ from gif_tools.core import (
     change_gif_speed, apply_gif_filter,
     # Additional tools
     extract_gif_frames, set_gif_loop_count, convert_gif_format, 
-    process_gif_batch
+    process_gif_batch,
+    # Split modes
+    split_gif_into_two, extract_gif_region, remove_gif_region
 )
 from desktop_app.gui.tool_panels import (
     RearrangePanel,
@@ -507,15 +509,47 @@ class GifToolsApp:
                     progress_callback=progress_callback
                 )
             elif tool_name == 'split':
-                return split_gif(
-                    input_path=input_path,
-                    output_dir=output_path,
-                    start_frame=settings.get('start_frame', 0),
-                    end_frame=settings.get('end_frame', 10),
-                    output_format=settings.get('output_format', 'png'),
-                    naming_pattern=settings.get('naming_pattern', 'frame_{index:04d}'),
-                    progress_callback=progress_callback
-                )
+                split_mode = settings.get('split_mode', 'extract_selected')
+                
+                if split_mode == 'split_two':
+                    # Split into two GIFs at the start frame
+                    return split_gif_into_two(
+                        input_path=input_path,
+                        output_dir=output_path,
+                        split_frame=settings.get('start_frame', 0),
+                        progress_callback=progress_callback
+                    )
+                elif split_mode == 'extract_selected':
+                    # Extract selected region as GIF
+                    output_file = output_path / f"{Path(input_path).stem}_extracted.gif"
+                    return extract_gif_region(
+                        input_path=input_path,
+                        output_path=output_file,
+                        start_frame=settings.get('start_frame', 0),
+                        end_frame=settings.get('end_frame', 10),
+                        progress_callback=progress_callback
+                    )
+                elif split_mode == 'remove_selected':
+                    # Remove selected region, keep the rest as GIF
+                    output_file = output_path / f"{Path(input_path).stem}_removed.gif"
+                    return remove_gif_region(
+                        input_path=input_path,
+                        output_path=output_file,
+                        start_frame=settings.get('start_frame', 0),
+                        end_frame=settings.get('end_frame', 10),
+                        progress_callback=progress_callback
+                    )
+                else:
+                    # Fallback to original split (extract frames as images)
+                    return split_gif(
+                        input_path=input_path,
+                        output_dir=output_path,
+                        start_frame=settings.get('start_frame', 0),
+                        end_frame=settings.get('end_frame', 10),
+                        output_format=settings.get('output_format', 'png'),
+                        naming_pattern=settings.get('naming_pattern', 'frame_{index:04d}'),
+                        progress_callback=progress_callback
+                    )
             else:
                 raise ValueError(f"Unknown tool: {tool_name}")
                 
