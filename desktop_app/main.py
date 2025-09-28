@@ -34,8 +34,7 @@ from gif_tools.core import (
     process_gif_batch
 )
 from desktop_app.gui.tool_panels import (
-    ResizePanel, AddTextPanel, VideoToGifPanel, RotatePanel, CropPanel,
-    SplitPanel, MergePanel, ReversePanel, OptimizePanel
+    RearrangePanel
 )
 from gif_tools.utils import validate_animated_file, get_supported_extensions
 
@@ -408,85 +407,10 @@ class GifToolsApp:
     def _execute_tool(self, tool_name: str, input_path: str, output_path: str, settings: dict):
         """Execute a specific tool."""
         try:
-            if tool_name == 'resize':
-                return resize_gif(input_path, output_path, 
-                                (settings['width'], settings['height']),
-                                maintain_aspect=settings.get('maintain_aspect', True),
-                                method=settings.get('method', 'lanczos'),
-                                quality=settings.get('quality', 85))
-            
-            elif tool_name == 'add_text':
-                return add_text_to_gif(input_path, output_path,
-                                     settings['text'],
-                                     position=settings.get('position', (10, 10)),
-                                     font_family=settings.get('font_family', 'Arial'),
-                                     font_size=settings.get('font_size', 24),
-                                     color=settings.get('color', 'white'),
-                                     alignment=settings.get('alignment', 'left'),
-                                     background_color=settings.get('background_color'),
-                                     background_opacity=settings.get('background_opacity'),
-                                     stroke_width=settings.get('stroke_width', 0),
-                                     stroke_color=settings.get('stroke_color'),
-                                     quality=settings.get('quality', 85))
-            
-            elif tool_name == 'video_to_gif':
-                return convert_video_to_gif(input_path, output_path,
-                                          duration=settings.get('duration', 5),
-                                          start_time=settings.get('start_time', 0),
-                                          fps=settings.get('fps', 10),
-                                          width=settings.get('width', 320),
-                                          height=settings.get('height', 240),
-                                          quality=settings.get('quality', 85),
-                                          loop_count=settings.get('loop_count', 0),
-                                          optimize=settings.get('optimize', True))
-            
-            elif tool_name == 'rotate':
-                return rotate_gif(input_path, output_path,
-                                angle=settings['angle'],
-                                quality=settings.get('quality', 85),
-                                expand=settings.get('expand', True),
-                                flip=settings.get('flip'),
-                                background_color=settings.get('background_color'))
-            
-            elif tool_name == 'crop':
-                return crop_gif(input_path, output_path,
-                              x=settings['x'],
-                              y=settings['y'],
-                              width=settings['width'],
-                              height=settings['height'],
-                              mode=settings.get('mode', 'exact'),
-                              quality=settings.get('quality', 85),
-                              background_color=settings.get('background_color'))
-            
-            elif tool_name == 'split':
-                # For split, we need to create a directory for output
-                output_dir = Path(output_path).parent / f"{Path(output_path).stem}_frames"
-                output_dir.mkdir(exist_ok=True)
-                return split_gif(input_path, output_dir,
-                               mode=settings.get('mode', 'all'),
-                               quality=settings.get('quality', 95),
-                               output_format=settings.get('output_format', 'png'),
-                               naming_pattern=settings.get('naming_pattern', 'frame_{:04d}'))
-            
-            elif tool_name == 'merge':
-                file_list = settings.get('file_list', [])
-                if not file_list:
-                    raise ValueError("No files to merge")
-                return merge_gifs(file_list, output_path,
-                                mode=settings.get('mode', 'sequential'),
-                                duration=settings.get('duration', 100),
-                                loop_count=settings.get('loop_count', 0),
-                                quality=settings.get('quality', 85))
-            
-            elif tool_name == 'reverse':
-                return reverse_gif(input_path, output_path,
-                                 quality=settings.get('quality', 85))
-            
-            elif tool_name == 'optimize':
-                return optimize_gif(input_path, output_path,
-                                  quality=settings.get('quality', 85),
-                                  optimize=settings.get('optimize_palette', True))
-            
+            if tool_name == 'rearrange':
+                return rearrange_gif_frames(input_path, output_path,
+                                          frame_order=settings['frame_order'],
+                                          quality=settings.get('quality', 85))
             else:
                 raise ValueError(f"Unknown tool: {tool_name}")
                 
@@ -542,35 +466,35 @@ class GifToolsApp:
     # Tool dialog methods
     def open_video_to_gif_dialog(self):
         """Open video to GIF conversion dialog."""
-        self._open_tool_dialog("Video to GIF", VideoToGifPanel)
+        messagebox.showinfo("Video to GIF", "Video to GIF tool - Coming soon!")
     
     def open_resize_dialog(self):
         """Open resize dialog."""
-        self._open_tool_dialog("Resize GIF", ResizePanel)
+        messagebox.showinfo("Resize", "Resize tool - Coming soon!")
     
     def open_rotate_dialog(self):
         """Open rotate dialog."""
-        self._open_tool_dialog("Rotate GIF", RotatePanel)
+        messagebox.showinfo("Rotate", "Rotate tool - Coming soon!")
     
     def open_crop_dialog(self):
         """Open crop dialog."""
-        self._open_tool_dialog("Crop GIF", CropPanel)
+        messagebox.showinfo("Crop", "Crop tool - Coming soon!")
     
     def open_split_dialog(self):
         """Open split dialog."""
-        self._open_tool_dialog("Split GIF", SplitPanel)
+        messagebox.showinfo("Split", "Split tool - Coming soon!")
     
     def open_merge_dialog(self):
         """Open merge dialog."""
-        self._open_tool_dialog("Merge GIFs", MergePanel)
+        messagebox.showinfo("Merge", "Merge tool - Coming soon!")
     
     def open_reverse_dialog(self):
         """Open reverse dialog."""
-        self._open_tool_dialog("Reverse GIF", ReversePanel)
+        messagebox.showinfo("Reverse", "Reverse tool - Coming soon!")
     
     def open_optimize_dialog(self):
         """Open optimize dialog."""
-        self._open_tool_dialog("Optimize GIF", OptimizePanel)
+        messagebox.showinfo("Optimize", "Optimize tool - Coming soon!")
     
     def _open_tool_dialog(self, title: str, panel_class):
         """Open a tool dialog with the specified panel."""
@@ -594,29 +518,13 @@ class GifToolsApp:
         y = (dialog.winfo_screenheight() // 2) - (dialog.winfo_height() // 2)
         dialog.geometry(f"+{x}+{y}")
     
-    def open_split_dialog(self):
-        """Open split dialog."""
-        self._open_tool_dialog("Split GIF", SplitPanel)
-    
-    def open_merge_dialog(self):
-        """Open merge dialog."""
-        self._open_tool_dialog("Merge GIFs", MergePanel)
-    
     def open_add_text_dialog(self):
         """Open add text dialog."""
-        self._open_tool_dialog("Add Text to GIF", AddTextPanel)
+        messagebox.showinfo("Add Text", "Add Text tool - Coming soon!")
     
     def open_rearrange_dialog(self):
         """Open rearrange dialog."""
-        messagebox.showinfo("Rearrange", "Rearrange tool - Coming soon!")
-    
-    def open_reverse_dialog(self):
-        """Open reverse dialog."""
-        self._open_tool_dialog("Reverse GIF", ReversePanel)
-    
-    def open_optimize_dialog(self):
-        """Open optimize dialog."""
-        self._open_tool_dialog("Optimize GIF", OptimizePanel)
+        self._open_tool_dialog("Rearrange GIF Frames", RearrangePanel)
     
     def open_speed_dialog(self):
         """Open speed control dialog."""
