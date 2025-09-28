@@ -78,7 +78,7 @@ class GifRearranger:
                 
                 # Save rearranged GIF
                 self.image_processor.save_image(
-                    rearranged_gif, output_path, quality=quality, optimize=True
+                    rearranged_gif, output_path, quality=quality, optimize=False
                 )
                 
                 return output_path
@@ -135,7 +135,7 @@ class GifRearranger:
                 
                 # Save rearranged GIF
                 self.image_processor.save_image(
-                    rearranged_gif, output_path, quality=quality, optimize=True
+                    rearranged_gif, output_path, quality=quality, optimize=False
                 )
                 
                 return output_path
@@ -203,7 +203,7 @@ class GifRearranger:
                 
                 # Save rearranged GIF
                 self.image_processor.save_image(
-                    rearranged_gif, output_path, quality=quality, optimize=True
+                    rearranged_gif, output_path, quality=quality, optimize=False
                 )
                 
                 return output_path
@@ -263,7 +263,7 @@ class GifRearranger:
                 
                 # Save rearranged GIF
                 self.image_processor.save_image(
-                    rearranged_gif, output_path, quality=quality, optimize=True
+                    rearranged_gif, output_path, quality=quality, optimize=False
                 )
                 
                 return output_path
@@ -320,7 +320,7 @@ class GifRearranger:
                 
                 # Save rearranged GIF
                 self.image_processor.save_image(
-                    rearranged_gif, output_path, quality=quality, optimize=True
+                    rearranged_gif, output_path, quality=quality, optimize=False
                 )
                 
                 return output_path
@@ -406,16 +406,28 @@ class GifRearranger:
             # Load frames in new order
             for frame_idx in frame_order:
                 gif.seek(frame_idx)
-                frames.append(gif.copy())
+                frame = gif.copy()
+                frames.append(frame)
                 
-                # Get frame duration
-                duration = gif.info.get('duration', 100)  # Default 100ms
+                # Get frame duration - try multiple sources
+                duration = 100  # Default 100ms
+                if 'duration' in gif.info:
+                    duration = gif.info['duration']
+                elif hasattr(gif, 'info') and 'duration' in gif.info:
+                    duration = gif.info['duration']
+                elif hasattr(gif, 'duration'):
+                    duration = gif.duration
+                
                 durations.append(duration)
             
             # Create new GIF with proper frame handling
             if frames:
                 # Create a new GIF with the rearranged frames
                 new_gif = frames[0].copy()
+                
+                # Debug: Print frame count
+                print(f"Debug: Creating GIF with {len(frames)} frames")
+                print(f"Debug: Durations: {durations}")
                 
                 # Save with proper GIF parameters
                 new_gif.save(
@@ -431,6 +443,10 @@ class GifRearranger:
                 
                 # Load the saved GIF and return
                 result_gif = Image.open('temp_rearrange.gif')
+                
+                # Debug: Check result frame count
+                result_frames = getattr(result_gif, 'n_frames', 1)
+                print(f"Debug: Result GIF has {result_frames} frames")
                 
                 # Clean up temp file
                 import os
