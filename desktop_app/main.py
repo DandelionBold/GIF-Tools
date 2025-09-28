@@ -147,7 +147,6 @@ class GifToolsApp:
         self.create_basic_tools_tab()
         self.create_advanced_tools_tab()
         self.create_additional_tools_tab()
-        self.create_batch_tools_tab()
     
     def create_basic_tools_tab(self):
         """Create the basic tools tab."""
@@ -219,22 +218,6 @@ class GifToolsApp:
         for i in range(2):
             additional_frame.grid_columnconfigure(i, weight=1)
     
-    def create_batch_tools_tab(self):
-        """Create the batch processing tools tab."""
-        batch_frame = ttk.Frame(self.notebook)
-        self.notebook.add(batch_frame, text="Batch Processing")
-        
-        # Batch processing controls
-        ttk.Label(batch_frame, text="Batch Processing Tools", font=("Arial", 12, "bold")).grid(row=0, column=0, columnspan=2, pady=10)
-        
-        ttk.Button(batch_frame, text="Batch Resize", command=self.open_batch_resize_dialog).grid(row=1, column=0, padx=10, pady=10, sticky=(tk.W, tk.E))
-        ttk.Button(batch_frame, text="Batch Optimize", command=self.open_batch_optimize_dialog).grid(row=1, column=1, padx=10, pady=10, sticky=(tk.W, tk.E))
-        ttk.Button(batch_frame, text="Batch Convert", command=self.open_batch_convert_dialog).grid(row=2, column=0, padx=10, pady=10, sticky=(tk.W, tk.E))
-        ttk.Button(batch_frame, text="Custom Batch", command=self.open_custom_batch_dialog).grid(row=2, column=1, padx=10, pady=10, sticky=(tk.W, tk.E))
-        
-        # Configure grid weights
-        for i in range(2):
-            batch_frame.grid_columnconfigure(i, weight=1)
     
     def create_tool_panels(self):
         """Create individual tool panels (placeholder for now)."""
