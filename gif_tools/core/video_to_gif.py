@@ -294,10 +294,7 @@ class VideoToGifConverter:
             # Write GIF with precise frame control
             video.write_gif(
                 str(output_path),
-                fps=fps,
-                program='ffmpeg',
-                verbose=False,
-                logger=None
+                fps=fps
             )
             
             # Progress update: Applying loop settings
