@@ -62,7 +62,7 @@ class CropPanel(ttk.Frame):
         preview_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
         
         # Canvas for image display
-        self.canvas = tk.Canvas(preview_frame, bg="white", cursor="crosshair")
+        self.canvas = tk.Canvas(preview_frame, bg="white", cursor="crosshair", width=400, height=300)
         self.canvas.pack(fill=tk.BOTH, expand=True)
         
         # Bind mouse events for crop selection
@@ -237,49 +237,67 @@ class CropPanel(ttk.Frame):
         if file_path:
             try:
                 from PIL import Image
+                print(f"Loading GIF: {file_path}")
                 self.current_gif = Image.open(file_path)
+                print(f"GIF loaded successfully: {self.current_gif.size}")
                 self.display_gif_preview()
             except Exception as e:
+                print(f"Error loading GIF: {e}")
                 messagebox.showerror("Error", f"Failed to load GIF: {e}")
     
     def display_gif_preview(self):
         """Display GIF preview on canvas."""
         if not self.current_gif:
+            print("No GIF loaded")
             return
         
         try:
+            print("Starting to display GIF preview")
             # Clear canvas
             self.canvas.delete("all")
+            
+            # Force canvas to update and get actual size
+            self.canvas.update_idletasks()
             
             # Calculate scale to fit canvas
             canvas_width = self.canvas.winfo_width()
             canvas_height = self.canvas.winfo_height()
+            print(f"Canvas size: {canvas_width}x{canvas_height}")
             
+            # If canvas is still not ready, set a minimum size
             if canvas_width <= 1 or canvas_height <= 1:
-                # Canvas not ready, schedule for later
-                self.canvas.after(100, self.display_gif_preview)
-                return
+                canvas_width = 400
+                canvas_height = 300
+                self.canvas.config(width=canvas_width, height=canvas_height)
+                print(f"Set canvas to minimum size: {canvas_width}x{canvas_height}")
             
             img_width = self.current_gif.width
             img_height = self.current_gif.height
+            print(f"Image size: {img_width}x{img_height}")
             
-            scale_x = canvas_width / img_width
-            scale_y = canvas_height / img_height
+            # Calculate scale to fit canvas with some padding
+            scale_x = (canvas_width - 20) / img_width
+            scale_y = (canvas_height - 20) / img_height
             self.image_scale = min(scale_x, scale_y, 1.0)  # Don't scale up
+            print(f"Image scale: {self.image_scale}")
             
             # Calculate centered position
             scaled_width = int(img_width * self.image_scale)
             scaled_height = int(img_height * self.image_scale)
+            print(f"Scaled size: {scaled_width}x{scaled_height}")
             
             self.image_offset_x = (canvas_width - scaled_width) // 2
             self.image_offset_y = (canvas_height - scaled_height) // 2
+            print(f"Image offset: ({self.image_offset_x}, {self.image_offset_y})")
             
             # Resize image for display
             display_img = self.current_gif.resize((scaled_width, scaled_height), Image.Resampling.LANCZOS)
+            print("Image resized successfully")
             
             # Convert to PhotoImage
             from PIL import ImageTk
             self.display_photo = ImageTk.PhotoImage(display_img)
+            print("PhotoImage created successfully")
             
             # Display image
             self.canvas.create_image(
@@ -287,9 +305,21 @@ class CropPanel(ttk.Frame):
                 self.image_offset_y + scaled_height // 2,
                 image=self.display_photo
             )
+            print("Image displayed on canvas")
+            
+            # Add a border around the image
+            self.canvas.create_rectangle(
+                self.image_offset_x, self.image_offset_y,
+                self.image_offset_x + scaled_width, self.image_offset_y + scaled_height,
+                outline="gray", width=1
+            )
+            print("Border added")
             
         except Exception as e:
+            print(f"Error in display_gif_preview: {e}")
             messagebox.showerror("Error", f"Failed to display GIF preview: {e}")
+            import traceback
+            traceback.print_exc()
     
     def start_crop_selection(self, event):
         """Start crop area selection."""
