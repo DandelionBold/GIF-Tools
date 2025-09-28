@@ -148,6 +148,34 @@ def validate_dimensions(width: int, height: int) -> Tuple[int, int]:
     return width, height
 
 
+def validate_size(size: Union[Tuple[int, int], Tuple[float, float]]) -> Tuple[int, int]:
+    """
+    Validate size tuple (width, height).
+    
+    Args:
+        size: Tuple of (width, height)
+        
+    Returns:
+        Tuple of (width, height) as integers if valid
+        
+    Raises:
+        ValidationError: If size is invalid
+    """
+    if not isinstance(size, (tuple, list)) or len(size) != 2:
+        raise ValidationError("Size must be a tuple or list of 2 elements")
+    
+    width, height = size
+    
+    # Convert to integers if they're floats
+    try:
+        width = int(width)
+        height = int(height)
+    except (ValueError, TypeError):
+        raise ValidationError("Size dimensions must be numeric")
+    
+    return validate_dimensions(width, height)
+
+
 def validate_rotation_angle(angle: int) -> int:
     """
     Validate rotation angle.
@@ -585,6 +613,7 @@ __all__ = [
     'validate_file_format',
     'validate_file_size',
     'validate_dimensions',
+    'validate_size',
     'validate_rotation_angle',
     'validate_quality',
     'validate_speed_multiplier',

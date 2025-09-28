@@ -456,9 +456,10 @@ class GifMerger:
                     loop=loop_count,
                     optimize=True
                 )
-        except Exception:
+        except Exception as e:
             # If loop count application fails, continue without it
-            pass
+            # Log the error for debugging purposes
+            print(f"Warning: Could not apply loop count: {e}")
 
 
 def merge_gifs(input_paths: List[Union[str, Path]],

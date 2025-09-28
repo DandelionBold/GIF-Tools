@@ -9,7 +9,7 @@ import tempfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-import moviepy.editor as mp
+from moviepy import VideoFileClip, ImageClip, CompositeVideoClip, concatenate_videoclips
 from PIL import Image
 
 from ..utils import (
@@ -87,7 +87,7 @@ class VideoToGifConverter:
         
         try:
             # Load video
-            with mp.VideoFileClip(str(video_path)) as video:
+            with VideoFileClip(str(video_path)) as video:
                 # Validate video duration
                 if start_time >= video.duration:
                     raise ValidationError(
@@ -149,7 +149,7 @@ class VideoToGifConverter:
         
         try:
             # Load video
-            with mp.VideoFileClip(str(video_path)) as video:
+            with VideoFileClip(str(video_path)) as video:
                 # Extract preview frames
                 preview_images = self._extract_preview_frames(
                     video, preview_frames, kwargs.get('start_time', 0.0)
@@ -176,7 +176,7 @@ class VideoToGifConverter:
         video_path = validate_video_file(video_path)
         
         try:
-            with mp.VideoFileClip(str(video_path)) as video:
+            with VideoFileClip(str(video_path)) as video:
                 return {
                     'duration': video.duration,
                     'fps': video.fps,
@@ -191,8 +191,8 @@ class VideoToGifConverter:
         except Exception as e:
             raise ValidationError(f"Failed to get video info: {e}")
     
-    def _resize_video(self, video: mp.VideoFileClip, 
-                     width: Optional[int], height: Optional[int]) -> mp.VideoFileClip:
+    def _resize_video(self, video: VideoFileClip, 
+                     width: Optional[int], height: Optional[int]) -> VideoFileClip:
         """
         Resize video clip.
         
@@ -213,7 +213,7 @@ class VideoToGifConverter:
         else:
             return video
     
-    def _convert_to_gif(self, video: mp.VideoFileClip, 
+    def _convert_to_gif(self, video: VideoFileClip, 
                        output_path: Path, fps: int, quality: int,
                        optimize: bool, loop_count: int) -> Path:
         """
@@ -250,7 +250,7 @@ class VideoToGifConverter:
         except Exception as e:
             raise ValidationError(f"GIF conversion failed: {e}")
     
-    def _extract_preview_frames(self, video: mp.VideoFileClip, 
+    def _extract_preview_frames(self, video: VideoFileClip, 
                                frame_count: int, start_time: float) -> List[Image.Image]:
         """
         Extract preview frames from video.
@@ -305,7 +305,8 @@ class VideoToGifConverter:
                 )
         except Exception as e:
             # If loop count application fails, continue without it
-            pass
+            # Log the error for debugging purposes
+            print(f"Warning: Could not apply loop count: {e}")
     
     def cleanup(self):
         """Clean up temporary files."""

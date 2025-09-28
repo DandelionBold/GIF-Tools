@@ -475,6 +475,47 @@ def get_supported_extensions() -> List[str]:
             SUPPORTED_ANIMATED_FORMATS)
 
 
+def get_temp_file(directory: Union[str, Path], prefix: str = 'gif_tools_', suffix: str = '.tmp') -> Path:
+    """
+    Create a temporary file in the specified directory.
+    
+    Args:
+        directory: Directory to create the file in
+        prefix: File prefix
+        suffix: File suffix
+        
+    Returns:
+        Path to temporary file
+    """
+    directory = Path(directory)
+    directory.mkdir(parents=True, exist_ok=True)
+    
+    # Create temporary file
+    temp_file = tempfile.NamedTemporaryFile(
+        dir=directory,
+        prefix=prefix,
+        suffix=suffix,
+        delete=False
+    )
+    temp_file.close()
+    
+    return Path(temp_file.name)
+
+
+def get_temp_directory(prefix: str = 'gif_tools_') -> Path:
+    """
+    Create a temporary directory.
+    
+    Args:
+        prefix: Directory prefix
+        
+    Returns:
+        Path to temporary directory
+    """
+    temp_dir = tempfile.mkdtemp(prefix=prefix)
+    return Path(temp_dir)
+
+
 # Export all functions and classes
 __all__ = [
     'FileHandler',
@@ -485,5 +526,7 @@ __all__ = [
     'get_file_extension',
     'get_mime_type',
     'is_supported_file',
-    'get_supported_extensions'
+    'get_supported_extensions',
+    'get_temp_file',
+    'get_temp_directory'
 ]
