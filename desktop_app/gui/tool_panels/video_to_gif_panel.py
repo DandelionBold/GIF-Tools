@@ -255,7 +255,7 @@ class VideoToGifPanel:
             settings = self.get_settings()
             
             if self.on_process:
-                self.on_process('video_to_gif', str(self.video_path), settings)
+                self.on_process('video_to_gif', settings, str(self.video_path))
             else:
                 messagebox.showinfo("Video to GIF", f"Conversion settings: {settings}")
                 

@@ -390,7 +390,13 @@ class GifToolsApp:
         
         # Generate output filename
         input_file_path = Path(input_path)
-        output_filename = f"{input_file_path.stem}_{tool_name}{input_file_path.suffix}"
+        
+        # Special handling for video to GIF - output should be .gif
+        if tool_name == 'video_to_gif':
+            output_filename = f"{input_file_path.stem}_{tool_name}.gif"
+        else:
+            output_filename = f"{input_file_path.stem}_{tool_name}{input_file_path.suffix}"
+        
         output_path = output_dir / output_filename
         
         # Add to processing queue
