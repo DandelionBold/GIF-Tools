@@ -100,19 +100,40 @@ class RearrangePanel:
         ttk.Button(range_frame, text="Select Range", command=self.select_range).pack(side=tk.LEFT, padx=(10, 0))
         
         # Drop zone for placing selected frames
-        drop_frame = ttk.LabelFrame(self.frame, text="Drop Zone - Click to Place Selected Frames", padding="5")
+        drop_frame = ttk.LabelFrame(self.frame, text="Drop Zone - Place Selected Frames", padding="5")
         drop_frame.grid(row=4, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=5)
         
-        self.drop_zone = tk.Frame(drop_frame, bg="lightblue", height=60, relief=tk.SUNKEN, borderwidth=2)
-        self.drop_zone.pack(fill=tk.X, pady=5)
+        # Drop zone options
+        options_frame = ttk.Frame(drop_frame)
+        options_frame.pack(fill=tk.X, pady=5)
         
-        self.drop_label = ttk.Label(self.drop_zone, text="Click here to place selected frames", 
-                                   background="lightblue", font=("Arial", 10, "italic"))
-        self.drop_label.pack(expand=True)
+        # Drop at start
+        self.drop_at_start_btn = ttk.Button(options_frame, text="Drop at Start", 
+                                          command=lambda: self.drop_frames_at_position("start"))
+        self.drop_at_start_btn.pack(side=tk.LEFT, padx=(0, 5))
         
-        # Bind drop zone click
-        self.drop_zone.bind("<Button-1>", self.on_drop_zone_click)
-        self.drop_label.bind("<Button-1>", self.on_drop_zone_click)
+        # Drop at end
+        self.drop_at_end_btn = ttk.Button(options_frame, text="Drop at End", 
+                                        command=lambda: self.drop_frames_at_position("end"))
+        self.drop_at_end_btn.pack(side=tk.LEFT, padx=(0, 5))
+        
+        # Drop at specific position
+        position_frame = ttk.Frame(options_frame)
+        position_frame.pack(side=tk.LEFT, padx=(10, 0))
+        
+        ttk.Label(position_frame, text="Drop at Frame #:").pack(side=tk.LEFT)
+        self.drop_position_var = tk.StringVar(value="1")
+        self.drop_position_entry = ttk.Entry(position_frame, textvariable=self.drop_position_var, width=8)
+        self.drop_position_entry.pack(side=tk.LEFT, padx=(5, 5))
+        
+        self.drop_at_position_btn = ttk.Button(position_frame, text="Drop Here", 
+                                             command=lambda: self.drop_frames_at_position("specific"))
+        self.drop_at_position_btn.pack(side=tk.LEFT)
+        
+        # Status label
+        self.drop_status_label = ttk.Label(drop_frame, text="Select frames and choose where to place them", 
+                                         foreground="gray", font=("Arial", 9, "italic"))
+        self.drop_status_label.pack(pady=(5, 0))
         
         # Control buttons
         control_frame = ttk.Frame(self.frame)
@@ -236,6 +257,10 @@ class RearrangePanel:
         # Update the canvas window size
         self.canvas.itemconfig(self.canvas_window, width=event.width)
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+        
+        # Redraw frames with new column count if we have frames loaded
+        if self.frames:
+            self.display_frames()
     
     def on_mousewheel(self, event):
         """Handle mouse wheel scrolling."""
@@ -252,29 +277,54 @@ class RearrangePanel:
         
         self.canvas.yview_scroll(delta, "units")
     
-    def on_drop_zone_click(self, event):
-        """Handle drop zone click to place selected frames at the end."""
+    def drop_frames_at_position(self, position_type):
+        """Drop selected frames at specified position."""
         if not self.selected_frames:
-            messagebox.showwarning("Warning", "Please select frames first!")
+            self.drop_status_label.config(text="Please select frames first!", foreground="red")
             return
         
-        # Move selected frames to the end
         frames_to_move = [self.frame_order[i] for i in self.selected_frames]
         
         # Remove selected frames from their current positions
         for frame_idx in frames_to_move:
             self.frame_order.remove(frame_idx)
         
-        # Add them to the end
-        self.frame_order.extend(frames_to_move)
+        if position_type == "start":
+            # Insert at the beginning
+            for frame_idx in reversed(frames_to_move):
+                self.frame_order.insert(0, frame_idx)
+            self.drop_status_label.config(text=f"Moved {len(frames_to_move)} frames to the start!", foreground="green")
+            
+        elif position_type == "end":
+            # Add to the end
+            self.frame_order.extend(frames_to_move)
+            self.drop_status_label.config(text=f"Moved {len(frames_to_move)} frames to the end!", foreground="green")
+            
+        elif position_type == "specific":
+            try:
+                # Get frame number from user input (convert to 0-based index)
+                frame_num = int(self.drop_position_var.get())
+                if frame_num < 1 or frame_num > len(self.frame_order) + 1:
+                    self.drop_status_label.config(text="Invalid frame number! Use 1 to " + str(len(self.frame_order) + 1), foreground="red")
+                    return
+                
+                # Insert at specified position (convert to 0-based index)
+                insert_pos = frame_num - 1
+                for frame_idx in reversed(frames_to_move):
+                    self.frame_order.insert(insert_pos, frame_idx)
+                
+                self.drop_status_label.config(text=f"Moved {len(frames_to_move)} frames to position {frame_num}!", foreground="green")
+                
+            except ValueError:
+                self.drop_status_label.config(text="Please enter a valid frame number!", foreground="red")
+                return
         
         # Update display
         self.display_frames()
         self.selected_frames = []
         
-        # Update drop zone text
-        self.drop_label.config(text="Frames placed at the end!")
-        self.root.after(2000, lambda: self.drop_label.config(text="Click here to place selected frames"))
+        # Reset status after 3 seconds
+        self.parent.after(3000, lambda: self.drop_status_label.config(text="Select frames and choose where to place them", foreground="gray"))
     
     def display_frames(self):
         """Display all frames in the canvas."""
@@ -282,8 +332,16 @@ class RearrangePanel:
         for widget in self.frame_container.winfo_children():
             widget.destroy()
         
+        # Calculate dynamic columns based on canvas width
+        canvas_width = self.canvas.winfo_width()
+        if canvas_width <= 0:
+            canvas_width = 800  # Default width if not yet rendered
+        
+        # Calculate frames per row dynamically
+        frame_width = 90  # Approximate frame width including padding
+        frames_per_row = max(1, canvas_width // frame_width)
+        
         # Create frame labels in vertical layout
-        frames_per_row = 5  # Number of frames per row
         for i, (frame_idx, thumbnail) in enumerate(zip(self.frame_order, self.frame_thumbnails)):
             row = i // frames_per_row
             col = i % frames_per_row
@@ -336,9 +394,12 @@ class RearrangePanel:
         x = self.canvas.canvasx(event.x)
         y = self.canvas.canvasy(event.y)
         
-        # Find frame at this position (vertical layout with 5 frames per row)
-        frames_per_row = 5
-        frame_width = 90  # Approximate frame width
+        # Calculate dynamic frames per row
+        canvas_width = self.canvas.winfo_width()
+        if canvas_width <= 0:
+            canvas_width = 800
+        frame_width = 90
+        frames_per_row = max(1, canvas_width // frame_width)
         frame_height = 120  # Approximate frame height
         
         col = int(x // frame_width)
@@ -358,12 +419,16 @@ class RearrangePanel:
     def on_canvas_release(self, event):
         """Handle canvas release (drop)."""
         if self.drag_start_index is not None:
-            # Find drop position (vertical layout with 5 frames per row)
+            # Find drop position with dynamic columns
             x = self.canvas.canvasx(event.x)
             y = self.canvas.canvasy(event.y)
             
-            frames_per_row = 5
+            # Calculate dynamic frames per row
+            canvas_width = self.canvas.winfo_width()
+            if canvas_width <= 0:
+                canvas_width = 800
             frame_width = 90
+            frames_per_row = max(1, canvas_width // frame_width)
             frame_height = 120
             
             col = int(x // frame_width)
