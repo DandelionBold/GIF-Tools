@@ -9,15 +9,19 @@ A comprehensive library and desktop application for GIF processing and manipulat
 
 ## 🚀 Features
 
-### Core GIF Processing Tools
-- **Video to GIF** - Convert video files to animated GIFs
-- **Resize** - Change GIF dimensions while maintaining aspect ratio
-- **Rotate** - Rotate GIFs by 90°, 180°, or 270° degrees
-- **Crop** - Cut out specific rectangular areas from GIFs
+### ✅ **IMPLEMENTED TOOLS** (Ready to Use)
+- **Video to GIF** - Convert video files to animated GIFs with auto-optimization
+- **Resize** - Change GIF dimensions with aspect ratio control and quality settings
+- **Rotate** - Rotate GIFs by 90°, 180°, or 270° degrees with progress tracking
+- **Crop** - Professional visual crop tool with aspect ratio presets and drag selection
+- **Rearrange** - Advanced drag-and-drop frame reordering with visual preview
+
+### 🔄 **IN PROGRESS** (Partially Implemented)
 - **Split** - Extract individual frames from GIFs
 - **Merge** - Combine multiple GIFs or images into one
 - **Add Text** - Overlay text with customizable fonts and colors
-- **Rearrange** - Drag and drop frames to reorder them
+
+### 📋 **PLANNED TOOLS** (Coming Soon)
 - **Reverse** - Play GIF animations backwards
 - **Optimize** - Reduce file size while maintaining quality
 - **Speed Control** - Adjust playback speed
@@ -28,17 +32,45 @@ A comprehensive library and desktop application for GIF processing and manipulat
 - **Batch Processing** - Process multiple files at once
 - **Watermark** - Add image or text watermarks
 
-### Desktop Application
-- Modern, intuitive GUI built with tkinter
-- Drag-and-drop file handling
-- Real-time preview
-- Progress tracking
-- Error handling and validation
+### 🎨 **Desktop Application Features**
+- **Modern GUI** - Professional interface built with tkinter
+- **Visual Crop Tool** - Click-and-drag cropping with 15+ aspect ratio presets
+- **Auto-Loading** - Tools automatically load selected GIFs from main dashboard
+- **Progress Tracking** - Real-time progress bars with detailed status messages
+- **Error Handling** - Robust error messages and validation
+- **Resizable Windows** - All tool dialogs are resizable for better workflow
+- **Aspect Ratio Presets** - Free, Square, Classic, Camera, Widescreen, Portrait, Vertical, and more
 
-### Future Web API
+### 🌐 **Future Web API**
 - RESTful API for web integration
 - Async processing for large files
 - Docker containerization ready
+
+## 📊 **Current Development Status**
+
+### **Phase 1: Core Infrastructure** ✅ **COMPLETED**
+- Project structure and architecture
+- Core library with modular design
+- Desktop GUI framework
+- Basic tool integration
+
+### **Phase 2: Basic Tools** ✅ **COMPLETED**
+- Video to GIF conversion with auto-optimization
+- Resize tool with aspect ratio control
+- Rotate tool with progress tracking
+- Professional visual crop tool with 15+ aspect ratios
+- Advanced rearrange tool with drag-and-drop
+
+### **Phase 3: Advanced Tools** 🔄 **IN PROGRESS**
+- Split tool (frames extraction)
+- Merge tool (combine GIFs)
+- Add Text tool (text overlay)
+
+### **Phase 4: Polish & Optimization** 📋 **PLANNED**
+- Performance optimization
+- Additional effects and filters
+- Batch processing
+- Web API development
 
 ## 📦 Installation
 

@@ -98,9 +98,25 @@ class CropPanel(ttk.Frame):
         aspect_combo = ttk.Combobox(
             aspect_frame,
             textvariable=self.aspect_ratio_var,
-            values=["free", "1:1 (Square)", "4:3", "3:2", "16:9", "21:9", "2:1", "3:1"],
+            values=[
+                "free", 
+                "1:1 (Square)", 
+                "4:3 (Classic)", 
+                "3:2 (Camera)", 
+                "16:9 (Widescreen)", 
+                "21:9 (Ultra-wide)", 
+                "2:1 (Panoramic)",
+                "3:1 (Ultra-panoramic)",
+                "5:4 (Portrait)",
+                "4:5 (Landscape)",
+                "3:4 (Portrait)",
+                "2:3 (Portrait)",
+                "9:16 (Vertical Video)",
+                "1:2 (Vertical)",
+                "1:3 (Ultra-vertical)"
+            ],
             state="readonly",
-            width=12
+            width=15
         )
         aspect_combo.pack(side=tk.LEFT)
         aspect_combo.bind("<<ComboboxSelected>>", self.on_aspect_ratio_change)
@@ -461,6 +477,12 @@ class CropPanel(ttk.Frame):
         
         width = x2 - x1
         height = y2 - y1
+        
+        # Avoid division by zero
+        if height == 0:
+            height = 1
+        if width == 0:
+            width = 1
         
         # Calculate target dimensions based on aspect ratio
         if width / height > self.aspect_ratio:
