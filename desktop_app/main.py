@@ -137,6 +137,10 @@ class GifToolsApp:
         # Process button
         self.process_btn = ttk.Button(toolbar, text="Process", command=self.process_file, state=tk.DISABLED)
         self.process_btn.pack(side=tk.LEFT, padx=(0, 5))
+        
+        # Stop button
+        self.stop_btn = ttk.Button(toolbar, text="Stop", command=self.stop_processing, state=tk.DISABLED)
+        self.stop_btn.pack(side=tk.LEFT, padx=(0, 5))
     
     def create_main_content(self):
         """Create the main content area with notebook for tools."""
@@ -361,13 +365,54 @@ class GifToolsApp:
         """Handle successful processing result."""
         self.status_var.set("Processing completed successfully!")
         self.progress_var.set(100)
+        self.set_buttons_state(True)  # Re-enable buttons
         messagebox.showinfo("Success", "File processed successfully!")
     
     def handle_error(self, result):
         """Handle processing error."""
         self.status_var.set("Processing failed!")
         self.progress_var.set(0)
+        self.set_buttons_state(True)  # Re-enable buttons
         messagebox.showerror("Error", f"Processing failed: {result['error']}")
+    
+    def set_buttons_state(self, enabled: bool):
+        """Enable or disable buttons during processing."""
+        state = "normal" if enabled else "disabled"
+        
+        # Disable/enable main buttons
+        if hasattr(self, 'open_button'):
+            self.open_button.config(state=state)
+        if hasattr(self, 'save_button'):
+            self.save_button.config(state=state)
+        if hasattr(self, 'batch_button'):
+            self.batch_button.config(state=state)
+        
+        # Disable/enable process and stop buttons
+        if hasattr(self, 'process_btn'):
+            self.process_btn.config(state=state)
+        if hasattr(self, 'stop_btn'):
+            # Stop button is enabled when processing, disabled when not
+            self.stop_btn.config(state="normal" if not enabled else "disabled")
+        
+        # Disable/enable tool buttons
+        for button in self.tool_buttons.values():
+            if hasattr(button, 'config'):
+                button.config(state=state)
+    
+    def stop_processing(self):
+        """Stop current processing operation."""
+        if self.is_processing:
+            self.is_processing = False
+            self.status_var.set("Stopping processing...")
+            # Clear the processing queue
+            while not self.processing_queue.empty():
+                try:
+                    self.processing_queue.get_nowait()
+                except queue.Empty:
+                    break
+            self.set_buttons_state(True)
+            self.status_var.set("Processing stopped.")
+            self.progress_var.set(0)
     
     def process_tool(self, tool_name: str, settings: dict, input_file: Optional[str] = None):
         """Process a tool operation."""
@@ -410,14 +455,22 @@ class GifToolsApp:
         self.processing_queue.put(task)
         self.status_var.set(f"Processing {tool_name}...")
         self.progress_var.set(0)
+        
+        # Disable buttons during processing
+        self.set_buttons_state(False)
     
     def _execute_tool(self, tool_name: str, input_path: str, output_path: str, settings: dict):
         """Execute a specific tool."""
         try:
+            # Create progress callback
+            def progress_callback(progress: int, message: str):
+                self.root.after(0, lambda: self._update_progress(progress, message))
+            
             if tool_name == 'rearrange':
                 return rearrange_gif_frames(input_path, output_path,
                                           frame_order=settings['frame_order'],
-                                          quality=settings.get('quality', 85))
+                                          quality=settings.get('quality', 85),
+                                          progress_callback=progress_callback)
             elif tool_name == 'video_to_gif':
                 return convert_video_to_gif(
                     video_path=input_path,
@@ -429,13 +482,19 @@ class GifToolsApp:
                     width=settings.get('width'),
                     height=settings.get('height'),
                     optimize=settings.get('optimize', True),
-                    loop_count=settings.get('loop_count', 0)
+                    loop_count=settings.get('loop_count', 0),
+                    progress_callback=progress_callback
                 )
             else:
                 raise ValueError(f"Unknown tool: {tool_name}")
                 
         except Exception as e:
             raise Exception(f"Tool execution failed: {e}")
+    
+    def _update_progress(self, progress: int, message: str):
+        """Update progress bar and status message."""
+        self.progress_var.set(progress)
+        self.status_var.set(message)
     
     # File operations
     def open_file(self):
