@@ -630,16 +630,16 @@ class GifToolsApp:
         
         dialog = tk.Toplevel(self.root)
         dialog.title("GIF Crop Tool")
-        dialog.geometry("600x500")
+        dialog.geometry("800x700")
         dialog.resizable(True, True)
-        dialog.minsize(600, 500)
+        dialog.minsize(800, 700)
         
         # Center the dialog
         dialog.transient(self.root)
         dialog.grab_set()
         
-        # Create crop panel
-        crop_panel = CropPanel(dialog, self.process_tool)
+        # Create crop panel with current file
+        crop_panel = CropPanel(dialog, self.process_tool, self.current_file)
         crop_panel.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
     
     def open_split_dialog(self):

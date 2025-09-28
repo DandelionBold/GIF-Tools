@@ -10,24 +10,31 @@ from pathlib import Path
 from typing import Optional, Callable, Any
 import threading
 
+from PIL import Image, ImageTk
 from gif_tools.core.crop import crop_gif
 
 
 class CropPanel(ttk.Frame):
     """Panel for GIF crop operations."""
     
-    def __init__(self, parent: tk.Widget, on_process: Optional[Callable] = None):
+    def __init__(self, parent: tk.Widget, on_process: Optional[Callable] = None, file_path: Optional[str] = None):
         """
         Initialize the crop panel.
         
         Args:
             parent: Parent widget
             on_process: Callback function for processing
+            file_path: Optional path to GIF file to auto-load
         """
         super().__init__(parent)
         self.parent = parent
         self.on_process = on_process
+        self.file_path = file_path
         self.setup_ui()
+        
+        # Auto-load GIF if file path provided
+        if file_path:
+            self.auto_load_gif(file_path)
     
     def setup_ui(self):
         """Create the crop panel UI."""
@@ -227,6 +234,18 @@ class CropPanel(ttk.Frame):
         # Pack the frame
         self.frame.pack(fill=tk.BOTH, expand=True)
     
+    def auto_load_gif(self, file_path: str):
+        """Auto-load GIF from file path."""
+        try:
+            print(f"Auto-loading GIF: {file_path}")
+            self.current_gif = Image.open(file_path)
+            print(f"GIF auto-loaded successfully: {self.current_gif.size}")
+            # Schedule display after UI is ready
+            self.after(100, self.display_gif_preview)
+        except Exception as e:
+            print(f"Error auto-loading GIF: {e}")
+            messagebox.showerror("Error", f"Failed to auto-load GIF: {e}")
+    
     def load_gif_for_crop(self):
         """Load GIF for visual cropping."""
         from tkinter import filedialog
@@ -236,7 +255,6 @@ class CropPanel(ttk.Frame):
         )
         if file_path:
             try:
-                from PIL import Image
                 print(f"Loading GIF: {file_path}")
                 self.current_gif = Image.open(file_path)
                 print(f"GIF loaded successfully: {self.current_gif.size}")
@@ -295,7 +313,6 @@ class CropPanel(ttk.Frame):
             print("Image resized successfully")
             
             # Convert to PhotoImage
-            from PIL import ImageTk
             self.display_photo = ImageTk.PhotoImage(display_img)
             print("PhotoImage created successfully")
             
