@@ -1,0 +1,5 @@
+# Main requirements file for easy installation
+# This file includes the most commonly used dependencies
+
+-r requirements/base.txt
+-r requirements/desktop.txt

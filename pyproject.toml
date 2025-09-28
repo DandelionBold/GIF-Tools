@@ -1,0 +1,253 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gif-tools"
+version = "0.1.0"
+description = "A comprehensive library and GUI application for GIF processing and manipulation"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "DandelionBold", email = "dandelionbold@example.com"}
+]
+maintainers = [
+    {name = "DandelionBold", email = "dandelionbold@example.com"}
+]
+keywords = [
+    "gif",
+    "image-processing",
+    "video-conversion",
+    "animation",
+    "graphics",
+    "desktop-app",
+    "gui"
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: End Users/Desktop",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Multimedia :: Graphics",
+    "Topic :: Multimedia :: Video",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Desktop Environment :: Window Managers",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "Pillow>=10.0.0",
+    "opencv-python>=4.8.0",
+    "moviepy>=1.0.3",
+    "ffmpeg-python>=0.2.0",
+    "numpy>=1.24.0",
+]
+
+[project.optional-dependencies]
+desktop = [
+    "tkinter-tooltip>=2.0.0",
+    "customtkinter>=5.2.0",
+]
+web = [
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "python-multipart>=0.0.6",
+    "aiofiles>=23.2.0",
+]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-benchmark>=4.0.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "mypy>=1.6.0",
+    "pre-commit>=3.5.0",
+    "sphinx>=7.1.0",
+    "sphinx-rtd-theme>=1.3.0",
+    "tox>=4.11.0",
+]
+all = [
+    "gif-tools[desktop,web,dev]"
+]
+
+[project.urls]
+Homepage = "https://github.com/DandelionBold/GIF-Tools"
+Documentation = "https://gif-tools.readthedocs.io"
+Repository = "https://github.com/DandelionBold/GIF-Tools.git"
+Issues = "https://github.com/DandelionBold/GIF-Tools/issues"
+Changelog = "https://github.com/DandelionBold/GIF-Tools/blob/main/CHANGELOG.md"
+
+[project.scripts]
+gif-tools = "desktop_app.main:main"
+gif-tools-cli = "gif_tools.cli:main"
+
+[project.gui-scripts]
+gif-tools-gui = "desktop_app.main:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["gif_tools*", "desktop_app*", "web_api*"]
+exclude = ["tests*", "docs*", "scripts*"]
+
+[tool.setuptools.package-data]
+gif_tools = ["*.py"]
+desktop_app = ["assets/**/*", "*.py"]
+web_api = ["*.py"]
+
+# Black configuration
+[tool.black]
+line-length = 88
+target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
+
+# Flake8 configuration
+[tool.flake8]
+max-line-length = 88
+extend-ignore = ["E203", "W503", "E501"]
+exclude = [
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    ".venv",
+    "venv",
+    ".eggs",
+    "*.egg",
+    ".tox",
+    ".pytest_cache",
+    ".mypy_cache",
+]
+
+# MyPy configuration
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[[tool.mypy.overrides]]
+module = [
+    "cv2.*",
+    "moviepy.*",
+    "ffmpeg.*",
+]
+ignore_missing_imports = true
+
+# Pytest configuration
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--cov=gif_tools",
+    "--cov=desktop_app",
+    "--cov=web_api",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-report=xml",
+    "--cov-fail-under=90",
+]
+testpaths = [
+    "gif_tools/tests",
+    "desktop_app/tests",
+    "web_api/tests",
+    "tests",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "performance: marks tests as performance tests",
+    "gui: marks tests as GUI tests",
+]
+
+# Coverage configuration
+[tool.coverage.run]
+source = ["gif_tools", "desktop_app", "web_api"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "*/__init__.py",
+    "*/conftest.py",
+    "*/venv/*",
+    "*/virtualenv/*",
+    "*/env/*",
+    "*/ENV/*",
+    "*/env.bak/*",
+    "*/venv.bak/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+# Tox configuration
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+envlist = py38, py39, py310, py311, py312, lint, docs
+isolated_build = True
+
+[testenv]
+deps =
+    -r requirements/dev.txt
+commands =
+    pytest {posargs:tests}
+
+[testenv:lint]
+deps =
+    -r requirements/dev.txt
+commands =
+    black --check gif_tools desktop_app web_api tests
+    flake8 gif_tools desktop_app web_api tests
+    mypy gif_tools desktop_app web_api
+
+[testenv:docs]
+deps =
+    -r requirements/dev.txt
+commands =
+    sphinx-build -W -b html docs/source docs/build
+"""

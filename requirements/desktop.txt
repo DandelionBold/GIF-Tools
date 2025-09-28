@@ -1,0 +1,12 @@
+# Desktop GUI requirements
+# Includes base requirements plus GUI-specific dependencies
+
+-r base.txt
+
+# GUI framework
+# tkinter is built-in with Python, but we include additional GUI libraries
+customtkinter>=5.2.0
+tkinter-tooltip>=2.0.0
+
+# Additional GUI utilities
+Pillow>=10.0.0  # For image preview and manipulation in GUI
