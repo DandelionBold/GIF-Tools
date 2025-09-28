@@ -368,18 +368,18 @@ class RearrangePanel:
         
         self.update_canvas_scroll()
     
-    def on_frame_click(self, event, frame_index):
+    def on_frame_click(self, event, grid_index):
         """Handle frame click for selection."""
         if tk.EventType.ButtonPress:
             if event.state & 0x4:  # Ctrl key held
                 # Toggle selection
-                if frame_index in self.selected_frames:
-                    self.selected_frames.remove(frame_index)
+                if grid_index in self.selected_frames:
+                    self.selected_frames.remove(grid_index)
                 else:
-                    self.selected_frames.append(frame_index)
+                    self.selected_frames.append(grid_index)
             else:
                 # Select only this frame
-                self.selected_frames = [frame_index]
+                self.selected_frames = [grid_index]
             
             self.update_frame_display()
     
@@ -467,8 +467,8 @@ class RearrangePanel:
         """Update the visual display of frames."""
         # Update frame colors based on selection
         for i, widget in enumerate(self.frame_container.winfo_children()):
-            if hasattr(widget, 'frame_index'):
-                if widget.frame_index in self.selected_frames:
+            if hasattr(widget, 'grid_index'):
+                if widget.grid_index in self.selected_frames:
                     widget.configure(relief=tk.SUNKEN, borderwidth=2)
                 else:
                     widget.configure(relief=tk.RAISED, borderwidth=1)
