@@ -181,7 +181,7 @@ class GifFormatConverter:
                     'width': gif.width,
                     'height': gif.height,
                     'mode': gif.mode,
-                    'supported_formats': list(SUPPORTED_ANIMATED_FORMATS.keys()),
+                    'supported_formats': SUPPORTED_ANIMATED_FORMATS,
                     'can_convert': True,
                     'conversion_options': self._get_conversion_options(current_format),
                     'message': f'Can convert {current_format} to other animated formats'

@@ -324,7 +324,7 @@ class GifFrameExtractor:
                     'height': gif.height,
                     'mode': gif.mode,
                     'format': gif.format,
-                    'supported_formats': list(SUPPORTED_IMAGE_FORMATS.keys()),
+                    'supported_formats': SUPPORTED_IMAGE_FORMATS,
                     'extraction_methods': ['all', 'range', 'every_nth', 'key_frames'],
                     'key_frame_methods': ['first_last_middle', 'first_last', 'middle', 'quarter_points'],
                     'can_extract': True
