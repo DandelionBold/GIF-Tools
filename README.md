@@ -16,10 +16,10 @@ A comprehensive library and desktop application for GIF processing and manipulat
 - **Rotate** - Rotate GIFs by 90°, 180°, or 270° degrees with progress tracking
 - **Crop** - Professional visual crop tool with aspect ratio presets and drag selection
 - **Rearrange** - Advanced drag-and-drop frame reordering with visual preview
+- **Split** - Media player interface with timeline for frame extraction and GIF splitting
 
 ### 🔄 **IN PROGRESS** (Partially Implemented)
 
-- **Split** - Extract individual frames from GIFs
 - **Merge** - Combine multiple GIFs or images into one
 - **Add Text** - Overlay text with customizable fonts and colors
 
@@ -38,6 +38,8 @@ A comprehensive library and desktop application for GIF processing and manipulat
 ### 🎨 **Desktop Application Features**
 
 - **Modern GUI** - Professional interface built with tkinter
+- **Split Tool with Media Player** - Timeline scrubber, frame navigation, visual selection
+- **Three Split Modes** - Split into Two GIFs, Extract Selected Region, Remove Selected Region
 - **Visual Crop Tool** - Click-and-drag cropping with 15+ aspect ratio presets
 - **Auto-Loading** - Tools automatically load selected GIFs from main dashboard
 - **Progress Tracking** - Real-time progress bars with detailed status messages
@@ -70,9 +72,9 @@ A comprehensive library and desktop application for GIF processing and manipulat
 
 ### **Phase 3: Advanced Tools** 🔄 **IN PROGRESS**
 
-- Split tool (frames extraction)
-- Merge tool (combine GIFs)
-- Add Text tool (text overlay)
+- Split tool (media player interface with timeline) ✅ **COMPLETED**
+- Merge tool (combine GIFs) - In Progress
+- Add Text tool (text overlay) - In Progress
 
 ### **Phase 4: Polish & Optimization** 📋 **PLANNED**
 
@@ -92,7 +94,7 @@ A comprehensive library and desktop application for GIF processing and manipulat
 
 ```bash
 # Clone the repository
-git clone https://github.com/KamalNady/GIF-Tools.git
+git clone https://github.com/DandelionBold/GIF-Tools.git
 cd GIF-Tools
 
 # Create virtual environment
@@ -213,8 +215,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- 🐛 [Report a bug](https://github.com/KamalNady/GIF-Tools/issues)
-- 💡 [Request a feature](https://github.com/KamalNady/GIF-Tools/issues)
+- 🐛 [Report a bug](https://github.com/DandelionBold/GIF-Tools/issues)
+- 💡 [Request a feature](https://github.com/DandelionBold/GIF-Tools/issues)
 - 📧 [Contact us](mailto:kamalnadykamal@gmail.com)
 
 ---

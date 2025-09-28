@@ -31,7 +31,9 @@ from gif_tools.core import (
     change_gif_speed, apply_gif_filter,
     # Additional tools
     extract_gif_frames, set_gif_loop_count, convert_gif_format, 
-    process_gif_batch
+    process_gif_batch,
+    # Split modes
+    split_gif_into_two, extract_gif_region, remove_gif_region
 )
 from desktop_app.gui.tool_panels import (
     RearrangePanel,
@@ -121,7 +123,6 @@ class GifToolsApp:
         # File operations
         ttk.Button(toolbar, text="Open GIF", command=self.open_file).pack(side=tk.LEFT, padx=(0, 5))
         ttk.Button(toolbar, text="Save As", command=self.save_as).pack(side=tk.LEFT, padx=(0, 5))
-        ttk.Button(toolbar, text="Batch Process", command=self.open_batch_dialog).pack(side=tk.LEFT, padx=(0, 5))
         
         # Separator
         ttk.Separator(toolbar, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=10)
@@ -133,10 +134,6 @@ class GifToolsApp:
         
         # Separator
         ttk.Separator(toolbar, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=10)
-        
-        # Process button
-        self.process_btn = ttk.Button(toolbar, text="Process", command=self.process_file, state=tk.DISABLED)
-        self.process_btn.pack(side=tk.LEFT, padx=(0, 5))
         
         # Stop button
         self.stop_btn = ttk.Button(toolbar, text="Stop", command=self.stop_processing, state=tk.DISABLED)
@@ -152,7 +149,6 @@ class GifToolsApp:
         self.create_basic_tools_tab()
         self.create_advanced_tools_tab()
         self.create_additional_tools_tab()
-        self.create_batch_tools_tab()
     
     def create_basic_tools_tab(self):
         """Create the basic tools tab."""
@@ -224,22 +220,6 @@ class GifToolsApp:
         for i in range(2):
             additional_frame.grid_columnconfigure(i, weight=1)
     
-    def create_batch_tools_tab(self):
-        """Create the batch processing tools tab."""
-        batch_frame = ttk.Frame(self.notebook)
-        self.notebook.add(batch_frame, text="Batch Processing")
-        
-        # Batch processing controls
-        ttk.Label(batch_frame, text="Batch Processing Tools", font=("Arial", 12, "bold")).grid(row=0, column=0, columnspan=2, pady=10)
-        
-        ttk.Button(batch_frame, text="Batch Resize", command=self.open_batch_resize_dialog).grid(row=1, column=0, padx=10, pady=10, sticky=(tk.W, tk.E))
-        ttk.Button(batch_frame, text="Batch Optimize", command=self.open_batch_optimize_dialog).grid(row=1, column=1, padx=10, pady=10, sticky=(tk.W, tk.E))
-        ttk.Button(batch_frame, text="Batch Convert", command=self.open_batch_convert_dialog).grid(row=2, column=0, padx=10, pady=10, sticky=(tk.W, tk.E))
-        ttk.Button(batch_frame, text="Custom Batch", command=self.open_custom_batch_dialog).grid(row=2, column=1, padx=10, pady=10, sticky=(tk.W, tk.E))
-        
-        # Configure grid weights
-        for i in range(2):
-            batch_frame.grid_columnconfigure(i, weight=1)
     
     def create_tool_panels(self):
         """Create individual tool panels (placeholder for now)."""
@@ -257,7 +237,6 @@ class GifToolsApp:
         file_menu.add_command(label="Open GIF", command=self.open_file)
         file_menu.add_command(label="Save As", command=self.save_as)
         file_menu.add_separator()
-        file_menu.add_command(label="Batch Process", command=self.open_batch_dialog)
         file_menu.add_separator()
         file_menu.add_command(label="Exit", command=self.root.quit)
         
@@ -381,7 +360,8 @@ class GifToolsApp:
         
         # Disable/enable process and stop buttons
         if hasattr(self, 'process_btn'):
-            self.process_btn.config(state=state)
+            # Process button was removed, no action needed
+            pass
         if hasattr(self, 'stop_btn'):
             # Stop button is enabled when processing, disabled when not
             self.stop_btn.config(state="normal" if not enabled else "disabled")
@@ -446,13 +426,16 @@ class GifToolsApp:
         # Generate output filename
         input_file_path = Path(input_path)
         
-        # Special handling for video to GIF - output should be .gif
+        # Special handling for different tools
         if tool_name == 'video_to_gif':
             output_filename = f"{input_file_path.stem}_{tool_name}.gif"
+            output_path = output_dir / output_filename
+        elif tool_name == 'split':
+            # Split tool outputs to a directory, not a single file
+            output_path = output_dir / f"{input_file_path.stem}_frames"
         else:
             output_filename = f"{input_file_path.stem}_{tool_name}{input_file_path.suffix}"
-        
-        output_path = output_dir / output_filename
+            output_path = output_dir / output_filename
         
         # Add to processing queue
         task = {
@@ -526,6 +509,48 @@ class GifToolsApp:
                     quality=settings.get('quality', 85),
                     progress_callback=progress_callback
                 )
+            elif tool_name == 'split':
+                split_mode = settings.get('split_mode', 'extract_selected')
+                
+                if split_mode == 'split_two':
+                    # Split into two GIFs at the start frame
+                    return split_gif_into_two(
+                        input_path=input_path,
+                        output_dir=Path(output_path),
+                        split_frame=settings.get('start_frame', 0),
+                        progress_callback=progress_callback
+                    )
+                elif split_mode == 'extract_selected':
+                    # Extract selected region as GIF
+                    output_file = Path(output_path) / f"{Path(input_path).stem}_extracted.gif"
+                    return extract_gif_region(
+                        input_path=input_path,
+                        output_path=output_file,
+                        start_frame=settings.get('start_frame', 0),
+                        end_frame=settings.get('end_frame', 10),
+                        progress_callback=progress_callback
+                    )
+                elif split_mode == 'remove_selected':
+                    # Remove selected region, keep the rest as GIF
+                    output_file = Path(output_path) / f"{Path(input_path).stem}_removed.gif"
+                    return remove_gif_region(
+                        input_path=input_path,
+                        output_path=output_file,
+                        start_frame=settings.get('start_frame', 0),
+                        end_frame=settings.get('end_frame', 10),
+                        progress_callback=progress_callback
+                    )
+                else:
+                    # Fallback to original split (extract frames as images)
+                    return split_gif(
+                        input_path=input_path,
+                        output_dir=Path(output_path),
+                        start_frame=settings.get('start_frame', 0),
+                        end_frame=settings.get('end_frame', 10),
+                        output_format=settings.get('output_format', 'png'),
+                        naming_pattern=settings.get('naming_pattern', 'frame_{index:04d}'),
+                        progress_callback=progress_callback
+                    )
             else:
                 raise ValueError(f"Unknown tool: {tool_name}")
                 
@@ -552,7 +577,7 @@ class GifToolsApp:
         if file_path:
             self.current_file = Path(file_path)
             self.input_file_var.set(str(self.current_file))
-            self.process_btn.config(state=tk.NORMAL)
+            # Process button was removed, no action needed
             self.status_var.set(f"Loaded: {self.current_file.name}")
     
     def save_as(self):
@@ -644,7 +669,21 @@ class GifToolsApp:
     
     def open_split_dialog(self):
         """Open split dialog."""
-        messagebox.showinfo("Split", "Split tool - Coming soon!")
+        from desktop_app.gui.tool_panels.split_panel import SplitPanel
+        
+        dialog = tk.Toplevel(self.root)
+        dialog.title("GIF Split Tool - Media Player")
+        dialog.geometry("900x700")
+        dialog.resizable(True, True)
+        dialog.minsize(900, 700)
+        
+        # Center the dialog
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Create split panel
+        split_panel = SplitPanel(dialog, self.process_tool, self.current_file)
+        split_panel.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
     
     def open_merge_dialog(self):
         """Open merge dialog."""
@@ -717,33 +756,6 @@ class GifToolsApp:
         """Open watermark dialog."""
         messagebox.showinfo("Watermark", "Watermark tool - Coming soon!")
     
-    def open_batch_dialog(self):
-        """Open batch processing dialog."""
-        messagebox.showinfo("Batch Processing", "Batch Processing tool - Coming soon!")
-    
-    def open_batch_resize_dialog(self):
-        """Open batch resize dialog."""
-        messagebox.showinfo("Batch Resize", "Batch Resize tool - Coming soon!")
-    
-    def open_batch_optimize_dialog(self):
-        """Open batch optimize dialog."""
-        messagebox.showinfo("Batch Optimize", "Batch Optimize tool - Coming soon!")
-    
-    def open_batch_convert_dialog(self):
-        """Open batch convert dialog."""
-        messagebox.showinfo("Batch Convert", "Batch Convert tool - Coming soon!")
-    
-    def open_custom_batch_dialog(self):
-        """Open custom batch dialog."""
-        messagebox.showinfo("Custom Batch", "Custom Batch tool - Coming soon!")
-    
-    def process_file(self):
-        """Process the current file (placeholder)."""
-        if not self.current_file:
-            messagebox.showwarning("Warning", "No file loaded!")
-            return
-        
-        messagebox.showinfo("Process", "File processing - Coming soon!")
     
     def show_about(self):
         """Show about dialog."""
