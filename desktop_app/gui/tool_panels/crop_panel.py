@@ -13,7 +13,7 @@ import threading
 from gif_tools.core.crop import crop_gif
 
 
-class CropPanel:
+class CropPanel(ttk.Frame):
     """Panel for GIF crop operations."""
     
     def __init__(self, parent: tk.Widget, on_process: Optional[Callable] = None):
@@ -24,6 +24,7 @@ class CropPanel:
             parent: Parent widget
             on_process: Callback function for processing
         """
+        super().__init__(parent)
         self.parent = parent
         self.on_process = on_process
         self.setup_ui()
@@ -31,7 +32,7 @@ class CropPanel:
     def setup_ui(self):
         """Create the crop panel UI."""
         # Main frame
-        self.frame = ttk.LabelFrame(self.parent, text="Crop GIF", padding="10")
+        self.frame = ttk.LabelFrame(self, text="Crop GIF", padding="10")
         
         # Crop coordinates
         ttk.Label(self.frame, text="Crop Area:").grid(row=0, column=0, sticky=tk.W, pady=5)
@@ -142,6 +143,9 @@ class CropPanel:
         
         # Configure grid weights
         self.frame.grid_columnconfigure(1, weight=1)
+        
+        # Pack the frame
+        self.frame.pack(fill=tk.BOTH, expand=True)
     
     def set_center_square(self):
         """Set crop area to center square."""
