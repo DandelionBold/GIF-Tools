@@ -34,7 +34,8 @@ from gif_tools.core import (
     process_gif_batch
 )
 from desktop_app.gui.tool_panels import (
-    ResizePanel, AddTextPanel, VideoToGifPanel, RotatePanel, CropPanel
+    ResizePanel, AddTextPanel, VideoToGifPanel, RotatePanel, CropPanel,
+    SplitPanel, MergePanel, ReversePanel, OptimizePanel
 )
 from gif_tools.utils import validate_animated_file, get_supported_extensions
 
@@ -457,6 +458,35 @@ class GifToolsApp:
                               quality=settings.get('quality', 85),
                               background_color=settings.get('background_color'))
             
+            elif tool_name == 'split':
+                # For split, we need to create a directory for output
+                output_dir = Path(output_path).parent / f"{Path(output_path).stem}_frames"
+                output_dir.mkdir(exist_ok=True)
+                return split_gif(input_path, output_dir,
+                               mode=settings.get('mode', 'all'),
+                               quality=settings.get('quality', 95),
+                               output_format=settings.get('output_format', 'png'),
+                               naming_pattern=settings.get('naming_pattern', 'frame_{:04d}'))
+            
+            elif tool_name == 'merge':
+                file_list = settings.get('file_list', [])
+                if not file_list:
+                    raise ValueError("No files to merge")
+                return merge_gifs(file_list, output_path,
+                                mode=settings.get('mode', 'sequential'),
+                                duration=settings.get('duration', 100),
+                                loop_count=settings.get('loop_count', 0),
+                                quality=settings.get('quality', 85))
+            
+            elif tool_name == 'reverse':
+                return reverse_gif(input_path, output_path,
+                                 quality=settings.get('quality', 85))
+            
+            elif tool_name == 'optimize':
+                return optimize_gif(input_path, output_path,
+                                  quality=settings.get('quality', 85),
+                                  optimize=settings.get('optimize_palette', True))
+            
             else:
                 raise ValueError(f"Unknown tool: {tool_name}")
                 
@@ -526,6 +556,22 @@ class GifToolsApp:
         """Open crop dialog."""
         self._open_tool_dialog("Crop GIF", CropPanel)
     
+    def open_split_dialog(self):
+        """Open split dialog."""
+        self._open_tool_dialog("Split GIF", SplitPanel)
+    
+    def open_merge_dialog(self):
+        """Open merge dialog."""
+        self._open_tool_dialog("Merge GIFs", MergePanel)
+    
+    def open_reverse_dialog(self):
+        """Open reverse dialog."""
+        self._open_tool_dialog("Reverse GIF", ReversePanel)
+    
+    def open_optimize_dialog(self):
+        """Open optimize dialog."""
+        self._open_tool_dialog("Optimize GIF", OptimizePanel)
+    
     def _open_tool_dialog(self, title: str, panel_class):
         """Open a tool dialog with the specified panel."""
         # Create dialog window
@@ -550,11 +596,11 @@ class GifToolsApp:
     
     def open_split_dialog(self):
         """Open split dialog."""
-        messagebox.showinfo("Split", "Split tool - Coming soon!")
+        self._open_tool_dialog("Split GIF", SplitPanel)
     
     def open_merge_dialog(self):
         """Open merge dialog."""
-        messagebox.showinfo("Merge", "Merge tool - Coming soon!")
+        self._open_tool_dialog("Merge GIFs", MergePanel)
     
     def open_add_text_dialog(self):
         """Open add text dialog."""
@@ -566,11 +612,11 @@ class GifToolsApp:
     
     def open_reverse_dialog(self):
         """Open reverse dialog."""
-        messagebox.showinfo("Reverse", "Reverse tool - Coming soon!")
+        self._open_tool_dialog("Reverse GIF", ReversePanel)
     
     def open_optimize_dialog(self):
         """Open optimize dialog."""
-        messagebox.showinfo("Optimize", "Optimize tool - Coming soon!")
+        self._open_tool_dialog("Optimize GIF", OptimizePanel)
     
     def open_speed_dialog(self):
         """Open speed control dialog."""
