@@ -515,6 +515,17 @@ class GifToolsApp:
                     quality=settings.get('quality', 85),
                     progress_callback=progress_callback
                 )
+            elif tool_name == 'crop':
+                return crop_gif(
+                    input_path=input_path,
+                    output_path=output_path,
+                    x=settings.get('x', 0),
+                    y=settings.get('y', 0),
+                    width=settings.get('width', 100),
+                    height=settings.get('height', 100),
+                    quality=settings.get('quality', 85),
+                    progress_callback=progress_callback
+                )
             else:
                 raise ValueError(f"Unknown tool: {tool_name}")
                 
@@ -615,7 +626,21 @@ class GifToolsApp:
     
     def open_crop_dialog(self):
         """Open crop dialog."""
-        messagebox.showinfo("Crop", "Crop tool - Coming soon!")
+        from desktop_app.gui.tool_panels.crop_panel import CropPanel
+        
+        dialog = tk.Toplevel(self.root)
+        dialog.title("GIF Crop Tool")
+        dialog.geometry("600x500")
+        dialog.resizable(True, True)
+        dialog.minsize(600, 500)
+        
+        # Center the dialog
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Create crop panel
+        crop_panel = CropPanel(dialog, self.process_tool)
+        crop_panel.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
     
     def open_split_dialog(self):
         """Open split dialog."""

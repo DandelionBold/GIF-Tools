@@ -35,7 +35,8 @@ class GifCropper:
              y: int,
              width: int,
              height: int,
-             quality: int = 85) -> Path:
+             quality: int = 85,
+             progress_callback: Optional[callable] = None) -> Path:
         """
         Crop GIF by specified coordinates.
         
@@ -59,18 +60,34 @@ class GifCropper:
         output_path = validate_output_path(output_path)
         
         try:
+            # Progress update: Loading GIF
+            if progress_callback:
+                progress_callback(0, "Loading GIF...")
+            
             # Load GIF to get dimensions
             with Image.open(input_path) as gif:
                 # Validate crop coordinates
                 validate_crop_coordinates(x, y, width, height, gif.width, gif.height)
                 
+                # Progress update: Cropping GIF
+                if progress_callback:
+                    progress_callback(20, f"Cropping GIF to {width}x{height}...")
+                
                 # Crop GIF
-                cropped_gif = self._crop_gif(gif, x, y, width, height)
+                cropped_gif = self._crop_gif(gif, x, y, width, height, progress_callback)
+                
+                # Progress update: Saving GIF
+                if progress_callback:
+                    progress_callback(80, "Saving cropped GIF...")
                 
                 # Save cropped GIF
                 self.image_processor.save_image(
                     cropped_gif, output_path, quality=quality, optimize=True
                 )
+                
+                # Progress update: Complete
+                if progress_callback:
+                    progress_callback(100, "Crop complete!")
                 
                 return output_path
                 
@@ -266,7 +283,7 @@ class GifCropper:
             raise ValidationError(f"Failed to get crop info: {e}")
     
     def _crop_gif(self, gif: Image.Image, x: int, y: int, 
-                  width: int, height: int) -> Image.Image:
+                  width: int, height: int, progress_callback: Optional[callable] = None) -> Image.Image:
         """
         Crop animated GIF.
         
@@ -293,6 +310,11 @@ class GifCropper:
             frame_count = getattr(gif, 'n_frames', 1) if hasattr(gif, 'n_frames') else 1
             
             for frame_idx in range(frame_count):
+                # Progress update: Processing frames
+                if progress_callback:
+                    progress = 20 + int((frame_idx / frame_count) * 50)  # 20-70%
+                    progress_callback(progress, f"Cropping frame {frame_idx+1}/{frame_count}...")
+                
                 gif.seek(frame_idx)
                 
                 # Crop frame
@@ -302,6 +324,10 @@ class GifCropper:
                 # Get frame duration
                 duration = gif.info.get('duration', 100)  # Default 100ms
                 durations.append(duration)
+            
+            # Progress update: Creating cropped GIF
+            if progress_callback:
+                progress_callback(70, "Creating cropped GIF...")
             
             # Create new GIF
             if frames:
@@ -429,7 +455,8 @@ def crop_gif(input_path: Union[str, Path],
             y: int,
             width: int,
             height: int,
-            quality: int = 85) -> Path:
+            quality: int = 85,
+            progress_callback: Optional[callable] = None) -> Path:
     """
     Crop GIF by specified coordinates.
     
@@ -446,7 +473,7 @@ def crop_gif(input_path: Union[str, Path],
         Path to output GIF file
     """
     cropper = GifCropper()
-    return cropper.crop(input_path, output_path, x, y, width, height, quality)
+    return cropper.crop(input_path, output_path, x, y, width, height, quality, progress_callback)
 
 
 def crop_gif_center(input_path: Union[str, Path],
