@@ -11,7 +11,7 @@ from typing import Any, Dict, Optional, Union
 from PIL import Image
 
 from ..utils import (
-    DEFAULT_OPTIMIZATION,
+    DEFAULT_QUALITY,
     QUALITY_LEVELS,
     SUCCESS_MESSAGES,
     ValidationError,
