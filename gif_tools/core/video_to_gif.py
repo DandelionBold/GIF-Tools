@@ -148,7 +148,7 @@ class VideoToGifConverter:
                 
                 # Convert to GIF
                 output_path = self._convert_to_gif(
-                    video, output_path, fps, quality, optimize, loop_count, progress_callback
+                    video, output_path, fps, quality, optimize, loop_count, actual_duration, progress_callback
                 )
                 
                 # Progress update: Complete
@@ -261,6 +261,7 @@ class VideoToGifConverter:
     def _convert_to_gif(self, video: VideoFileClip, 
                        output_path: Path, fps: int, quality: int,
                        optimize: bool, loop_count: int, 
+                       actual_duration: float,
                        progress_callback: Optional[callable] = None) -> Path:
         """
         Convert video clip to GIF.
@@ -272,6 +273,8 @@ class VideoToGifConverter:
             quality: GIF quality
             optimize: Whether to optimize
             loop_count: Loop count
+            actual_duration: Actual duration of the video clip
+            progress_callback: Optional callback for progress updates
             
         Returns:
             Output file path
