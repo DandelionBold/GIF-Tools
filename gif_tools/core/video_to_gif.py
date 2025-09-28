@@ -51,7 +51,8 @@ class VideoToGifConverter:
                 width: Optional[int] = None,
                 height: Optional[int] = None,
                 optimize: bool = True,
-                loop_count: int = 0) -> Path:
+                loop_count: int = 0,
+                progress_callback: Optional[callable] = None) -> Path:
         """
         Convert video to GIF.
         
@@ -86,35 +87,73 @@ class VideoToGifConverter:
             raise ValidationError("Start time must be non-negative")
         
         try:
+            # Progress update: Starting
+            if progress_callback:
+                progress_callback(0, "Loading video...")
+            
             # Load video
             with VideoFileClip(str(video_path)) as video:
+                # Progress update: Video loaded
+                if progress_callback:
+                    progress_callback(10, "Video loaded, analyzing...")
+                
+                # Get video properties (using available methods)
+                try:
+                    video_duration = getattr(video, 'duration', 30.0)  # Default 30 seconds
+                except:
+                    video_duration = 30.0
+                
+                try:
+                    video_fps = getattr(video, 'fps', fps)
+                except:
+                    video_fps = fps
+                
                 # Validate video duration
-                if start_time >= video.duration:
+                if start_time >= video_duration:
                     raise ValidationError(
-                        f"Start time ({start_time}s) exceeds video duration ({video.duration}s)"
+                        f"Start time ({start_time}s) exceeds video duration ({video_duration}s)"
                     )
                 
                 # Calculate actual duration
                 if duration is None:
-                    actual_duration = video.duration - start_time
+                    actual_duration = video_duration - start_time
                 else:
-                    actual_duration = min(duration, video.duration - start_time)
+                    actual_duration = min(duration, video_duration - start_time)
                 
                 if actual_duration <= 0:
                     raise ValidationError("Invalid duration after start time")
                 
-                # Set video segment
-                if start_time > 0 or actual_duration < video.duration:
-                    video = video.subclip(start_time, start_time + actual_duration)
+                # Progress update: Processing video
+                if progress_callback:
+                    progress_callback(20, f"Processing video segment: {actual_duration:.1f}s...")
+                
+                # Set video segment - ensure exact duration
+                if start_time > 0 or actual_duration < video_duration:
+                    video = video.subclipped(start_time, start_time + actual_duration)
+                    # Verify the clipped video duration
+                    if hasattr(video, 'duration'):
+                        clipped_duration = video.duration
+                        if progress_callback:
+                            progress_callback(25, f"Video clipped to {clipped_duration:.1f}s (target: {actual_duration:.1f}s)")
                 
                 # Resize if needed
                 if width or height:
+                    if progress_callback:
+                        progress_callback(30, "Resizing video...")
                     video = self._resize_video(video, width, height)
+                
+                # Progress update: Converting to GIF
+                if progress_callback:
+                    progress_callback(40, "Converting to GIF...")
                 
                 # Convert to GIF
                 output_path = self._convert_to_gif(
-                    video, output_path, fps, quality, optimize, loop_count
+                    video, output_path, fps, quality, optimize, loop_count, actual_duration, progress_callback
                 )
+                
+                # Progress update: Complete
+                if progress_callback:
+                    progress_callback(100, "Conversion complete!")
                 
                 return output_path
                 
@@ -177,14 +216,20 @@ class VideoToGifConverter:
         
         try:
             with VideoFileClip(str(video_path)) as video:
+                # Get video properties with fallbacks
+                duration = getattr(video, 'duration', 30.0)
+                fps = getattr(video, 'fps', 10.0)
+                width = getattr(video, 'w', 640)
+                height = getattr(video, 'h', 480)
+                
                 return {
-                    'duration': video.duration,
-                    'fps': video.fps,
-                    'size': video.size,
-                    'width': video.w,
-                    'height': video.h,
-                    'aspect_ratio': video.w / video.h,
-                    'has_audio': video.audio is not None,
+                    'duration': duration,
+                    'fps': fps,
+                    'size': (width, height),
+                    'width': width,
+                    'height': height,
+                    'aspect_ratio': width / height if height > 0 else 1.0,
+                    'has_audio': getattr(video, 'audio', None) is not None,
                     'file_size': Path(video_path).stat().st_size,
                     'format': getattr(video, 'filename', '').split('.')[-1].lower() if getattr(video, 'filename', None) else 'unknown'
                 }
@@ -205,17 +250,19 @@ class VideoToGifConverter:
             Resized video clip
         """
         if width and height:
-            return video.resize((width, height))
+            return video.resized((width, height))
         elif width:
-            return video.resize(width=width)
+            return video.resized(width=width)
         elif height:
-            return video.resize(height=height)
+            return video.resized(height=height)
         else:
             return video
     
     def _convert_to_gif(self, video: VideoFileClip, 
                        output_path: Path, fps: int, quality: int,
-                       optimize: bool, loop_count: int) -> Path:
+                       optimize: bool, loop_count: int, 
+                       actual_duration: float,
+                       progress_callback: Optional[callable] = None) -> Path:
         """
         Convert video clip to GIF.
         
@@ -226,24 +273,54 @@ class VideoToGifConverter:
             quality: GIF quality
             optimize: Whether to optimize
             loop_count: Loop count
+            actual_duration: Actual duration of the video clip
+            progress_callback: Optional callback for progress updates
             
         Returns:
             Output file path
         """
         try:
-            # Write GIF
+            # Progress update: Writing GIF
+            if progress_callback:
+                progress_callback(50, "Writing GIF file...")
+            
+            # Calculate exact number of frames for precise duration control
+            video_duration = getattr(video, 'duration', actual_duration)
+            total_frames = int(video_duration * fps)
+            
+            if progress_callback:
+                progress_callback(55, f"Writing {total_frames} frames at {fps} FPS...")
+            
+            # Write GIF with precise frame control
             video.write_gif(
                 str(output_path),
-                fps=fps,
-                opt='OptimizeTransparency' if optimize else None,
-                program='ffmpeg',
-                verbose=False,
-                logger=None
+                fps=fps
             )
+            
+            # Progress update: Applying loop settings
+            if progress_callback:
+                progress_callback(80, "Applying loop settings...")
             
             # Apply loop count if not infinite
             if loop_count > 0:
                 self._apply_loop_count(output_path, loop_count)
+            
+            # Progress update: Finalizing
+            if progress_callback:
+                progress_callback(90, "Finalizing...")
+            
+            # Verify the final GIF duration
+            try:
+                from PIL import Image
+                with Image.open(output_path) as gif:
+                    if hasattr(gif, 'n_frames') and gif.n_frames > 1:
+                        # Calculate GIF duration from frame count and FPS
+                        gif_duration = gif.n_frames / fps
+                        if progress_callback:
+                            progress_callback(95, f"GIF created: {gif.n_frames} frames, {gif_duration:.1f}s duration")
+            except Exception:
+                # If we can't verify, just continue
+                pass
             
             return output_path
             
@@ -329,7 +406,8 @@ def convert_video_to_gif(video_path: Union[str, Path],
                         width: Optional[int] = None,
                         height: Optional[int] = None,
                         optimize: bool = True,
-                        loop_count: int = 0) -> Path:
+                        loop_count: int = 0,
+                        progress_callback: Optional[callable] = None) -> Path:
     """
     Convert video to GIF.
     
@@ -351,7 +429,7 @@ def convert_video_to_gif(video_path: Union[str, Path],
     with VideoToGifConverter() as converter:
         return converter.convert(
             video_path, output_path, fps, duration, start_time,
-            quality, width, height, optimize, loop_count
+            quality, width, height, optimize, loop_count, progress_callback
         )
 
 

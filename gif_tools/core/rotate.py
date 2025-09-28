@@ -32,7 +32,8 @@ class GifRotator:
                input_path: Union[str, Path],
                output_path: Union[str, Path],
                angle: int,
-               quality: int = 85) -> Path:
+               quality: int = 85,
+               progress_callback: Optional[callable] = None) -> Path:
         """
         Rotate GIF by specified angle.
         
@@ -54,15 +55,31 @@ class GifRotator:
         angle = validate_rotation_angle(angle)
         
         try:
+            # Progress update: Loading GIF
+            if progress_callback:
+                progress_callback(0, "Loading GIF...")
+            
             # Load GIF
             with Image.open(input_path) as gif:
+                # Progress update: Rotating GIF
+                if progress_callback:
+                    progress_callback(20, f"Rotating GIF by {angle}°...")
+                
                 # Rotate GIF
-                rotated_gif = self._rotate_gif(gif, angle)
+                rotated_gif = self._rotate_gif(gif, angle, progress_callback)
+                
+                # Progress update: Saving GIF
+                if progress_callback:
+                    progress_callback(80, "Saving rotated GIF...")
                 
                 # Save rotated GIF
                 self.image_processor.save_image(
                     rotated_gif, output_path, quality=quality, optimize=True
                 )
+                
+                # Progress update: Complete
+                if progress_callback:
+                    progress_callback(100, "Rotation complete!")
                 
                 return output_path
                 
@@ -218,7 +235,7 @@ class GifRotator:
         except Exception as e:
             raise ValidationError(f"Failed to get rotation info: {e}")
     
-    def _rotate_gif(self, gif: Image.Image, angle: int) -> Image.Image:
+    def _rotate_gif(self, gif: Image.Image, angle: int, progress_callback: Optional[callable] = None) -> Image.Image:
         """
         Rotate animated GIF.
         
@@ -242,6 +259,11 @@ class GifRotator:
             frame_count = getattr(gif, 'n_frames', 1) if hasattr(gif, 'n_frames') else 1
             
             for frame_idx in range(frame_count):
+                # Progress update: Processing frames
+                if progress_callback:
+                    progress = 20 + int((frame_idx / frame_count) * 50)  # 20-70%
+                    progress_callback(progress, f"Rotating frame {frame_idx+1}/{frame_count}...")
+                
                 gif.seek(frame_idx)
                 
                 # Rotate frame
@@ -251,6 +273,10 @@ class GifRotator:
                 # Get frame duration
                 duration = gif.info.get('duration', 100)  # Default 100ms
                 durations.append(duration)
+            
+            # Progress update: Creating rotated GIF
+            if progress_callback:
+                progress_callback(70, "Creating rotated GIF...")
             
             # Create new GIF
             if frames:
@@ -335,7 +361,8 @@ class GifRotator:
 def rotate_gif(input_path: Union[str, Path],
               output_path: Union[str, Path],
               angle: int,
-              quality: int = 85) -> Path:
+              quality: int = 85,
+              progress_callback: Optional[callable] = None) -> Path:
     """
     Rotate GIF by specified angle.
     
@@ -349,7 +376,7 @@ def rotate_gif(input_path: Union[str, Path],
         Path to output GIF file
     """
     rotator = GifRotator()
-    return rotator.rotate(input_path, output_path, angle, quality)
+    return rotator.rotate(input_path, output_path, angle, quality, progress_callback)
 
 
 def rotate_gif_clockwise(input_path: Union[str, Path],

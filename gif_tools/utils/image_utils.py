@@ -90,14 +90,31 @@ class ImageProcessor:
             path = Path(file_path)
             path.parent.mkdir(parents=True, exist_ok=True)
             
-            save_kwargs = {
-                'format': format or path.suffix[1:].upper(),
-                'quality': quality,
-                'optimize': optimize
-            }
-            save_kwargs.update(kwargs)
+            # Check if it's an animated GIF
+            is_animated = getattr(image, 'is_animated', False)
+            file_format = format or path.suffix[1:].upper()
             
-            image.save(path, **save_kwargs)
+            if is_animated and file_format.upper() == 'GIF':
+                # For animated GIFs, we need to save with specific parameters
+                save_kwargs = {
+                    'format': 'GIF',
+                    'save_all': True,
+                    'optimize': optimize,
+                    'disposal': 2,
+                    'transparency': 0
+                }
+                save_kwargs.update(kwargs)
+                image.save(path, **save_kwargs)
+            else:
+                # For static images, use regular save
+                save_kwargs = {
+                    'format': file_format,
+                    'quality': quality,
+                    'optimize': optimize
+                }
+                save_kwargs.update(kwargs)
+                image.save(path, **save_kwargs)
+            
             return path
         except Exception as e:
             raise ValidationError(f"Failed to save image: {e}")

@@ -24,7 +24,7 @@ DEFAULT_SIZE = (640, 480)
 DEFAULT_ROTATION_ANGLES = [90, 180, 270]
 
 # File size limits (in bytes)
-MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB
+MAX_FILE_SIZE = 500 * 1024 * 1024  # 500MB (increased for modern video files)
 MAX_FRAME_COUNT = 1000
 MAX_DIMENSION = 4096
 

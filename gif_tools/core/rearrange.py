@@ -30,7 +30,8 @@ class GifRearranger:
                         input_path: Union[str, Path],
                         output_path: Union[str, Path],
                         frame_order: List[int],
-                        quality: int = 85) -> Path:
+                        quality: int = 85,
+                        progress_callback: Optional[callable] = None) -> Path:
         """
         Rearrange frames in GIF according to specified order.
         
@@ -54,8 +55,16 @@ class GifRearranger:
             raise ValidationError("Frame order cannot be empty")
         
         try:
+            # Progress update: Loading GIF
+            if progress_callback:
+                progress_callback(0, "Loading GIF...")
+            
             # Load GIF
             with Image.open(input_path) as gif:
+                # Progress update: Analyzing GIF
+                if progress_callback:
+                    progress_callback(10, "Analyzing GIF...")
+                
                 # Check if animated
                 if not getattr(gif, 'is_animated', False):
                     raise ValidationError("Cannot rearrange frames in non-animated GIF")
@@ -73,13 +82,25 @@ class GifRearranger:
                 if len(set(frame_order)) != len(frame_order):
                     raise ValidationError("Frame order must contain unique indices")
                 
+                # Progress update: Rearranging frames
+                if progress_callback:
+                    progress_callback(20, "Rearranging frames...")
+                
                 # Rearrange frames
-                rearranged_gif = self._rearrange_frames(gif, frame_order)
+                rearranged_gif = self._rearrange_frames(gif, frame_order, progress_callback)
+                
+                # Progress update: Saving GIF
+                if progress_callback:
+                    progress_callback(80, "Saving rearranged GIF...")
                 
                 # Save rearranged GIF
                 self.image_processor.save_image(
-                    rearranged_gif, output_path, quality=quality, optimize=True
+                    rearranged_gif, output_path, quality=quality, optimize=False
                 )
+                
+                # Progress update: Complete
+                if progress_callback:
+                    progress_callback(100, "Rearrangement complete!")
                 
                 return output_path
                 
@@ -135,7 +156,7 @@ class GifRearranger:
                 
                 # Save rearranged GIF
                 self.image_processor.save_image(
-                    rearranged_gif, output_path, quality=quality, optimize=True
+                    rearranged_gif, output_path, quality=quality, optimize=False
                 )
                 
                 return output_path
@@ -203,7 +224,7 @@ class GifRearranger:
                 
                 # Save rearranged GIF
                 self.image_processor.save_image(
-                    rearranged_gif, output_path, quality=quality, optimize=True
+                    rearranged_gif, output_path, quality=quality, optimize=False
                 )
                 
                 return output_path
@@ -263,7 +284,7 @@ class GifRearranger:
                 
                 # Save rearranged GIF
                 self.image_processor.save_image(
-                    rearranged_gif, output_path, quality=quality, optimize=True
+                    rearranged_gif, output_path, quality=quality, optimize=False
                 )
                 
                 return output_path
@@ -320,7 +341,7 @@ class GifRearranger:
                 
                 # Save rearranged GIF
                 self.image_processor.save_image(
-                    rearranged_gif, output_path, quality=quality, optimize=True
+                    rearranged_gif, output_path, quality=quality, optimize=False
                 )
                 
                 return output_path
@@ -385,7 +406,7 @@ class GifRearranger:
         except Exception as e:
             raise ValidationError(f"Failed to get frame info: {e}")
     
-    def _rearrange_frames(self, gif: Image.Image, frame_order: List[int]) -> Image.Image:
+    def _rearrange_frames(self, gif: Image.Image, frame_order: List[int], progress_callback: Optional[callable] = None) -> Image.Image:
         """
         Rearrange frames in GIF.
         
@@ -404,28 +425,59 @@ class GifRearranger:
             frame_count = getattr(gif, 'n_frames', 1) if hasattr(gif, 'n_frames') else 1
             
             # Load frames in new order
-            for frame_idx in frame_order:
-                gif.seek(frame_idx)
-                frames.append(gif.copy())
+            for i, frame_idx in enumerate(frame_order):
+                # Progress update: Loading frames
+                if progress_callback:
+                    progress = 20 + int((i / len(frame_order)) * 50)  # 20-70%
+                    progress_callback(progress, f"Loading frame {i+1}/{len(frame_order)}...")
                 
-                # Get frame duration
-                duration = gif.info.get('duration', 100)  # Default 100ms
+                gif.seek(frame_idx)
+                frame = gif.copy()
+                frames.append(frame)
+                
+                # Get frame duration - try multiple sources
+                duration = 100  # Default 100ms
+                if 'duration' in gif.info:
+                    duration = gif.info['duration']
+                elif hasattr(gif, 'info') and 'duration' in gif.info:
+                    duration = gif.info['duration']
+                elif hasattr(gif, 'duration'):
+                    duration = gif.duration
+                
                 durations.append(duration)
             
-            # Create new GIF
+            # Create new GIF with proper frame handling
             if frames:
+                # Progress update: Creating new GIF
+                if progress_callback:
+                    progress_callback(70, "Creating rearranged GIF...")
+                
+                # Create a new GIF with the rearranged frames
                 new_gif = frames[0].copy()
+                
+                # Save with proper GIF parameters
                 new_gif.save(
                     'temp_rearrange.gif',
                     save_all=True,
                     append_images=frames[1:],
                     duration=durations,
                     loop=gif.info.get('loop', 0),
-                    optimize=True
+                    optimize=False,  # Disable optimization to prevent frame loss
+                    disposal=2,  # Restore to background
+                    transparency=0  # No transparency
                 )
                 
-                # Load the saved GIF
-                return Image.open('temp_rearrange.gif')
+                # Load the saved GIF and return
+                result_gif = Image.open('temp_rearrange.gif')
+                
+                # Clean up temp file
+                import os
+                try:
+                    os.remove('temp_rearrange.gif')
+                except:
+                    pass
+                
+                return result_gif
             else:
                 return gif.copy()
                 
@@ -437,7 +489,8 @@ class GifRearranger:
 def rearrange_gif_frames(input_path: Union[str, Path],
                         output_path: Union[str, Path],
                         frame_order: List[int],
-                        quality: int = 85) -> Path:
+                        quality: int = 85,
+                        progress_callback: Optional[callable] = None) -> Path:
     """
     Rearrange frames in GIF according to specified order.
     
@@ -451,7 +504,7 @@ def rearrange_gif_frames(input_path: Union[str, Path],
         Path to output GIF file
     """
     rearranger = GifRearranger()
-    return rearranger.rearrange_frames(input_path, output_path, frame_order, quality)
+    return rearranger.rearrange_frames(input_path, output_path, frame_order, quality, progress_callback)
 
 
 def move_gif_frame(input_path: Union[str, Path],

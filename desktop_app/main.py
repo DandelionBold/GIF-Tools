@@ -31,7 +31,11 @@ from gif_tools.core import (
     change_gif_speed, apply_gif_filter,
     # Additional tools
     extract_gif_frames, set_gif_loop_count, convert_gif_format, 
-    process_gif_batch, add_watermark_to_gif
+    process_gif_batch
+)
+from desktop_app.gui.tool_panels import (
+    RearrangePanel,
+    VideoToGifPanel
 )
 from gif_tools.utils import validate_animated_file, get_supported_extensions
 
@@ -133,6 +137,10 @@ class GifToolsApp:
         # Process button
         self.process_btn = ttk.Button(toolbar, text="Process", command=self.process_file, state=tk.DISABLED)
         self.process_btn.pack(side=tk.LEFT, padx=(0, 5))
+        
+        # Stop button
+        self.stop_btn = ttk.Button(toolbar, text="Stop", command=self.stop_processing, state=tk.DISABLED)
+        self.stop_btn.pack(side=tk.LEFT, padx=(0, 5))
     
     def create_main_content(self):
         """Create the main content area with notebook for tools."""
@@ -300,6 +308,7 @@ class GifToolsApp:
         """Start the background processing thread."""
         def process_worker():
             while True:
+                task = None
                 try:
                     task = self.processing_queue.get(timeout=1)
                     if task is None:
@@ -324,11 +333,12 @@ class GifToolsApp:
                     self.result_queue.put({
                         'success': False,
                         'error': str(e),
-                        'task_id': task.get('task_id')
+                        'task_id': task.get('task_id') if task else None
                     })
                 finally:
                     self.is_processing = False
-                    self.processing_queue.task_done()
+                    if task is not None:
+                        self.processing_queue.task_done()
         
         self.processing_thread = threading.Thread(target=process_worker, daemon=True)
         self.processing_thread.start()
@@ -355,13 +365,177 @@ class GifToolsApp:
         """Handle successful processing result."""
         self.status_var.set("Processing completed successfully!")
         self.progress_var.set(100)
+        self.set_buttons_state(True)  # Re-enable buttons
         messagebox.showinfo("Success", "File processed successfully!")
     
     def handle_error(self, result):
         """Handle processing error."""
         self.status_var.set("Processing failed!")
         self.progress_var.set(0)
+        self.set_buttons_state(True)  # Re-enable buttons
         messagebox.showerror("Error", f"Processing failed: {result['error']}")
+    
+    def set_buttons_state(self, enabled: bool):
+        """Enable or disable buttons during processing."""
+        state = "normal" if enabled else "disabled"
+        
+        # Disable/enable process and stop buttons
+        if hasattr(self, 'process_btn'):
+            self.process_btn.config(state=state)
+        if hasattr(self, 'stop_btn'):
+            # Stop button is enabled when processing, disabled when not
+            self.stop_btn.config(state="normal" if not enabled else "disabled")
+        
+        # Disable/enable all buttons in the notebook tabs
+        try:
+            # Get all frames in the notebook
+            for tab_id in self.notebook.tabs():
+                frame = self.notebook.nametowidget(tab_id)
+                # Find all buttons in this frame and its children
+                self._disable_buttons_in_widget(frame, state)
+        except Exception:
+            # If there's an error accessing notebook, continue
+            pass
+    
+    def _disable_buttons_in_widget(self, widget, state):
+        """Recursively disable/enable buttons in a widget and its children."""
+        try:
+            if isinstance(widget, ttk.Button):
+                widget.config(state=state)
+            elif hasattr(widget, 'winfo_children'):
+                for child in widget.winfo_children():
+                    self._disable_buttons_in_widget(child, state)
+        except Exception:
+            # If there's an error with a widget, continue
+            pass
+    
+    def stop_processing(self):
+        """Stop current processing operation."""
+        if self.is_processing:
+            self.is_processing = False
+            self.status_var.set("Stopping processing...")
+            # Clear the processing queue
+            while not self.processing_queue.empty():
+                try:
+                    self.processing_queue.get_nowait()
+                except queue.Empty:
+                    break
+            self.set_buttons_state(True)
+            self.status_var.set("Processing stopped.")
+            self.progress_var.set(0)
+    
+    def process_tool(self, tool_name: str, settings: dict, input_file: Optional[str] = None):
+        """Process a tool operation."""
+        if not self.current_file and not input_file:
+            messagebox.showwarning("Warning", "No file loaded!")
+            return
+        
+        input_path = input_file or self.current_file
+        if not input_path:
+            messagebox.showwarning("Warning", "No input file specified!")
+            return
+        
+        # Get output path
+        if not self.output_dir_var.get():
+            messagebox.showwarning("Warning", "Please select an output directory!")
+            return
+        
+        output_dir = Path(self.output_dir_var.get())
+        output_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Generate output filename
+        input_file_path = Path(input_path)
+        
+        # Special handling for video to GIF - output should be .gif
+        if tool_name == 'video_to_gif':
+            output_filename = f"{input_file_path.stem}_{tool_name}.gif"
+        else:
+            output_filename = f"{input_file_path.stem}_{tool_name}{input_file_path.suffix}"
+        
+        output_path = output_dir / output_filename
+        
+        # Add to processing queue
+        task = {
+            'function': self._execute_tool,
+            'args': (tool_name, str(input_path), str(output_path), settings),
+            'kwargs': {},
+            'task_id': f"{tool_name}_{int(time.time())}"
+        }
+        
+        self.processing_queue.put(task)
+        self.status_var.set(f"Processing {tool_name}...")
+        self.progress_var.set(0)
+        
+        # Disable buttons during processing
+        self.set_buttons_state(False)
+    
+    def _execute_tool(self, tool_name: str, input_path: str, output_path: str, settings: dict):
+        """Execute a specific tool."""
+        try:
+            # Create progress callback
+            def progress_callback(progress: int, message: str):
+                self.root.after(0, lambda: self._update_progress(progress, message))
+            
+            if tool_name == 'rearrange':
+                return rearrange_gif_frames(input_path, output_path,
+                                          frame_order=settings['frame_order'],
+                                          quality=settings.get('quality', 85),
+                                          progress_callback=progress_callback)
+            elif tool_name == 'video_to_gif':
+                return convert_video_to_gif(
+                    video_path=input_path,
+                    output_path=output_path,
+                    fps=settings.get('fps', 10),
+                    duration=settings.get('duration'),
+                    start_time=settings.get('start_time', 0.0),
+                    quality=settings.get('quality', 85),
+                    width=settings.get('width'),
+                    height=settings.get('height'),
+                    optimize=settings.get('optimize', True),
+                    loop_count=settings.get('loop_count', 0),
+                    progress_callback=progress_callback
+                )
+            elif tool_name == 'resize':
+                return resize_gif(
+                    input_path=input_path,
+                    output_path=output_path,
+                    width=settings.get('width'),
+                    height=settings.get('height'),
+                    size=settings.get('size'),
+                    maintain_aspect_ratio=settings.get('maintain_aspect_ratio', True),
+                    resample=settings.get('resample', 1),  # LANCZOS
+                    quality=settings.get('quality', 85),
+                    progress_callback=progress_callback
+                )
+            elif tool_name == 'rotate':
+                return rotate_gif(
+                    input_path=input_path,
+                    output_path=output_path,
+                    angle=settings.get('angle', 90),
+                    quality=settings.get('quality', 85),
+                    progress_callback=progress_callback
+                )
+            elif tool_name == 'crop':
+                return crop_gif(
+                    input_path=input_path,
+                    output_path=output_path,
+                    x=settings.get('x', 0),
+                    y=settings.get('y', 0),
+                    width=settings.get('width', 100),
+                    height=settings.get('height', 100),
+                    quality=settings.get('quality', 85),
+                    progress_callback=progress_callback
+                )
+            else:
+                raise ValueError(f"Unknown tool: {tool_name}")
+                
+        except Exception as e:
+            raise Exception(f"Tool execution failed: {e}")
+    
+    def _update_progress(self, progress: int, message: str):
+        """Update progress bar and status message."""
+        self.progress_var.set(progress)
+        self.status_var.set(message)
     
     # File operations
     def open_file(self):
@@ -409,22 +583,64 @@ class GifToolsApp:
             self.output_dir_var.set(dir_path)
             self.output_dir = Path(dir_path)
     
-    # Tool dialog methods (placeholders for now)
+    # Tool dialog methods
     def open_video_to_gif_dialog(self):
         """Open video to GIF conversion dialog."""
-        messagebox.showinfo("Video to GIF", "Video to GIF tool - Coming soon!")
+        self._open_tool_dialog("Video to GIF Converter", VideoToGifPanel)
     
     def open_resize_dialog(self):
         """Open resize dialog."""
-        messagebox.showinfo("Resize", "Resize tool - Coming soon!")
+        from desktop_app.gui.tool_panels.resize_panel import ResizePanel
+        
+        dialog = tk.Toplevel(self.root)
+        dialog.title("GIF Resize Tool")
+        dialog.geometry("600x500")
+        dialog.resizable(True, True)
+        dialog.minsize(600, 500)
+        
+        # Center the dialog
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Create resize panel
+        resize_panel = ResizePanel(dialog, self.process_tool)
+        resize_panel.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
     
     def open_rotate_dialog(self):
         """Open rotate dialog."""
-        messagebox.showinfo("Rotate", "Rotate tool - Coming soon!")
+        from desktop_app.gui.tool_panels.rotate_panel import RotatePanel
+        
+        dialog = tk.Toplevel(self.root)
+        dialog.title("GIF Rotate Tool")
+        dialog.geometry("600x500")
+        dialog.resizable(True, True)
+        dialog.minsize(600, 500)
+        
+        # Center the dialog
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Create rotate panel
+        rotate_panel = RotatePanel(dialog, self.process_tool)
+        rotate_panel.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
     
     def open_crop_dialog(self):
         """Open crop dialog."""
-        messagebox.showinfo("Crop", "Crop tool - Coming soon!")
+        from desktop_app.gui.tool_panels.crop_panel import CropPanel
+        
+        dialog = tk.Toplevel(self.root)
+        dialog.title("GIF Crop Tool")
+        dialog.geometry("800x700")
+        dialog.resizable(True, True)
+        dialog.minsize(800, 700)
+        
+        # Center the dialog
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Create crop panel with current file
+        crop_panel = CropPanel(dialog, self.process_tool, self.current_file)
+        crop_panel.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
     
     def open_split_dialog(self):
         """Open split dialog."""
@@ -434,14 +650,6 @@ class GifToolsApp:
         """Open merge dialog."""
         messagebox.showinfo("Merge", "Merge tool - Coming soon!")
     
-    def open_add_text_dialog(self):
-        """Open add text dialog."""
-        messagebox.showinfo("Add Text", "Add Text tool - Coming soon!")
-    
-    def open_rearrange_dialog(self):
-        """Open rearrange dialog."""
-        messagebox.showinfo("Rearrange", "Rearrange tool - Coming soon!")
-    
     def open_reverse_dialog(self):
         """Open reverse dialog."""
         messagebox.showinfo("Reverse", "Reverse tool - Coming soon!")
@@ -449,6 +657,41 @@ class GifToolsApp:
     def open_optimize_dialog(self):
         """Open optimize dialog."""
         messagebox.showinfo("Optimize", "Optimize tool - Coming soon!")
+    
+    def _open_tool_dialog(self, title: str, panel_class):
+        """Open a tool dialog with the specified panel."""
+        # Create dialog window
+        dialog = tk.Toplevel(self.root)
+        dialog.title(title)
+        dialog.geometry("800x700")
+        dialog.resizable(True, True)
+        dialog.minsize(600, 500)  # Set minimum size
+        
+        # Create panel
+        panel = panel_class(dialog, on_process=self.process_tool)
+        panel.get_widget().pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # If it's the rearrange panel and we have a current file, load it
+        if hasattr(panel, 'load_gif') and self.current_file:
+            panel.load_gif(self.current_file)
+        
+        # Center the dialog
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Center on parent
+        dialog.update_idletasks()
+        x = (dialog.winfo_screenwidth() // 2) - (dialog.winfo_width() // 2)
+        y = (dialog.winfo_screenheight() // 2) - (dialog.winfo_height() // 2)
+        dialog.geometry(f"+{x}+{y}")
+    
+    def open_add_text_dialog(self):
+        """Open add text dialog."""
+        messagebox.showinfo("Add Text", "Add Text tool - Coming soon!")
+    
+    def open_rearrange_dialog(self):
+        """Open rearrange dialog."""
+        self._open_tool_dialog("Rearrange GIF Frames", RearrangePanel)
     
     def open_speed_dialog(self):
         """Open speed control dialog."""
