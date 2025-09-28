@@ -425,10 +425,6 @@ class GifRearranger:
                 # Create a new GIF with the rearranged frames
                 new_gif = frames[0].copy()
                 
-                # Debug: Print frame count
-                print(f"Debug: Creating GIF with {len(frames)} frames")
-                print(f"Debug: Durations: {durations}")
-                
                 # Save with proper GIF parameters
                 new_gif.save(
                     'temp_rearrange.gif',
@@ -443,10 +439,6 @@ class GifRearranger:
                 
                 # Load the saved GIF and return
                 result_gif = Image.open('temp_rearrange.gif')
-                
-                # Debug: Check result frame count
-                result_frames = getattr(result_gif, 'n_frames', 1)
-                print(f"Debug: Result GIF has {result_frames} frames")
                 
                 # Clean up temp file
                 import os
