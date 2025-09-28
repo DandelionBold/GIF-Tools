@@ -507,6 +507,14 @@ class GifToolsApp:
                     quality=settings.get('quality', 85),
                     progress_callback=progress_callback
                 )
+            elif tool_name == 'rotate':
+                return rotate_gif(
+                    input_path=input_path,
+                    output_path=output_path,
+                    angle=settings.get('angle', 90),
+                    quality=settings.get('quality', 85),
+                    progress_callback=progress_callback
+                )
             else:
                 raise ValueError(f"Unknown tool: {tool_name}")
                 
@@ -589,7 +597,21 @@ class GifToolsApp:
     
     def open_rotate_dialog(self):
         """Open rotate dialog."""
-        messagebox.showinfo("Rotate", "Rotate tool - Coming soon!")
+        from desktop_app.gui.tool_panels.rotate_panel import RotatePanel
+        
+        dialog = tk.Toplevel(self.root)
+        dialog.title("GIF Rotate Tool")
+        dialog.geometry("600x500")
+        dialog.resizable(True, True)
+        dialog.minsize(600, 500)
+        
+        # Center the dialog
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Create rotate panel
+        rotate_panel = RotatePanel(dialog, self.process_tool)
+        rotate_panel.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
     
     def open_crop_dialog(self):
         """Open crop dialog."""

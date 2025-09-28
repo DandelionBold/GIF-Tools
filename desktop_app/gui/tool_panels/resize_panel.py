@@ -13,7 +13,7 @@ import threading
 from gif_tools.core.resize import resize_gif
 
 
-class ResizePanel:
+class ResizePanel(ttk.Frame):
     """Panel for GIF resize operations."""
     
     def __init__(self, parent: tk.Widget, on_process: Optional[Callable] = None):
@@ -24,6 +24,7 @@ class ResizePanel:
             parent: Parent widget
             on_process: Callback function for processing
         """
+        super().__init__(parent)
         self.parent = parent
         self.on_process = on_process
         self.setup_ui()
@@ -31,7 +32,7 @@ class ResizePanel:
     def setup_ui(self):
         """Create the resize panel UI."""
         # Main frame
-        self.frame = ttk.LabelFrame(self.parent, text="Resize GIF", padding="10")
+        self.frame = ttk.LabelFrame(self, text="Resize GIF", padding="10")
         
         # Width control
         ttk.Label(self.frame, text="Width:").grid(row=0, column=0, sticky=tk.W, pady=5)
@@ -105,6 +106,9 @@ class ResizePanel:
         
         # Configure grid weights
         self.frame.grid_columnconfigure(1, weight=1)
+        
+        # Pack the frame
+        self.frame.pack(fill=tk.BOTH, expand=True)
     
     def update_quality_label(self, value):
         """Update the quality label when scale changes."""
