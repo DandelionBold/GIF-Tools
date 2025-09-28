@@ -70,7 +70,7 @@ class GifBatchProcessor:
             'processed_files': 0,
             'failed_files': 0,
             'success_files': [],
-            'failed_files': [],
+            'failed_files_list': [],
             'operation': operation,
             'input_dir': str(input_dir),
             'output_dir': str(output_dir)
@@ -104,7 +104,7 @@ class GifBatchProcessor:
                     output_dir: Union[str, Path],
                     width: int,
                     height: int,
-                    **kwargs) -> Dict[str, Any]:
+                    **kwargs: Any) -> Dict[str, Any]:
         """
         Resize all GIF files in batch.
         
@@ -123,10 +123,10 @@ class GifBatchProcessor:
         )
     
     def optimize_batch(self,
-                      input_dir: Union[str, Path],
-                      output_dir: Union[str, Path],
-                      quality: int = 85,
-                      **kwargs) -> Dict[str, Any]:
+                       input_dir: Union[str, Path],
+                       output_dir: Union[str, Path],
+                       quality: int = 85,
+                       **kwargs: Any) -> Dict[str, Any]:
         """
         Optimize all GIF files in batch.
         
@@ -147,7 +147,7 @@ class GifBatchProcessor:
                             input_dir: Union[str, Path],
                             output_dir: Union[str, Path],
                             target_format: str,
-                            **kwargs) -> Dict[str, Any]:
+                            **kwargs: Any) -> Dict[str, Any]:
         """
         Convert format of all GIF files in batch.
         
@@ -168,7 +168,7 @@ class GifBatchProcessor:
                       input_dir: Union[str, Path],
                       output_dir: Union[str, Path],
                       text: str,
-                      **kwargs) -> Dict[str, Any]:
+                      **kwargs: Any) -> Dict[str, Any]:
         """
         Add text to all GIF files in batch.
         

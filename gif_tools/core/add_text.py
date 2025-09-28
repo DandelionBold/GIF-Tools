@@ -155,7 +155,7 @@ class GifTextAdder:
                          text: str,
                          animation_type: str = 'fade',
                          duration: int = 1000,
-                         **kwargs) -> Path:
+                         **kwargs: Any) -> Path:
         """
         Add animated text to GIF.
         
@@ -378,7 +378,7 @@ class GifTextAdder:
     
     def _add_animated_text_to_gif(self, gif: Image.Image, text: str,
                                  animation_type: str, duration: int,
-                                 **kwargs) -> Image.Image:
+                                 **kwargs: Any) -> Image.Image:
         """
         Add animated text to GIF.
         
@@ -445,7 +445,7 @@ class GifTextAdder:
     
     def _apply_text_animation(self, text: str, animation_type: str,
                             frame_idx: int, total_frames: int, duration: int,
-                            **kwargs) -> Optional[str]:
+                            **kwargs: Any) -> Optional[str]:
         """
         Apply text animation effect.
         
@@ -528,7 +528,7 @@ class GifTextAdder:
 def add_text_to_gif(input_path: Union[str, Path],
                    output_path: Union[str, Path],
                    text: str,
-                   **kwargs) -> Path:
+                   **kwargs: Any) -> Path:
     """
     Add text to GIF.
     
@@ -548,7 +548,7 @@ def add_text_to_gif(input_path: Union[str, Path],
 def add_multiple_text_to_gif(input_path: Union[str, Path],
                             output_path: Union[str, Path],
                             text_elements: List[Dict[str, Any]],
-                            **kwargs) -> Path:
+                            **kwargs: Any) -> Path:
     """
     Add multiple text elements to GIF.
     
@@ -569,7 +569,7 @@ def add_animated_text_to_gif(input_path: Union[str, Path],
                             output_path: Union[str, Path],
                             text: str,
                             animation_type: str = 'fade',
-                            **kwargs) -> Path:
+                            **kwargs: Any) -> Path:
     """
     Add animated text to GIF.
     
