@@ -22,7 +22,7 @@ from ..utils import (
 class GifRearranger:
     """GIF frame rearrangement utility class."""
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize GIF rearranger."""
         self.image_processor = get_image_processor()
     
@@ -61,7 +61,7 @@ class GifRearranger:
                     raise ValidationError("Cannot rearrange frames in non-animated GIF")
                 
                 # Get frame count
-                frame_count = gif.n_frames
+                frame_count = getattr(gif, 'n_frames', 1) if hasattr(gif, 'n_frames') else 1
                 
                 # Validate frame order
                 if len(frame_order) != frame_count:
@@ -117,7 +117,7 @@ class GifRearranger:
                     raise ValidationError("Cannot move frames in non-animated GIF")
                 
                 # Get frame count
-                frame_count = gif.n_frames
+                frame_count = getattr(gif, 'n_frames', 1) if hasattr(gif, 'n_frames') else 1
                 
                 # Validate indices
                 if not 0 <= from_index < frame_count:
@@ -177,7 +177,7 @@ class GifRearranger:
                     raise ValidationError("Cannot move frames in non-animated GIF")
                 
                 # Get frame count
-                frame_count = gif.n_frames
+                frame_count = getattr(gif, 'n_frames', 1) if hasattr(gif, 'n_frames') else 1
                 
                 # Validate indices
                 if not all(0 <= idx < frame_count for idx in from_indices):
@@ -245,7 +245,7 @@ class GifRearranger:
                     raise ValidationError("Cannot duplicate frames in non-animated GIF")
                 
                 # Get frame count
-                frame_count = gif.n_frames
+                frame_count = getattr(gif, 'n_frames', 1) if hasattr(gif, 'n_frames') else 1
                 
                 # Validate frame index
                 if not 0 <= frame_index < frame_count:
@@ -303,7 +303,7 @@ class GifRearranger:
                     raise ValidationError("Cannot remove frames from non-animated GIF")
                 
                 # Get frame count
-                frame_count = gif.n_frames
+                frame_count = getattr(gif, 'n_frames', 1) if hasattr(gif, 'n_frames') else 1
                 
                 # Validate indices
                 if not all(0 <= idx < frame_count for idx in frame_indices):
@@ -401,7 +401,7 @@ class GifRearranger:
         
         try:
             # Get frame count
-            frame_count = gif.n_frames
+            frame_count = getattr(gif, 'n_frames', 1) if hasattr(gif, 'n_frames') else 1
             
             # Load frames in new order
             for frame_idx in frame_order:

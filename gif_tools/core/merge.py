@@ -24,7 +24,7 @@ from ..utils import (
 class GifMerger:
     """GIF merge utility class."""
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize GIF merger."""
         self.image_processor = get_image_processor()
     

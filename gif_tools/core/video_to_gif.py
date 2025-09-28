@@ -29,7 +29,7 @@ from ..utils import (
 class VideoToGifConverter:
     """Video to GIF conversion utility class."""
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize video to GIF converter."""
         self._temp_files: List[Path] = []
     
@@ -186,7 +186,7 @@ class VideoToGifConverter:
                     'aspect_ratio': video.w / video.h,
                     'has_audio': video.audio is not None,
                     'file_size': Path(video_path).stat().st_size,
-                    'format': video.filename.split('.')[-1].lower() if video.filename else 'unknown'
+                    'format': getattr(video, 'filename', '').split('.')[-1].lower() if getattr(video, 'filename', None) else 'unknown'
                 }
         except Exception as e:
             raise ValidationError(f"Failed to get video info: {e}")

@@ -23,7 +23,7 @@ from ..utils import (
 class GifFrameExtractor:
     """GIF frame extraction utility class."""
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize GIF frame extractor."""
         self.image_processor = get_image_processor()
     

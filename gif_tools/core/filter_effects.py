@@ -23,7 +23,7 @@ from ..utils import (
 class GifFilterApplier:
     """GIF filter effects utility class."""
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize GIF filter applier."""
         self.image_processor = get_image_processor()
     
@@ -290,7 +290,7 @@ class GifFilterApplier:
         
         try:
             # Get frame count
-            frame_count = gif.n_frames
+            frame_count = getattr(gif, 'n_frames', 1) if hasattr(gif, 'n_frames') else 1
             
             for frame_idx in range(frame_count):
                 gif.seek(frame_idx)
@@ -348,7 +348,7 @@ class GifFilterApplier:
         
         try:
             # Get frame count
-            frame_count = gif.n_frames
+            frame_count = getattr(gif, 'n_frames', 1) if hasattr(gif, 'n_frames') else 1
             
             for frame_idx in range(frame_count):
                 gif.seek(frame_idx)
@@ -479,7 +479,7 @@ class GifFilterApplier:
         
         try:
             # Get frame count
-            frame_count = gif.n_frames
+            frame_count = getattr(gif, 'n_frames', 1) if hasattr(gif, 'n_frames') else 1
             
             for frame_idx in range(frame_count):
                 gif.seek(frame_idx)
@@ -598,7 +598,7 @@ class GifFilterApplier:
         
         try:
             # Get frame count
-            frame_count = gif.n_frames
+            frame_count = getattr(gif, 'n_frames', 1) if hasattr(gif, 'n_frames') else 1
             
             for frame_idx in range(frame_count):
                 gif.seek(frame_idx)

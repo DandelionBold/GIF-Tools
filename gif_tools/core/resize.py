@@ -24,7 +24,7 @@ from ..utils import (
 class GifResizer:
     """GIF resize utility class."""
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize GIF resizer."""
         self.image_processor = get_image_processor()
     
@@ -348,7 +348,7 @@ class GifResizer:
         
         try:
             # Get frame count
-            frame_count = gif.n_frames
+            frame_count = getattr(gif, 'n_frames', 1) if hasattr(gif, 'n_frames') else 1
             
             for frame_idx in range(frame_count):
                 gif.seek(frame_idx)
@@ -365,7 +365,7 @@ class GifResizer:
             if frames:
                 new_gif = frames[0].copy()
                 new_gif.save(
-                    new_gif.filename or 'temp.gif',
+                    getattr(new_gif, 'filename', None) or 'temp.gif',
                     save_all=True,
                     append_images=frames[1:],
                     duration=durations,
@@ -374,7 +374,7 @@ class GifResizer:
                 )
                 
                 # Load the saved GIF
-                return Image.open(new_gif.filename or 'temp.gif')
+                return Image.open(getattr(new_gif, 'filename', None) or 'temp.gif')
             else:
                 return gif.resize((width, height), resample)
                 
@@ -407,7 +407,7 @@ class GifResizer:
         
         try:
             # Get frame count
-            frame_count = gif.n_frames
+            frame_count = getattr(gif, 'n_frames', 1) if hasattr(gif, 'n_frames') else 1
             
             for frame_idx in range(frame_count):
                 gif.seek(frame_idx)
@@ -424,7 +424,7 @@ class GifResizer:
             if frames:
                 new_gif = frames[0].copy()
                 new_gif.save(
-                    new_gif.filename or 'temp.gif',
+                    getattr(new_gif, 'filename', None) or 'temp.gif',
                     save_all=True,
                     append_images=frames[1:],
                     duration=durations,
@@ -433,7 +433,7 @@ class GifResizer:
                 )
                 
                 # Load the saved GIF
-                return Image.open(new_gif.filename or 'temp.gif')
+                return Image.open(getattr(new_gif, 'filename', None) or 'temp.gif')
             else:
                 return gif.crop((x, y, x + width, y + height))
                 

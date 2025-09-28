@@ -25,7 +25,7 @@ from ..utils import (
 class GifWatermarker:
     """GIF watermark utility class."""
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize GIF watermarker."""
         self.image_processor = get_image_processor()
         self._font_cache: Dict[str, ImageFont.FreeTypeFont] = {}
@@ -270,7 +270,7 @@ class GifWatermarker:
         
         try:
             # Get frame count
-            frame_count = gif.n_frames
+            frame_count = getattr(gif, 'n_frames', 1) if hasattr(gif, 'n_frames') else 1
             
             for frame_idx in range(frame_count):
                 gif.seek(frame_idx)
@@ -338,7 +338,7 @@ class GifWatermarker:
         
         try:
             # Get frame count
-            frame_count = gif.n_frames
+            frame_count = getattr(gif, 'n_frames', 1) if hasattr(gif, 'n_frames') else 1
             
             for frame_idx in range(frame_count):
                 gif.seek(frame_idx)
@@ -398,7 +398,7 @@ class GifWatermarker:
         
         try:
             # Get frame count
-            frame_count = gif.n_frames
+            frame_count = getattr(gif, 'n_frames', 1) if hasattr(gif, 'n_frames') else 1
             
             for frame_idx in range(frame_count):
                 gif.seek(frame_idx)
