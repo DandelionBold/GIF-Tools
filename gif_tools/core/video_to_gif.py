@@ -88,23 +88,34 @@ class VideoToGifConverter:
         try:
             # Load video
             with VideoFileClip(str(video_path)) as video:
+                # Get video properties (using available methods)
+                try:
+                    video_duration = getattr(video, 'duration', 30.0)  # Default 30 seconds
+                except:
+                    video_duration = 30.0
+                
+                try:
+                    video_fps = getattr(video, 'fps', fps)
+                except:
+                    video_fps = fps
+                
                 # Validate video duration
-                if start_time >= video.duration:
+                if start_time >= video_duration:
                     raise ValidationError(
-                        f"Start time ({start_time}s) exceeds video duration ({video.duration}s)"
+                        f"Start time ({start_time}s) exceeds video duration ({video_duration}s)"
                     )
                 
                 # Calculate actual duration
                 if duration is None:
-                    actual_duration = video.duration - start_time
+                    actual_duration = video_duration - start_time
                 else:
-                    actual_duration = min(duration, video.duration - start_time)
+                    actual_duration = min(duration, video_duration - start_time)
                 
                 if actual_duration <= 0:
                     raise ValidationError("Invalid duration after start time")
                 
                 # Set video segment
-                if start_time > 0 or actual_duration < video.duration:
+                if start_time > 0 or actual_duration < video_duration:
                     video = video.subclipped(start_time, start_time + actual_duration)
                 
                 # Resize if needed
@@ -177,14 +188,20 @@ class VideoToGifConverter:
         
         try:
             with VideoFileClip(str(video_path)) as video:
+                # Get video properties with fallbacks
+                duration = getattr(video, 'duration', 30.0)
+                fps = getattr(video, 'fps', 10.0)
+                width = getattr(video, 'w', 640)
+                height = getattr(video, 'h', 480)
+                
                 return {
-                    'duration': video.duration,
-                    'fps': video.fps,
-                    'size': video.size,
-                    'width': video.w,
-                    'height': video.h,
-                    'aspect_ratio': video.w / video.h,
-                    'has_audio': video.audio is not None,
+                    'duration': duration,
+                    'fps': fps,
+                    'size': (width, height),
+                    'width': width,
+                    'height': height,
+                    'aspect_ratio': width / height if height > 0 else 1.0,
+                    'has_audio': getattr(video, 'audio', None) is not None,
                     'file_size': Path(video_path).stat().st_size,
                     'format': getattr(video, 'filename', '').split('.')[-1].lower() if getattr(video, 'filename', None) else 'unknown'
                 }
@@ -205,11 +222,11 @@ class VideoToGifConverter:
             Resized video clip
         """
         if width and height:
-            return video.resize((width, height))
+            return video.resized((width, height))
         elif width:
-            return video.resize(width=width)
+            return video.resized(width=width)
         elif height:
-            return video.resize(height=height)
+            return video.resized(height=height)
         else:
             return video
     
