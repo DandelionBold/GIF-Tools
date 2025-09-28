@@ -137,11 +137,20 @@ class VideoToGifPanel:
         ttk.Label(advanced_frame, text="(0 = infinite loop)", 
                  font=("Arial", 8), foreground="gray").grid(row=1, column=0, columnspan=2, sticky=tk.W, padx=(5, 0))
         
+        # Auto-optimize for large files
+        self.auto_optimize_var = tk.BooleanVar(value=True)
+        auto_optimize_check = ttk.Checkbutton(advanced_frame, text="Auto-optimize for large files", 
+                                            variable=self.auto_optimize_var)
+        auto_optimize_check.grid(row=2, column=0, columnspan=2, sticky=tk.W, pady=2)
+        
+        ttk.Label(advanced_frame, text="(Automatically reduces resolution/quality for files >100MB)", 
+                 font=("Arial", 8), foreground="gray").grid(row=3, column=0, columnspan=2, sticky=tk.W, padx=(5, 0))
+        
         # Optimize checkbox
         self.optimize_var = tk.BooleanVar(value=True)
         optimize_check = ttk.Checkbutton(advanced_frame, text="Optimize GIF", 
                                        variable=self.optimize_var)
-        optimize_check.grid(row=2, column=0, sticky=tk.W, pady=2)
+        optimize_check.grid(row=4, column=0, sticky=tk.W, pady=2)
         
         # Process button
         self.process_btn = ttk.Button(
@@ -203,6 +212,55 @@ class VideoToGifPanel:
         """Update the quality label when scale changes."""
         self.quality_label.config(text=str(int(float(value))))
     
+    def _calculate_auto_optimization(self, video_path: Path) -> dict:
+        """Calculate optimal settings for large video files."""
+        try:
+            from moviepy import VideoFileClip
+            with VideoFileClip(str(video_path)) as clip:
+                duration = clip.duration
+                fps = clip.fps
+                size = clip.size
+                
+                # Calculate file size in MB
+                file_size_mb = video_path.stat().st_size / (1024 * 1024)
+                
+                # If file is larger than 100MB, apply auto-optimization
+                if file_size_mb > 100 and self.auto_optimize_var.get():
+                    # Calculate optimal settings
+                    target_size_ratio = min(0.5, 100 / file_size_mb)  # Target 50% reduction or 100MB
+                    
+                    # Reduce resolution
+                    new_width = max(320, int(size[0] * (target_size_ratio ** 0.5)))
+                    new_height = max(240, int(size[1] * (target_size_ratio ** 0.5)))
+                    
+                    # Reduce FPS for very large files
+                    optimal_fps = min(self.fps_var.get(), max(5, int(fps * 0.7)))
+                    
+                    # Reduce quality
+                    optimal_quality = max(60, int(self.quality_var.get() * 0.8))
+                    
+                    # Reduce duration for extremely large files
+                    optimal_duration = None
+                    if file_size_mb > 500:  # For files > 500MB
+                        optimal_duration = min(30, duration * 0.3)  # Max 30 seconds or 30% of original
+                    elif file_size_mb > 200:  # For files > 200MB
+                        optimal_duration = min(60, duration * 0.5)  # Max 60 seconds or 50% of original
+                    
+                    return {
+                        'width': new_width,
+                        'height': new_height,
+                        'fps': optimal_fps,
+                        'quality': optimal_quality,
+                        'duration': optimal_duration,
+                        'auto_applied': True,
+                        'original_size_mb': file_size_mb
+                    }
+                
+                return {'auto_applied': False, 'original_size_mb': file_size_mb}
+                
+        except Exception as e:
+            return {'auto_applied': False, 'error': str(e)}
+    
     def get_settings(self) -> dict:
         """Get current conversion settings."""
         settings = {
@@ -210,7 +268,8 @@ class VideoToGifPanel:
             'start_time': self.start_time_var.get(),
             'quality': self.quality_var.get(),
             'loop_count': self.loop_var.get(),
-            'optimize': self.optimize_var.get()
+            'optimize': self.optimize_var.get(),
+            'auto_optimize': self.auto_optimize_var.get()
         }
         
         # Duration
@@ -253,6 +312,46 @@ class VideoToGifPanel:
                 return
             
             settings = self.get_settings()
+            
+            # Apply auto-optimization if enabled
+            auto_optimization = self._calculate_auto_optimization(self.video_path)
+            
+            if auto_optimization.get('auto_applied', False):
+                # Show optimization dialog
+                original_size = auto_optimization['original_size_mb']
+                new_width = auto_optimization['width']
+                new_height = auto_optimization['height']
+                new_fps = auto_optimization['fps']
+                new_quality = auto_optimization['quality']
+                new_duration = auto_optimization.get('duration')
+                
+                duration_text = f"Duration: {new_duration:.1f}s" if new_duration else "Duration: Full video"
+                
+                result = messagebox.askyesno(
+                    "Auto-Optimization Applied",
+                    f"Your video file is {original_size:.1f}MB (larger than 100MB limit).\n\n"
+                    f"Auto-optimization will be applied:\n"
+                    f"• Resolution: {new_width}x{new_height}\n"
+                    f"• FPS: {new_fps}\n"
+                    f"• Quality: {new_quality}\n"
+                    f"• {duration_text}\n\n"
+                    f"Do you want to continue with these optimized settings?",
+                    icon='question'
+                )
+                
+                if not result:
+                    return
+                
+                # Apply auto-optimization settings
+                settings.update({
+                    'width': new_width,
+                    'height': new_height,
+                    'fps': new_fps,
+                    'quality': new_quality
+                })
+                
+                if new_duration:
+                    settings['duration'] = new_duration
             
             if self.on_process:
                 self.on_process('video_to_gif', settings, str(self.video_path))
