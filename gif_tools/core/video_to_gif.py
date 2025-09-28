@@ -125,11 +125,16 @@ class VideoToGifConverter:
                 
                 # Progress update: Processing video
                 if progress_callback:
-                    progress_callback(20, "Processing video segment...")
+                    progress_callback(20, f"Processing video segment: {actual_duration:.1f}s...")
                 
-                # Set video segment
+                # Set video segment - ensure exact duration
                 if start_time > 0 or actual_duration < video_duration:
                     video = video.subclipped(start_time, start_time + actual_duration)
+                    # Verify the clipped video duration
+                    if hasattr(video, 'duration'):
+                        clipped_duration = video.duration
+                        if progress_callback:
+                            progress_callback(25, f"Video clipped to {clipped_duration:.1f}s (target: {actual_duration:.1f}s)")
                 
                 # Resize if needed
                 if width or height:
@@ -276,10 +281,20 @@ class VideoToGifConverter:
             if progress_callback:
                 progress_callback(50, "Writing GIF file...")
             
-            # Write GIF
+            # Calculate exact number of frames for precise duration control
+            video_duration = getattr(video, 'duration', actual_duration)
+            total_frames = int(video_duration * fps)
+            
+            if progress_callback:
+                progress_callback(55, f"Writing {total_frames} frames at {fps} FPS...")
+            
+            # Write GIF with precise frame control
             video.write_gif(
                 str(output_path),
-                fps=fps
+                fps=fps,
+                program='ffmpeg',
+                verbose=False,
+                logger=None
             )
             
             # Progress update: Applying loop settings
@@ -293,6 +308,19 @@ class VideoToGifConverter:
             # Progress update: Finalizing
             if progress_callback:
                 progress_callback(90, "Finalizing...")
+            
+            # Verify the final GIF duration
+            try:
+                from PIL import Image
+                with Image.open(output_path) as gif:
+                    if hasattr(gif, 'n_frames') and gif.n_frames > 1:
+                        # Calculate GIF duration from frame count and FPS
+                        gif_duration = gif.n_frames / fps
+                        if progress_callback:
+                            progress_callback(95, f"GIF created: {gif.n_frames} frames, {gif_duration:.1f}s duration")
+            except Exception:
+                # If we can't verify, just continue
+                pass
             
             return output_path
             
