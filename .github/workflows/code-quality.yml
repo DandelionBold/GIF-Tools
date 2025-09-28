@@ -75,7 +75,7 @@ jobs:
         pytest tests/test_performance.py --benchmark-only --benchmark-save=performance
 
     - name: Upload performance results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: performance-results
         path: .benchmarks/
