@@ -263,3 +263,6 @@ docker-compose.yml
 # Local development
 .local/
 local_settings.py
+
+# Cursor IDE
+.cursor/
