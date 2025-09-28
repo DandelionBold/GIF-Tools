@@ -31,7 +31,7 @@ from gif_tools.core import (
     change_gif_speed, apply_gif_filter,
     # Additional tools
     extract_gif_frames, set_gif_loop_count, convert_gif_format, 
-    process_gif_batch, add_watermark_to_gif
+    process_gif_batch
 )
 from desktop_app.gui.tool_panels import (
     ResizePanel, AddTextPanel, VideoToGifPanel, RotatePanel, CropPanel
@@ -303,6 +303,7 @@ class GifToolsApp:
         """Start the background processing thread."""
         def process_worker():
             while True:
+                task = None
                 try:
                     task = self.processing_queue.get(timeout=1)
                     if task is None:
@@ -327,11 +328,12 @@ class GifToolsApp:
                     self.result_queue.put({
                         'success': False,
                         'error': str(e),
-                        'task_id': task.get('task_id')
+                        'task_id': task.get('task_id') if task else None
                     })
                 finally:
                     self.is_processing = False
-                    self.processing_queue.task_done()
+                    if task is not None:
+                        self.processing_queue.task_done()
         
         self.processing_thread = threading.Thread(target=process_worker, daemon=True)
         self.processing_thread.start()
@@ -394,6 +396,7 @@ class GifToolsApp:
         task = {
             'function': self._execute_tool,
             'args': (tool_name, str(input_path), str(output_path), settings),
+            'kwargs': {},
             'task_id': f"{tool_name}_{int(time.time())}"
         }
         
