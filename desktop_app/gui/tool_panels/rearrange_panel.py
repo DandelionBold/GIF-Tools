@@ -70,6 +70,9 @@ class RearrangePanel:
         self.frame_container = ttk.Frame(self.canvas)
         self.canvas_window = self.canvas.create_window(0, 0, anchor=tk.NW, window=self.frame_container)
         
+        # Bind canvas resize to update scroll region
+        self.canvas.bind('<Configure>', self.on_canvas_configure)
+        
         # Bind events for drag and drop
         self.canvas.bind("<Button-1>", self.on_canvas_click)
         self.canvas.bind("<B1-Motion>", self.on_canvas_drag)
@@ -144,12 +147,13 @@ class RearrangePanel:
         self.frame.grid_columnconfigure(0, weight=1)
         self.frame.grid_rowconfigure(2, weight=1)
     
-    def load_gif(self):
+    def load_gif(self, file_path=None):
         """Load a GIF file and extract its frames."""
-        file_path = filedialog.askopenfilename(
-            title="Select GIF File",
-            filetypes=[("GIF files", "*.gif"), ("All files", "*.*")]
-        )
+        if file_path is None:
+            file_path = filedialog.askopenfilename(
+                title="Select GIF File",
+                filetypes=[("GIF files", "*.gif"), ("All files", "*.*")]
+            )
         
         if not file_path:
             return
@@ -183,8 +187,8 @@ class RearrangePanel:
             self.file_label.config(text=f"Loaded: {Path(file_path).name} ({len(self.frames)} frames)")
             self.process_btn.config(state=tk.NORMAL)
             
-            # Update canvas scroll region
-            self.update_canvas_scroll()
+            # Display frames
+            self.display_frames()
             
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load GIF: {e}")
@@ -205,6 +209,12 @@ class RearrangePanel:
     def update_canvas_scroll(self):
         """Update the canvas scroll region."""
         self.frame_container.update_idletasks()
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+    
+    def on_canvas_configure(self, event):
+        """Handle canvas resize to update scroll region."""
+        # Update the canvas window size
+        self.canvas.itemconfig(self.canvas_window, width=event.width)
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
     
     def display_frames(self):

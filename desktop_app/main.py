@@ -508,6 +508,10 @@ class GifToolsApp:
         panel = panel_class(dialog, on_process=self.process_tool)
         panel.get_widget().pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         
+        # If it's the rearrange panel and we have a current file, load it
+        if hasattr(panel, 'load_gif') and self.current_file:
+            panel.load_gif(self.current_file)
+        
         # Center the dialog
         dialog.transient(self.root)
         dialog.grab_set()
