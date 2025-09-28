@@ -9,7 +9,7 @@ import tempfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from moviepy.editor import VideoFileClip, ImageClip, CompositeVideoClip, concatenate_videoclips
+from moviepy import VideoFileClip, ImageClip, CompositeVideoClip, concatenate_videoclips
 from PIL import Image
 
 from ..utils import (
@@ -105,7 +105,7 @@ class VideoToGifConverter:
                 
                 # Set video segment
                 if start_time > 0 or actual_duration < video.duration:
-                    video = video.subclip(start_time, start_time + actual_duration)
+                    video = video.subclipped(start_time, start_time + actual_duration)
                 
                 # Resize if needed
                 if width or height:

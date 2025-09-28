@@ -196,7 +196,7 @@ class VideoToGifPanel:
             
             # Try to get video info
             try:
-                from moviepy.editor import VideoFileClip
+                from moviepy import VideoFileClip
                 with VideoFileClip(str(self.video_path)) as clip:
                     duration = clip.duration
                     fps = clip.fps
@@ -215,7 +215,7 @@ class VideoToGifPanel:
     def _calculate_auto_optimization(self, video_path: Path) -> dict:
         """Calculate optimal settings for large video files."""
         try:
-            from moviepy.editor import VideoFileClip
+            from moviepy import VideoFileClip
             with VideoFileClip(str(video_path)) as clip:
                 duration = clip.duration
                 fps = clip.fps
