@@ -379,14 +379,6 @@ class GifToolsApp:
         """Enable or disable buttons during processing."""
         state = "normal" if enabled else "disabled"
         
-        # Disable/enable main buttons
-        if hasattr(self, 'open_button'):
-            self.open_button.config(state=state)
-        if hasattr(self, 'save_button'):
-            self.save_button.config(state=state)
-        if hasattr(self, 'batch_button'):
-            self.batch_button.config(state=state)
-        
         # Disable/enable process and stop buttons
         if hasattr(self, 'process_btn'):
             self.process_btn.config(state=state)
@@ -394,10 +386,28 @@ class GifToolsApp:
             # Stop button is enabled when processing, disabled when not
             self.stop_btn.config(state="normal" if not enabled else "disabled")
         
-        # Disable/enable tool buttons
-        for button in self.tool_buttons.values():
-            if hasattr(button, 'config'):
-                button.config(state=state)
+        # Disable/enable all buttons in the notebook tabs
+        try:
+            # Get all frames in the notebook
+            for tab_id in self.notebook.tabs():
+                frame = self.notebook.nametowidget(tab_id)
+                # Find all buttons in this frame and its children
+                self._disable_buttons_in_widget(frame, state)
+        except Exception:
+            # If there's an error accessing notebook, continue
+            pass
+    
+    def _disable_buttons_in_widget(self, widget, state):
+        """Recursively disable/enable buttons in a widget and its children."""
+        try:
+            if isinstance(widget, ttk.Button):
+                widget.config(state=state)
+            elif hasattr(widget, 'winfo_children'):
+                for child in widget.winfo_children():
+                    self._disable_buttons_in_widget(child, state)
+        except Exception:
+            # If there's an error with a widget, continue
+            pass
     
     def stop_processing(self):
         """Stop current processing operation."""
