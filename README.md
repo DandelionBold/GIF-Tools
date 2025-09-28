@@ -215,7 +215,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - 🐛 [Report a bug](https://github.com/KamalNady/GIF-Tools/issues)
 - 💡 [Request a feature](https://github.com/KamalNady/GIF-Tools/issues)
-- 📧 [Contact us](mailto:kamalnady@example.com)
+- 📧 [Contact us](mailto:kamalnadykamal@gmail.com)
 
 ---
 
