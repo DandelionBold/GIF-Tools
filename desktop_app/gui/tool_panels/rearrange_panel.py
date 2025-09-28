@@ -78,6 +78,11 @@ class RearrangePanel:
         self.canvas.bind("<B1-Motion>", self.on_canvas_drag)
         self.canvas.bind("<ButtonRelease-1>", self.on_canvas_release)
         
+        # Bind mouse wheel for scrolling
+        self.canvas.bind("<MouseWheel>", self.on_mousewheel)
+        self.canvas.bind("<Button-4>", self.on_mousewheel)  # Linux scroll up
+        self.canvas.bind("<Button-5>", self.on_mousewheel)  # Linux scroll down
+        
         # Quick selection range
         range_frame = ttk.LabelFrame(self.frame, text="Quick Selection Range", padding="5")
         range_frame.grid(row=3, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=5)
@@ -94,9 +99,24 @@ class RearrangePanel:
         
         ttk.Button(range_frame, text="Select Range", command=self.select_range).pack(side=tk.LEFT, padx=(10, 0))
         
+        # Drop zone for placing selected frames
+        drop_frame = ttk.LabelFrame(self.frame, text="Drop Zone - Click to Place Selected Frames", padding="5")
+        drop_frame.grid(row=4, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=5)
+        
+        self.drop_zone = tk.Frame(drop_frame, bg="lightblue", height=60, relief=tk.SUNKEN, borderwidth=2)
+        self.drop_zone.pack(fill=tk.X, pady=5)
+        
+        self.drop_label = ttk.Label(self.drop_zone, text="Click here to place selected frames", 
+                                   background="lightblue", font=("Arial", 10, "italic"))
+        self.drop_label.pack(expand=True)
+        
+        # Bind drop zone click
+        self.drop_zone.bind("<Button-1>", self.on_drop_zone_click)
+        self.drop_label.bind("<Button-1>", self.on_drop_zone_click)
+        
         # Control buttons
         control_frame = ttk.Frame(self.frame)
-        control_frame.grid(row=4, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=10)
+        control_frame.grid(row=5, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=10)
         
         ttk.Button(control_frame, text="Select All", command=self.select_all).pack(side=tk.LEFT, padx=(0, 5))
         ttk.Button(control_frame, text="Clear Selection", command=self.clear_selection).pack(side=tk.LEFT, padx=(0, 5))
@@ -106,7 +126,7 @@ class RearrangePanel:
         
         # Quality controls
         quality_frame = ttk.Frame(self.frame)
-        quality_frame.grid(row=5, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=10)
+        quality_frame.grid(row=6, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=10)
         
         ttk.Label(quality_frame, text="Quality:").pack(side=tk.LEFT)
         self.quality_var = tk.IntVar(value=85)
@@ -132,7 +152,7 @@ class RearrangePanel:
             command=self.process_rearrange,
             state=tk.DISABLED
         )
-        self.process_btn.grid(row=6, column=0, columnspan=3, pady=10)
+        self.process_btn.grid(row=7, column=0, columnspan=3, pady=10)
         
         # Progress bar
         self.progress_var = tk.DoubleVar()
@@ -141,7 +161,7 @@ class RearrangePanel:
             variable=self.progress_var,
             mode='indeterminate'
         )
-        self.progress_bar.grid(row=7, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=5)
+        self.progress_bar.grid(row=8, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=5)
         
         # Configure grid weights
         self.frame.grid_columnconfigure(0, weight=1)
@@ -216,6 +236,45 @@ class RearrangePanel:
         # Update the canvas window size
         self.canvas.itemconfig(self.canvas_window, width=event.width)
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+    
+    def on_mousewheel(self, event):
+        """Handle mouse wheel scrolling."""
+        # Windows and MacOS
+        if event.delta:
+            delta = int(-1 * (event.delta / 120))
+        # Linux
+        elif event.num == 4:
+            delta = -1
+        elif event.num == 5:
+            delta = 1
+        else:
+            return
+        
+        self.canvas.yview_scroll(delta, "units")
+    
+    def on_drop_zone_click(self, event):
+        """Handle drop zone click to place selected frames at the end."""
+        if not self.selected_frames:
+            messagebox.showwarning("Warning", "Please select frames first!")
+            return
+        
+        # Move selected frames to the end
+        frames_to_move = [self.frame_order[i] for i in self.selected_frames]
+        
+        # Remove selected frames from their current positions
+        for frame_idx in frames_to_move:
+            self.frame_order.remove(frame_idx)
+        
+        # Add them to the end
+        self.frame_order.extend(frames_to_move)
+        
+        # Update display
+        self.display_frames()
+        self.selected_frames = []
+        
+        # Update drop zone text
+        self.drop_label.config(text="Frames placed at the end!")
+        self.root.after(2000, lambda: self.drop_label.config(text="Click here to place selected frames"))
     
     def display_frames(self):
         """Display all frames in the canvas."""

@@ -501,8 +501,9 @@ class GifToolsApp:
         # Create dialog window
         dialog = tk.Toplevel(self.root)
         dialog.title(title)
-        dialog.geometry("500x600")
+        dialog.geometry("800x700")
         dialog.resizable(True, True)
+        dialog.minsize(600, 500)  # Set minimum size
         
         # Create panel
         panel = panel_class(dialog, on_process=self.process_tool)
