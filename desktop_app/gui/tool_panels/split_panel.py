@@ -308,8 +308,6 @@ class SplitPanel(ttk.Frame):
             self.update_selection_info()
             self.split_btn.config(state=tk.NORMAL)
             
-            messagebox.showinfo("Success", f"Loaded GIF with {self.total_frames} frames")
-            
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load GIF: {e}")
     

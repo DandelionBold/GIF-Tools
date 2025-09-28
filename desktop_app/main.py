@@ -121,7 +121,6 @@ class GifToolsApp:
         # File operations
         ttk.Button(toolbar, text="Open GIF", command=self.open_file).pack(side=tk.LEFT, padx=(0, 5))
         ttk.Button(toolbar, text="Save As", command=self.save_as).pack(side=tk.LEFT, padx=(0, 5))
-        ttk.Button(toolbar, text="Batch Process", command=self.open_batch_dialog).pack(side=tk.LEFT, padx=(0, 5))
         
         # Separator
         ttk.Separator(toolbar, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=10)
@@ -133,10 +132,6 @@ class GifToolsApp:
         
         # Separator
         ttk.Separator(toolbar, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=10)
-        
-        # Process button
-        self.process_btn = ttk.Button(toolbar, text="Process", command=self.process_file, state=tk.DISABLED)
-        self.process_btn.pack(side=tk.LEFT, padx=(0, 5))
         
         # Stop button
         self.stop_btn = ttk.Button(toolbar, text="Stop", command=self.stop_processing, state=tk.DISABLED)
@@ -257,7 +252,6 @@ class GifToolsApp:
         file_menu.add_command(label="Open GIF", command=self.open_file)
         file_menu.add_command(label="Save As", command=self.save_as)
         file_menu.add_separator()
-        file_menu.add_command(label="Batch Process", command=self.open_batch_dialog)
         file_menu.add_separator()
         file_menu.add_command(label="Exit", command=self.root.quit)
         
@@ -744,33 +738,6 @@ class GifToolsApp:
         """Open watermark dialog."""
         messagebox.showinfo("Watermark", "Watermark tool - Coming soon!")
     
-    def open_batch_dialog(self):
-        """Open batch processing dialog."""
-        messagebox.showinfo("Batch Processing", "Batch Processing tool - Coming soon!")
-    
-    def open_batch_resize_dialog(self):
-        """Open batch resize dialog."""
-        messagebox.showinfo("Batch Resize", "Batch Resize tool - Coming soon!")
-    
-    def open_batch_optimize_dialog(self):
-        """Open batch optimize dialog."""
-        messagebox.showinfo("Batch Optimize", "Batch Optimize tool - Coming soon!")
-    
-    def open_batch_convert_dialog(self):
-        """Open batch convert dialog."""
-        messagebox.showinfo("Batch Convert", "Batch Convert tool - Coming soon!")
-    
-    def open_custom_batch_dialog(self):
-        """Open custom batch dialog."""
-        messagebox.showinfo("Custom Batch", "Custom Batch tool - Coming soon!")
-    
-    def process_file(self):
-        """Process the current file (placeholder)."""
-        if not self.current_file:
-            messagebox.showwarning("Warning", "No file loaded!")
-            return
-        
-        messagebox.showinfo("Process", "File processing - Coming soon!")
     
     def show_about(self):
         """Show about dialog."""
