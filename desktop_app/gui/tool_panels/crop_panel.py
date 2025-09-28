@@ -82,10 +82,21 @@ class CropPanel(ttk.Frame):
         self.crop_info_label = ttk.Label(info_frame, text="X: 0, Y: 0, W: 0, H: 0")
         self.crop_info_label.pack(side=tk.LEFT, padx=10)
         
-        # Aspect ratio checkbox
-        self.aspect_ratio_var = tk.BooleanVar(value=True)
-        aspect_check = ttk.Checkbutton(info_frame, text="Lock Aspect Ratio", variable=self.aspect_ratio_var)
-        aspect_check.pack(side=tk.RIGHT)
+        # Aspect ratio options
+        aspect_frame = ttk.Frame(info_frame)
+        aspect_frame.pack(side=tk.RIGHT)
+        
+        ttk.Label(aspect_frame, text="Aspect Ratio:").pack(side=tk.LEFT, padx=(0, 5))
+        self.aspect_ratio_var = tk.StringVar(value="free")
+        aspect_combo = ttk.Combobox(
+            aspect_frame,
+            textvariable=self.aspect_ratio_var,
+            values=["free", "1:1 (Square)", "4:3", "3:2", "16:9", "21:9", "2:1", "3:1"],
+            state="readonly",
+            width=12
+        )
+        aspect_combo.pack(side=tk.LEFT)
+        aspect_combo.bind("<<ComboboxSelected>>", self.on_aspect_ratio_change)
         
         # Initialize crop variables
         self.crop_start_x = None
@@ -97,6 +108,7 @@ class CropPanel(ttk.Frame):
         self.image_scale = 1.0
         self.image_offset_x = 0
         self.image_offset_y = 0
+        self.aspect_ratio = None  # Will be set based on selection
     
     def setup_manual_crop(self):
         """Setup manual crop interface."""
@@ -235,45 +247,49 @@ class CropPanel(ttk.Frame):
         if not self.current_gif:
             return
         
-        # Clear canvas
-        self.canvas.delete("all")
-        
-        # Calculate scale to fit canvas
-        canvas_width = self.canvas.winfo_width()
-        canvas_height = self.canvas.winfo_height()
-        
-        if canvas_width <= 1 or canvas_height <= 1:
-            # Canvas not ready, schedule for later
-            self.canvas.after(100, self.display_gif_preview)
-            return
-        
-        img_width = self.current_gif.width
-        img_height = self.current_gif.height
-        
-        scale_x = canvas_width / img_width
-        scale_y = canvas_height / img_height
-        self.image_scale = min(scale_x, scale_y, 1.0)  # Don't scale up
-        
-        # Calculate centered position
-        scaled_width = int(img_width * self.image_scale)
-        scaled_height = int(img_height * self.image_scale)
-        
-        self.image_offset_x = (canvas_width - scaled_width) // 2
-        self.image_offset_y = (canvas_height - scaled_height) // 2
-        
-        # Resize image for display
-        display_img = self.current_gif.resize((scaled_width, scaled_height), Image.Resampling.LANCZOS)
-        
-        # Convert to PhotoImage
-        from PIL import ImageTk
-        self.display_photo = ImageTk.PhotoImage(display_img)
-        
-        # Display image
-        self.canvas.create_image(
-            self.image_offset_x + scaled_width // 2,
-            self.image_offset_y + scaled_height // 2,
-            image=self.display_photo
-        )
+        try:
+            # Clear canvas
+            self.canvas.delete("all")
+            
+            # Calculate scale to fit canvas
+            canvas_width = self.canvas.winfo_width()
+            canvas_height = self.canvas.winfo_height()
+            
+            if canvas_width <= 1 or canvas_height <= 1:
+                # Canvas not ready, schedule for later
+                self.canvas.after(100, self.display_gif_preview)
+                return
+            
+            img_width = self.current_gif.width
+            img_height = self.current_gif.height
+            
+            scale_x = canvas_width / img_width
+            scale_y = canvas_height / img_height
+            self.image_scale = min(scale_x, scale_y, 1.0)  # Don't scale up
+            
+            # Calculate centered position
+            scaled_width = int(img_width * self.image_scale)
+            scaled_height = int(img_height * self.image_scale)
+            
+            self.image_offset_x = (canvas_width - scaled_width) // 2
+            self.image_offset_y = (canvas_height - scaled_height) // 2
+            
+            # Resize image for display
+            display_img = self.current_gif.resize((scaled_width, scaled_height), Image.Resampling.LANCZOS)
+            
+            # Convert to PhotoImage
+            from PIL import ImageTk
+            self.display_photo = ImageTk.PhotoImage(display_img)
+            
+            # Display image
+            self.canvas.create_image(
+                self.image_offset_x + scaled_width // 2,
+                self.image_offset_y + scaled_height // 2,
+                image=self.display_photo
+            )
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to display GIF preview: {e}")
     
     def start_crop_selection(self, event):
         """Start crop area selection."""
@@ -298,10 +314,15 @@ class CropPanel(ttk.Frame):
         if self.crop_rect:
             self.canvas.delete(self.crop_rect)
         
+        # Apply aspect ratio constraint
+        x1, y1, x2, y2 = self.constrain_to_aspect_ratio(
+            self.crop_start_x, self.crop_start_y,
+            self.crop_end_x, self.crop_end_y
+        )
+        
         # Draw new rectangle
         self.crop_rect = self.canvas.create_rectangle(
-            self.crop_start_x, self.crop_start_y,
-            self.crop_end_x, self.crop_end_y,
+            x1, y1, x2, y2,
             outline="red", width=2, fill="", stipple="gray50"
         )
         
@@ -315,6 +336,21 @@ class CropPanel(ttk.Frame):
         
         self.crop_end_x = event.x
         self.crop_end_y = event.y
+        
+        # Apply aspect ratio constraint
+        x1, y1, x2, y2 = self.constrain_to_aspect_ratio(
+            self.crop_start_x, self.crop_start_y,
+            self.crop_end_x, self.crop_end_y
+        )
+        
+        # Update final rectangle
+        if self.crop_rect:
+            self.canvas.delete(self.crop_rect)
+        
+        self.crop_rect = self.canvas.create_rectangle(
+            x1, y1, x2, y2,
+            outline="red", width=2, fill="", stipple="gray50"
+        )
         
         # Update crop info
         self.update_crop_info()
@@ -355,6 +391,41 @@ class CropPanel(ttk.Frame):
             self.y_var.set(str(img_y1))
             self.width_var.set(str(width))
             self.height_var.set(str(height))
+    
+    def on_aspect_ratio_change(self, event=None):
+        """Handle aspect ratio selection change."""
+        ratio_text = self.aspect_ratio_var.get()
+        
+        if ratio_text == "free":
+            self.aspect_ratio = None
+        else:
+            # Parse aspect ratio (e.g., "1:1 (Square)" -> 1.0)
+            ratio_part = ratio_text.split(" ")[0]  # Get "1:1" part
+            if ":" in ratio_part:
+                w, h = ratio_part.split(":")
+                self.aspect_ratio = float(w) / float(h)
+            else:
+                self.aspect_ratio = None
+    
+    def constrain_to_aspect_ratio(self, x1, y1, x2, y2):
+        """Constrain crop selection to selected aspect ratio."""
+        if self.aspect_ratio is None:
+            return x1, y1, x2, y2
+        
+        width = x2 - x1
+        height = y2 - y1
+        
+        # Calculate target dimensions based on aspect ratio
+        if width / height > self.aspect_ratio:
+            # Too wide, adjust width
+            target_width = int(height * self.aspect_ratio)
+            x2 = x1 + target_width
+        else:
+            # Too tall, adjust height
+            target_height = int(width / self.aspect_ratio)
+            y2 = y1 + target_height
+        
+        return x1, y1, x2, y2
     
     def set_center_square(self):
         """Set crop area to center square."""
