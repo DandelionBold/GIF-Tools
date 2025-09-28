@@ -34,7 +34,8 @@ from gif_tools.core import (
     process_gif_batch
 )
 from desktop_app.gui.tool_panels import (
-    RearrangePanel
+    RearrangePanel,
+    VideoToGifPanel
 )
 from gif_tools.utils import validate_animated_file, get_supported_extensions
 
@@ -411,6 +412,19 @@ class GifToolsApp:
                 return rearrange_gif_frames(input_path, output_path,
                                           frame_order=settings['frame_order'],
                                           quality=settings.get('quality', 85))
+            elif tool_name == 'video_to_gif':
+                return convert_video_to_gif(
+                    video_path=input_path,
+                    output_path=output_path,
+                    fps=settings.get('fps', 10),
+                    duration=settings.get('duration'),
+                    start_time=settings.get('start_time', 0.0),
+                    quality=settings.get('quality', 85),
+                    width=settings.get('width'),
+                    height=settings.get('height'),
+                    optimize=settings.get('optimize', True),
+                    loop_count=settings.get('loop_count', 0)
+                )
             else:
                 raise ValueError(f"Unknown tool: {tool_name}")
                 
@@ -466,7 +480,7 @@ class GifToolsApp:
     # Tool dialog methods
     def open_video_to_gif_dialog(self):
         """Open video to GIF conversion dialog."""
-        messagebox.showinfo("Video to GIF", "Video to GIF tool - Coming soon!")
+        self._open_tool_dialog("Video to GIF Converter", VideoToGifPanel)
     
     def open_resize_dialog(self):
         """Open resize dialog."""
