@@ -527,7 +527,7 @@ class GifFilterApplier:
         """
         try:
             if enhancement == 'brightness':
-                enhancer = ImageEnhance.Brightness(image)
+                enhancer: Any = ImageEnhance.Brightness(image)
             elif enhancement == 'contrast':
                 enhancer = ImageEnhance.Contrast(image)
             elif enhancement == 'saturation':
@@ -656,7 +656,7 @@ class GifFilterApplier:
             elif effect == 'invert':
                 return image.convert('RGB').point(lambda x: 255 - x)
             elif effect == 'posterize':
-                return image.convert('P', palette=Image.ADAPTIVE, colors=8)
+                return image.convert('P', palette=Image.Palette.ADAPTIVE, colors=8)
             elif effect == 'solarize':
                 return image.convert('RGB').point(lambda x: 255 - x if x < 128 else x)
             else:
@@ -669,7 +669,7 @@ def apply_gif_filter(input_path: Union[str, Path],
                     output_path: Union[str, Path],
                     filter_name: str,
                     intensity: float = 1.0,
-                    **kwargs) -> Path:
+                    **kwargs: Any) -> Path:
     """
     Apply a single filter effect to GIF.
     
@@ -690,7 +690,7 @@ def apply_gif_filter(input_path: Union[str, Path],
 def apply_gif_filters(input_path: Union[str, Path],
                      output_path: Union[str, Path],
                      filters: List[Dict[str, Any]],
-                     **kwargs) -> Path:
+                     **kwargs: Any) -> Path:
     """
     Apply multiple filter effects to GIF.
     
@@ -710,7 +710,7 @@ def apply_gif_filters(input_path: Union[str, Path],
 def adjust_gif_brightness(input_path: Union[str, Path],
                          output_path: Union[str, Path],
                          factor: float,
-                         **kwargs) -> Path:
+                         **kwargs: Any) -> Path:
     """
     Adjust brightness of GIF.
     
@@ -730,7 +730,7 @@ def adjust_gif_brightness(input_path: Union[str, Path],
 def adjust_gif_contrast(input_path: Union[str, Path],
                        output_path: Union[str, Path],
                        factor: float,
-                       **kwargs) -> Path:
+                       **kwargs: Any) -> Path:
     """
     Adjust contrast of GIF.
     
@@ -751,7 +751,7 @@ def apply_gif_color_effect(input_path: Union[str, Path],
                           output_path: Union[str, Path],
                           effect: str,
                           intensity: float = 1.0,
-                          **kwargs) -> Path:
+                          **kwargs: Any) -> Path:
     """
     Apply color effects to GIF.
     
