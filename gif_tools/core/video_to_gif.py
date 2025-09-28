@@ -251,11 +251,7 @@ class VideoToGifConverter:
             # Write GIF
             video.write_gif(
                 str(output_path),
-                fps=fps,
-                opt='OptimizeTransparency' if optimize else None,
-                program='ffmpeg',
-                verbose=False,
-                logger=None
+                fps=fps
             )
             
             # Apply loop count if not infinite
