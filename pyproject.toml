@@ -9,10 +9,10 @@ description = "A comprehensive library and GUI application for GIF processing an
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
-    {name = "Kamal Nady", email = "kamalnady@example.com"}
+    {name = "Kamal Nady", email = "kamalnadykamal@gmail.com"}
 ]
 maintainers = [
-    {name = "Kamal Nady", email = "kamalnady@example.com"}
+    {name = "Kamal Nady", email = "kamalnadykamal@gmail.com"}
 ]
 keywords = [
     "gif",

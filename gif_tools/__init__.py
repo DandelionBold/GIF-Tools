@@ -7,7 +7,7 @@ including conversion, editing, optimization, and various transformations.
 
 __version__ = "0.1.0"
 __author__ = "Kamal Nady"
-__email__ = "kamalnady@example.com"
+__email__ = "kamalnadykamal@gmail.com"
 __license__ = "MIT"
 
 # Import core modules
