@@ -36,7 +36,8 @@ class GifResizer:
                size: Optional[Tuple[int, int]] = None,
                maintain_aspect_ratio: bool = True,
                resample: int = Image.Resampling.LANCZOS,
-               quality: int = 85) -> Path:
+               quality: int = 85,
+               progress_callback: Optional[callable] = None) -> Path:
         """
         Resize GIF.
         
@@ -67,8 +68,16 @@ class GifResizer:
             raise ValidationError("Either width, height, or size must be specified")
         
         try:
+            # Progress update: Loading GIF
+            if progress_callback:
+                progress_callback(0, "Loading GIF...")
+            
             # Load GIF
             with Image.open(input_path) as gif:
+                # Progress update: Analyzing GIF
+                if progress_callback:
+                    progress_callback(10, "Analyzing GIF...")
+                
                 # Get original dimensions
                 original_width, original_height = gif.size
                 
@@ -80,13 +89,25 @@ class GifResizer:
                 # Validate new dimensions
                 validate_dimensions(new_width, new_height)
                 
+                # Progress update: Resizing frames
+                if progress_callback:
+                    progress_callback(20, f"Resizing from {original_width}x{original_height} to {new_width}x{new_height}...")
+                
                 # Resize GIF
-                resized_gif = self._resize_gif(gif, new_width, new_height, resample)
+                resized_gif = self._resize_gif(gif, new_width, new_height, resample, progress_callback)
+                
+                # Progress update: Saving GIF
+                if progress_callback:
+                    progress_callback(80, "Saving resized GIF...")
                 
                 # Save resized GIF
                 self.image_processor.save_image(
                     resized_gif, output_path, quality=quality, optimize=True
                 )
+                
+                # Progress update: Complete
+                if progress_callback:
+                    progress_callback(100, "Resize complete!")
                 
                 return output_path
                 
@@ -325,7 +346,7 @@ class GifResizer:
         return new_width, new_height
     
     def _resize_gif(self, gif: Image.Image, width: int, height: int, 
-                   resample: int) -> Image.Image:
+                   resample: int, progress_callback: Optional[callable] = None) -> Image.Image:
         """
         Resize animated GIF.
         
@@ -351,6 +372,11 @@ class GifResizer:
             frame_count = getattr(gif, 'n_frames', 1) if hasattr(gif, 'n_frames') else 1
             
             for frame_idx in range(frame_count):
+                # Progress update: Processing frames
+                if progress_callback:
+                    progress = 20 + int((frame_idx / frame_count) * 50)  # 20-70%
+                    progress_callback(progress, f"Resizing frame {frame_idx+1}/{frame_count}...")
+                
                 gif.seek(frame_idx)
                 
                 # Resize frame
@@ -360,6 +386,10 @@ class GifResizer:
                 # Get frame duration
                 duration = gif.info.get('duration', 100)  # Default 100ms
                 durations.append(duration)
+            
+            # Progress update: Creating resized GIF
+            if progress_callback:
+                progress_callback(70, "Creating resized GIF...")
             
             # Create new GIF
             if frames:
@@ -449,7 +479,8 @@ def resize_gif(input_path: Union[str, Path],
               size: Optional[Tuple[int, int]] = None,
               maintain_aspect_ratio: bool = True,
               resample: int = Image.Resampling.LANCZOS,
-              quality: int = 85) -> Path:
+              quality: int = 85,
+              progress_callback: Optional[callable] = None) -> Path:
     """
     Resize GIF.
     
@@ -469,7 +500,7 @@ def resize_gif(input_path: Union[str, Path],
     resizer = GifResizer()
     return resizer.resize(
         input_path, output_path, width, height, size,
-        maintain_aspect_ratio, resample, quality
+        maintain_aspect_ratio, resample, quality, progress_callback
     )
 
 

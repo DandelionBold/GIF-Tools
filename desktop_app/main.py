@@ -495,6 +495,18 @@ class GifToolsApp:
                     loop_count=settings.get('loop_count', 0),
                     progress_callback=progress_callback
                 )
+            elif tool_name == 'resize':
+                return resize_gif(
+                    input_path=input_path,
+                    output_path=output_path,
+                    width=settings.get('width'),
+                    height=settings.get('height'),
+                    size=settings.get('size'),
+                    maintain_aspect_ratio=settings.get('maintain_aspect_ratio', True),
+                    resample=settings.get('resample', 1),  # LANCZOS
+                    quality=settings.get('quality', 85),
+                    progress_callback=progress_callback
+                )
             else:
                 raise ValueError(f"Unknown tool: {tool_name}")
                 
@@ -559,7 +571,21 @@ class GifToolsApp:
     
     def open_resize_dialog(self):
         """Open resize dialog."""
-        messagebox.showinfo("Resize", "Resize tool - Coming soon!")
+        from desktop_app.gui.tool_panels.resize_panel import ResizePanel
+        
+        dialog = tk.Toplevel(self.root)
+        dialog.title("GIF Resize Tool")
+        dialog.geometry("600x500")
+        dialog.resizable(True, True)
+        dialog.minsize(600, 500)
+        
+        # Center the dialog
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Create resize panel
+        resize_panel = ResizePanel(dialog, self.process_tool)
+        resize_panel.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
     
     def open_rotate_dialog(self):
         """Open rotate dialog."""
