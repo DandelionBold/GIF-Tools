@@ -16,6 +16,11 @@ from .reverse import *
 from .optimize import *
 from .speed_control import *
 from .filter_effects import *
+from .extract_frames import *
+from .loop_settings import *
+from .format_conversion import *
+from .batch_processing import *
+from .watermark import *
 
 __all__ = [
     # Video to GIF
@@ -110,5 +115,46 @@ __all__ = [
     'adjust_gif_brightness',
     'adjust_gif_contrast',
     'apply_gif_color_effect',
-    'get_gif_filter_info'
+    'get_gif_filter_info',
+    
+    # Extract Frames
+    'GifFrameExtractor',
+    'extract_gif_frames',
+    'extract_gif_frame_range',
+    'extract_every_nth_gif_frame',
+    'extract_gif_key_frames',
+    'get_gif_extraction_info',
+    
+    # Loop Settings
+    'GifLoopController',
+    'set_gif_loop_count',
+    'set_gif_infinite_loop',
+    'set_gif_no_loop',
+    'set_gif_loop_behavior',
+    'get_gif_loop_info',
+    
+    # Format Conversion
+    'GifFormatConverter',
+    'convert_gif_format',
+    'convert_gif_to_webp',
+    'convert_gif_to_apng',
+    'convert_to_gif',
+    'get_gif_conversion_info',
+    
+    # Batch Processing
+    'GifBatchProcessor',
+    'process_gif_batch',
+    'resize_gif_batch',
+    'optimize_gif_batch',
+    'convert_format_gif_batch',
+    'add_text_gif_batch',
+    'custom_gif_batch',
+    'get_gif_batch_info',
+    
+    # Watermark
+    'GifWatermarker',
+    'add_text_watermark_to_gif',
+    'add_image_watermark_to_gif',
+    'add_multiple_watermarks_to_gif',
+    'get_gif_watermark_info'
 ]
