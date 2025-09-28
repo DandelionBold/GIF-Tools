@@ -1,5 +1,6 @@
 """
-Integration and performance tests for GIF-Tools.
+GIF-Tools test suite.
 
-This module contains comprehensive tests for the entire application.
+This package contains all tests for the GIF-Tools project including
+unit tests, integration tests, and performance benchmarks.
 """
