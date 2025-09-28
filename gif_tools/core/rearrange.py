@@ -489,7 +489,8 @@ class GifRearranger:
 def rearrange_gif_frames(input_path: Union[str, Path],
                         output_path: Union[str, Path],
                         frame_order: List[int],
-                        quality: int = 85) -> Path:
+                        quality: int = 85,
+                        progress_callback: Optional[callable] = None) -> Path:
     """
     Rearrange frames in GIF according to specified order.
     
@@ -503,7 +504,7 @@ def rearrange_gif_frames(input_path: Union[str, Path],
         Path to output GIF file
     """
     rearranger = GifRearranger()
-    return rearranger.rearrange_frames(input_path, output_path, frame_order, quality)
+    return rearranger.rearrange_frames(input_path, output_path, frame_order, quality, progress_callback)
 
 
 def move_gif_frame(input_path: Union[str, Path],

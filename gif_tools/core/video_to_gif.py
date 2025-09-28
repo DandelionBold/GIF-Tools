@@ -378,7 +378,8 @@ def convert_video_to_gif(video_path: Union[str, Path],
                         width: Optional[int] = None,
                         height: Optional[int] = None,
                         optimize: bool = True,
-                        loop_count: int = 0) -> Path:
+                        loop_count: int = 0,
+                        progress_callback: Optional[callable] = None) -> Path:
     """
     Convert video to GIF.
     
@@ -400,7 +401,7 @@ def convert_video_to_gif(video_path: Union[str, Path],
     with VideoToGifConverter() as converter:
         return converter.convert(
             video_path, output_path, fps, duration, start_time,
-            quality, width, height, optimize, loop_count
+            quality, width, height, optimize, loop_count, progress_callback
         )
 
 
