@@ -391,6 +391,11 @@ class SplitPanel(ttk.Frame):
         if not self.gif_frames:
             return
         
+        mode = self.split_mode_var.get()
+        if mode == "split_two":
+            self.update_timeline_for_split_two()
+            return
+        
         self.timeline_canvas.delete("all")
         
         canvas_width = self.timeline_canvas.winfo_width()
@@ -451,6 +456,62 @@ class SplitPanel(ttk.Frame):
             fill='red', width=4
         )
     
+    def update_timeline_for_split_two(self):
+        """Update timeline display for split into two mode."""
+        if not self.gif_frames:
+            return
+        
+        self.timeline_canvas.delete("all")
+        
+        canvas_width = self.timeline_canvas.winfo_width()
+        canvas_height = self.timeline_canvas.winfo_height()
+        
+        if canvas_width <= 1:
+            self.after(100, self.update_timeline_for_split_two)
+            return
+        
+        # Draw timeline
+        timeline_width = canvas_width - 20
+        timeline_height = 40
+        timeline_x = 10
+        timeline_y = (canvas_height - timeline_height) // 2
+        
+        # Timeline background
+        self.timeline_canvas.create_rectangle(
+            timeline_x, timeline_y, 
+            timeline_x + timeline_width, timeline_y + timeline_height,
+            fill='lightgray', outline='black'
+        )
+        
+        # Frame markers
+        frame_width = timeline_width / self.total_frames
+        for i in range(0, self.total_frames, max(1, self.total_frames // 20)):
+            x = timeline_x + i * frame_width
+            self.timeline_canvas.create_line(
+                x, timeline_y, x, timeline_y + timeline_height,
+                fill='black', width=1
+            )
+        
+        # Current frame indicator
+        current_x = timeline_x + self.current_frame * frame_width
+        self.timeline_canvas.create_line(
+            current_x, timeline_y - 5, current_x, timeline_y + timeline_height + 5,
+            fill='red', width=3
+        )
+        
+        # Split point marker (single line)
+        split_x = timeline_x + self.current_frame * frame_width
+        self.timeline_canvas.create_line(
+            split_x, timeline_y - 10, split_x, timeline_y + timeline_height + 10,
+            fill='orange', width=6
+        )
+        
+        # Add split point label
+        self.timeline_canvas.create_text(
+            split_x, timeline_y - 20,
+            text="SPLIT", fill='orange', font=('Arial', 8, 'bold')
+        )
+    
     def on_timeline_click(self, event):
         """Handle timeline click for frame navigation."""
         if not self.gif_frames:
@@ -466,8 +527,18 @@ class SplitPanel(ttk.Frame):
         frame_index = max(0, min(frame_index, self.total_frames - 1))
         
         self.current_frame = frame_index
-        self.update_frame_display()
-        self.update_timeline()
+        
+        # Update based on mode
+        mode = self.split_mode_var.get()
+        if mode == "split_two":
+            # For split_two mode, just update the split point
+            self.update_frame_display()
+            self.update_timeline_for_split_two()
+            self.update_selection_info_for_split_two()
+        else:
+            # For other modes, update normally
+            self.update_frame_display()
+            self.update_timeline()
     
     def on_timeline_drag(self, event):
         """Handle timeline drag for marker adjustment."""
@@ -614,8 +685,19 @@ class SplitPanel(ttk.Frame):
     
     def update_selection_info(self):
         """Update selection information display."""
+        mode = self.split_mode_var.get()
+        if mode == "split_two":
+            self.update_selection_info_for_split_two()
+            return
+        
         selected_frames = self.end_marker - self.start_marker + 1
         self.selection_info.config(text=f"Selected: {selected_frames} frames")
+    
+    def update_selection_info_for_split_two(self):
+        """Update selection info for split into two mode."""
+        part1_frames = self.current_frame
+        part2_frames = self.total_frames - self.current_frame
+        self.selection_info.config(text=f"Part 1: {part1_frames} frames | Part 2: {part2_frames} frames")
     
     def update_speed_label(self, value):
         """Update speed label when scale changes."""
@@ -630,27 +712,41 @@ class SplitPanel(ttk.Frame):
         mode = self.split_mode_var.get()
         
         if mode == "split_two":
-            # For splitting into two GIFs, hide format options
+            # For splitting into two GIFs, hide format options and update timeline
             self.format_frame.grid_remove()
             self.split_btn.config(text="Split into Two GIFs")
+            self.update_timeline_for_split_two()
         else:
-            # For extract/remove modes, show format options
+            # For extract/remove modes, show format options and normal timeline
             self.format_frame.grid()
             if mode == "extract_selected":
                 self.split_btn.config(text="Extract Selected Region")
             else:  # remove_selected
                 self.split_btn.config(text="Remove Selected Region")
+            self.update_timeline()
     
     def get_settings(self) -> dict:
         """Get current split settings."""
-        return {
-            'split_mode': self.split_mode_var.get(),
-            'start_frame': self.start_marker,
-            'end_frame': self.end_marker,
-            'output_format': self.output_format_var.get(),
-            'quality': self.quality_var.get(),
-            'naming_pattern': self.naming_var.get()
-        }
+        mode = self.split_mode_var.get()
+        
+        if mode == "split_two":
+            return {
+                'split_mode': mode,
+                'start_frame': self.current_frame,  # Split point
+                'end_frame': self.current_frame,    # Same as start for split point
+                'output_format': 'gif',  # Always GIF for split_two
+                'quality': 95,
+                'naming_pattern': 'frame_{index:04d}'
+            }
+        else:
+            return {
+                'split_mode': mode,
+                'start_frame': self.start_marker,
+                'end_frame': self.end_marker,
+                'output_format': self.output_format_var.get(),
+                'quality': self.quality_var.get(),
+                'naming_pattern': self.naming_var.get()
+            }
     
     def process_split(self):
         """Process the split operation."""

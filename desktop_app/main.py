@@ -360,7 +360,7 @@ class GifToolsApp:
         
         # Disable/enable process and stop buttons
         if hasattr(self, 'process_btn'):
-            self.process_btn.config(state=state)
+            # Process button was removed, no action needed
         if hasattr(self, 'stop_btn'):
             # Stop button is enabled when processing, disabled when not
             self.stop_btn.config(state="normal" if not enabled else "disabled")
@@ -576,7 +576,7 @@ class GifToolsApp:
         if file_path:
             self.current_file = Path(file_path)
             self.input_file_var.set(str(self.current_file))
-            self.process_btn.config(state=tk.NORMAL)
+            # Process button was removed, no action needed
             self.status_var.set(f"Loaded: {self.current_file.name}")
     
     def save_as(self):
