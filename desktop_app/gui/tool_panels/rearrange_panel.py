@@ -59,12 +59,12 @@ class RearrangePanel:
         canvas_frame = ttk.Frame(preview_frame)
         canvas_frame.pack(fill=tk.BOTH, expand=True)
         
-        self.canvas = tk.Canvas(canvas_frame, height=200, bg="white")
-        self.scrollbar = ttk.Scrollbar(canvas_frame, orient=tk.HORIZONTAL, command=self.canvas.xview)
-        self.canvas.configure(xscrollcommand=self.scrollbar.set)
+        self.canvas = tk.Canvas(canvas_frame, height=300, bg="white")
+        self.scrollbar = ttk.Scrollbar(canvas_frame, orient=tk.VERTICAL, command=self.canvas.yview)
+        self.canvas.configure(yscrollcommand=self.scrollbar.set)
         
-        self.canvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-        self.scrollbar.pack(side=tk.BOTTOM, fill=tk.X)
+        self.canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
         # Frame container
         self.frame_container = ttk.Frame(self.canvas)
@@ -75,9 +75,25 @@ class RearrangePanel:
         self.canvas.bind("<B1-Motion>", self.on_canvas_drag)
         self.canvas.bind("<ButtonRelease-1>", self.on_canvas_release)
         
+        # Quick selection range
+        range_frame = ttk.LabelFrame(self.frame, text="Quick Selection Range", padding="5")
+        range_frame.grid(row=3, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=5)
+        
+        ttk.Label(range_frame, text="From:").pack(side=tk.LEFT)
+        self.start_range_var = tk.StringVar(value="1")
+        start_entry = ttk.Entry(range_frame, textvariable=self.start_range_var, width=8)
+        start_entry.pack(side=tk.LEFT, padx=(5, 10))
+        
+        ttk.Label(range_frame, text="To:").pack(side=tk.LEFT)
+        self.end_range_var = tk.StringVar(value="100")
+        end_entry = ttk.Entry(range_frame, textvariable=self.end_range_var, width=8)
+        end_entry.pack(side=tk.LEFT, padx=(5, 10))
+        
+        ttk.Button(range_frame, text="Select Range", command=self.select_range).pack(side=tk.LEFT, padx=(10, 0))
+        
         # Control buttons
         control_frame = ttk.Frame(self.frame)
-        control_frame.grid(row=3, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=10)
+        control_frame.grid(row=4, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=10)
         
         ttk.Button(control_frame, text="Select All", command=self.select_all).pack(side=tk.LEFT, padx=(0, 5))
         ttk.Button(control_frame, text="Clear Selection", command=self.clear_selection).pack(side=tk.LEFT, padx=(0, 5))
@@ -87,7 +103,7 @@ class RearrangePanel:
         
         # Quality controls
         quality_frame = ttk.Frame(self.frame)
-        quality_frame.grid(row=4, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=10)
+        quality_frame.grid(row=5, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=10)
         
         ttk.Label(quality_frame, text="Quality:").pack(side=tk.LEFT)
         self.quality_var = tk.IntVar(value=85)
@@ -113,7 +129,7 @@ class RearrangePanel:
             command=self.process_rearrange,
             state=tk.DISABLED
         )
-        self.process_btn.grid(row=5, column=0, columnspan=3, pady=10)
+        self.process_btn.grid(row=6, column=0, columnspan=3, pady=10)
         
         # Progress bar
         self.progress_var = tk.DoubleVar()
@@ -122,7 +138,7 @@ class RearrangePanel:
             variable=self.progress_var,
             mode='indeterminate'
         )
-        self.progress_bar.grid(row=6, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=5)
+        self.progress_bar.grid(row=7, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=5)
         
         # Configure grid weights
         self.frame.grid_columnconfigure(0, weight=1)
@@ -197,10 +213,14 @@ class RearrangePanel:
         for widget in self.frame_container.winfo_children():
             widget.destroy()
         
-        # Create frame labels
+        # Create frame labels in vertical layout
+        frames_per_row = 5  # Number of frames per row
         for i, (frame_idx, thumbnail) in enumerate(zip(self.frame_order, self.frame_thumbnails)):
+            row = i // frames_per_row
+            col = i % frames_per_row
+            
             frame_widget = ttk.Frame(self.frame_container, relief=tk.RAISED, borderwidth=1)
-            frame_widget.grid(row=0, column=i, padx=2, pady=2)
+            frame_widget.grid(row=row, column=col, padx=2, pady=2)
             
             # Frame number label
             frame_label = ttk.Label(frame_widget, text=f"Frame {frame_idx}")
@@ -247,11 +267,18 @@ class RearrangePanel:
         x = self.canvas.canvasx(event.x)
         y = self.canvas.canvasy(event.y)
         
-        # Find frame at this position
-        for i, (frame_idx, _) in enumerate(zip(self.frame_order, self.frame_thumbnails)):
-            if 0 <= x - i * 90 < 90:  # Approximate frame width
-                self.drag_start_index = i
-                break
+        # Find frame at this position (vertical layout with 5 frames per row)
+        frames_per_row = 5
+        frame_width = 90  # Approximate frame width
+        frame_height = 120  # Approximate frame height
+        
+        col = int(x // frame_width)
+        row = int(y // frame_height)
+        
+        if 0 <= col < frames_per_row and 0 <= row:
+            frame_index = row * frames_per_row + col
+            if frame_index < len(self.frame_order):
+                self.drag_start_index = frame_index
     
     def on_canvas_drag(self, event):
         """Handle canvas drag."""
@@ -262,32 +289,44 @@ class RearrangePanel:
     def on_canvas_release(self, event):
         """Handle canvas release (drop)."""
         if self.drag_start_index is not None:
-            # Find drop position
+            # Find drop position (vertical layout with 5 frames per row)
             x = self.canvas.canvasx(event.x)
-            drop_index = int(x // 90)  # Approximate frame width
+            y = self.canvas.canvasy(event.y)
             
-            # Move frame(s)
-            if self.selected_frames:
-                # Move selected frames
-                frames_to_move = [self.frame_order[i] for i in self.selected_frames]
-                for frame_idx in frames_to_move:
-                    self.frame_order.remove(frame_idx)
-                
-                # Insert at new position
-                insert_pos = min(drop_index, len(self.frame_order))
-                for frame_idx in reversed(frames_to_move):
-                    self.frame_order.insert(insert_pos, frame_idx)
-            else:
-                # Move single frame
-                frame_to_move = self.frame_order[self.drag_start_index]
-                self.frame_order.pop(self.drag_start_index)
-                
-                insert_pos = min(drop_index, len(self.frame_order))
-                self.frame_order.insert(insert_pos, frame_to_move)
+            frames_per_row = 5
+            frame_width = 90
+            frame_height = 120
             
-            # Update display
-            self.display_frames()
-            self.selected_frames = []
+            col = int(x // frame_width)
+            row = int(y // frame_height)
+            
+            if 0 <= col < frames_per_row and 0 <= row:
+                drop_index = row * frames_per_row + col
+                drop_index = min(drop_index, len(self.frame_order))
+                
+                # Move frame(s)
+                if self.selected_frames:
+                    # Move selected frames
+                    frames_to_move = [self.frame_order[i] for i in self.selected_frames]
+                    for frame_idx in frames_to_move:
+                        self.frame_order.remove(frame_idx)
+                    
+                    # Insert at new position
+                    insert_pos = min(drop_index, len(self.frame_order))
+                    for frame_idx in reversed(frames_to_move):
+                        self.frame_order.insert(insert_pos, frame_idx)
+                else:
+                    # Move single frame
+                    frame_to_move = self.frame_order[self.drag_start_index]
+                    self.frame_order.pop(self.drag_start_index)
+                    
+                    insert_pos = min(drop_index, len(self.frame_order))
+                    self.frame_order.insert(insert_pos, frame_to_move)
+                
+                # Update display
+                self.display_frames()
+                self.selected_frames = []
+            
             self.drag_start_index = None
     
     def update_frame_display(self):
@@ -309,6 +348,23 @@ class RearrangePanel:
         """Clear frame selection."""
         self.selected_frames = []
         self.update_frame_display()
+    
+    def select_range(self):
+        """Select frames in the specified range."""
+        try:
+            start = int(self.start_range_var.get()) - 1  # Convert to 0-based index
+            end = int(self.end_range_var.get()) - 1      # Convert to 0-based index
+            
+            if start < 0 or end >= len(self.frame_order) or start > end:
+                messagebox.showerror("Error", "Invalid range! Please check your start and end values.")
+                return
+            
+            # Select frames in range
+            self.selected_frames = list(range(start, end + 1))
+            self.update_frame_display()
+            
+        except ValueError:
+            messagebox.showerror("Error", "Please enter valid numbers for start and end range!")
     
     def reset_order(self):
         """Reset frame order to original."""
