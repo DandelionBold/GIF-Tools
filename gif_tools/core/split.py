@@ -25,7 +25,7 @@ from ..utils import (
 class GifSplitter:
     """GIF split utility class."""
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize GIF splitter."""
         self.file_handler = get_file_handler()
     

@@ -23,7 +23,7 @@ from ..utils import (
 class GifFormatConverter:
     """GIF format conversion utility class."""
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize GIF format converter."""
         self.image_processor = get_image_processor()
     
@@ -89,7 +89,7 @@ class GifFormatConverter:
                        quality: int = 85,
                        lossless: bool = False,
                        method: int = 6,
-                       **kwargs) -> Path:
+                       **kwargs: Any) -> Path:
         """
         Convert GIF to WebP format.
         
@@ -115,7 +115,7 @@ class GifFormatConverter:
                        input_path: Union[str, Path],
                        output_path: Union[str, Path],
                        quality: int = 85,
-                       **kwargs) -> Path:
+                       **kwargs: Any) -> Path:
         """
         Convert GIF to APNG format.
         
@@ -137,7 +137,7 @@ class GifFormatConverter:
                       output_path: Union[str, Path],
                       quality: int = 85,
                       optimize: bool = True,
-                      **kwargs) -> Path:
+                      **kwargs: Any) -> Path:
         """
         Convert other formats to GIF.
         
@@ -181,7 +181,7 @@ class GifFormatConverter:
                     'width': gif.width,
                     'height': gif.height,
                     'mode': gif.mode,
-                    'supported_formats': list(SUPPORTED_ANIMATED_FORMATS.keys()),
+                    'supported_formats': SUPPORTED_ANIMATED_FORMATS,
                     'can_convert': True,
                     'conversion_options': self._get_conversion_options(current_format),
                     'message': f'Can convert {current_format} to other animated formats'
@@ -191,7 +191,7 @@ class GifFormatConverter:
     
     def _convert_single_frame(self, gif: Image.Image, output_path: Path,
                              target_format: str, quality: int, lossless: bool,
-                             **kwargs) -> Path:
+                             **kwargs: Any) -> Path:
         """
         Convert single frame to target format.
         
@@ -234,7 +234,7 @@ class GifFormatConverter:
             raise ValidationError(f"Single frame conversion failed: {e}")
     
     def _convert_animated_gif(self, gif: Image.Image, target_format: str,
-                             quality: int, lossless: bool, **kwargs) -> Image.Image:
+                             quality: int, lossless: bool, **kwargs: Any) -> Image.Image:
         """
         Convert animated GIF to target format.
         
@@ -253,7 +253,7 @@ class GifFormatConverter:
         
         try:
             # Get frame count
-            frame_count = gif.n_frames
+            frame_count = getattr(gif, 'n_frames', 1) if hasattr(gif, 'n_frames') else 1
             
             for frame_idx in range(frame_count):
                 gif.seek(frame_idx)
@@ -355,7 +355,7 @@ class GifFormatConverter:
 def convert_gif_format(input_path: Union[str, Path],
                       output_path: Union[str, Path],
                       target_format: str,
-                      **kwargs) -> Path:
+                      **kwargs: Any) -> Path:
     """
     Convert GIF to different animated format.
     
@@ -374,7 +374,7 @@ def convert_gif_format(input_path: Union[str, Path],
 
 def convert_gif_to_webp(input_path: Union[str, Path],
                        output_path: Union[str, Path],
-                       **kwargs) -> Path:
+                       **kwargs: Any) -> Path:
     """
     Convert GIF to WebP format.
     
@@ -392,7 +392,7 @@ def convert_gif_to_webp(input_path: Union[str, Path],
 
 def convert_gif_to_apng(input_path: Union[str, Path],
                        output_path: Union[str, Path],
-                       **kwargs) -> Path:
+                       **kwargs: Any) -> Path:
     """
     Convert GIF to APNG format.
     
@@ -410,7 +410,7 @@ def convert_gif_to_apng(input_path: Union[str, Path],
 
 def convert_to_gif(input_path: Union[str, Path],
                   output_path: Union[str, Path],
-                  **kwargs) -> Path:
+                  **kwargs: Any) -> Path:
     """
     Convert other formats to GIF.
     

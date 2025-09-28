@@ -22,7 +22,7 @@ from ..utils import (
 class GifReverser:
     """GIF reverse utility class."""
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize GIF reverser."""
         self.image_processor = get_image_processor()
     
@@ -207,7 +207,7 @@ class GifReverser:
         
         try:
             # Get frame count
-            frame_count = gif.n_frames
+            frame_count = getattr(gif, 'n_frames', 1) if hasattr(gif, 'n_frames') else 1
             
             # Load all frames
             for frame_idx in range(frame_count):

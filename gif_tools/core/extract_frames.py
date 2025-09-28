@@ -23,7 +23,7 @@ from ..utils import (
 class GifFrameExtractor:
     """GIF frame extraction utility class."""
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize GIF frame extractor."""
         self.image_processor = get_image_processor()
     
@@ -52,7 +52,7 @@ class GifFrameExtractor:
             ValidationError: If validation fails
         """
         # Validate inputs
-        input_path = validate_animated_file(input_path)
+        input_path = Path(validate_animated_file(input_path))
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
         
@@ -129,7 +129,7 @@ class GifFrameExtractor:
             List of paths to extracted frame files
         """
         # Validate inputs
-        input_path = validate_animated_file(input_path)
+        input_path = Path(validate_animated_file(input_path))
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
         
@@ -324,7 +324,7 @@ class GifFrameExtractor:
                     'height': gif.height,
                     'mode': gif.mode,
                     'format': gif.format,
-                    'supported_formats': list(SUPPORTED_IMAGE_FORMATS.keys()),
+                    'supported_formats': SUPPORTED_IMAGE_FORMATS,
                     'extraction_methods': ['all', 'range', 'every_nth', 'key_frames'],
                     'key_frame_methods': ['first_last_middle', 'first_last', 'middle', 'quarter_points'],
                     'can_extract': True
@@ -360,7 +360,7 @@ class GifFrameExtractor:
 def extract_gif_frames(input_path: Union[str, Path],
                       output_dir: Union[str, Path],
                       frame_indices: Optional[List[int]] = None,
-                      **kwargs) -> List[Path]:
+                      **kwargs: Any) -> List[Path]:
     """
     Extract specific frames from GIF and save as static images.
     
@@ -381,7 +381,7 @@ def extract_gif_frame_range(input_path: Union[str, Path],
                            output_dir: Union[str, Path],
                            start_frame: int,
                            end_frame: int,
-                           **kwargs) -> List[Path]:
+                           **kwargs: Any) -> List[Path]:
     """
     Extract a range of frames from GIF.
     
@@ -402,7 +402,7 @@ def extract_gif_frame_range(input_path: Union[str, Path],
 def extract_every_nth_gif_frame(input_path: Union[str, Path],
                                output_dir: Union[str, Path],
                                n: int,
-                               **kwargs) -> List[Path]:
+                               **kwargs: Any) -> List[Path]:
     """
     Extract every nth frame from GIF.
     
@@ -422,7 +422,7 @@ def extract_every_nth_gif_frame(input_path: Union[str, Path],
 def extract_gif_key_frames(input_path: Union[str, Path],
                           output_dir: Union[str, Path],
                           method: str = 'first_last_middle',
-                          **kwargs) -> List[Path]:
+                          **kwargs: Any) -> List[Path]:
     """
     Extract key frames from GIF using various methods.
     

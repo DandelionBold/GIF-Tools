@@ -24,7 +24,7 @@ from ..utils import (
 class GifBatchProcessor:
     """GIF batch processing utility class."""
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize GIF batch processor."""
         self.image_processor = get_image_processor()
         self._supported_formats = SUPPORTED_ANIMATED_FORMATS
@@ -33,7 +33,7 @@ class GifBatchProcessor:
                      input_dir: Union[str, Path],
                      output_dir: Union[str, Path],
                      operation: str,
-                     **kwargs) -> Dict[str, Any]:
+                     **kwargs: Any) -> Dict[str, Any]:
         """
         Process multiple GIF files with specified operation.
         
@@ -70,7 +70,7 @@ class GifBatchProcessor:
             'processed_files': 0,
             'failed_files': 0,
             'success_files': [],
-            'failed_files': [],
+            'failed_files_list': [],
             'operation': operation,
             'input_dir': str(input_dir),
             'output_dir': str(output_dir)
@@ -86,11 +86,11 @@ class GifBatchProcessor:
                     results['success_files'].append(result)
                 else:
                     results['failed_files'] += 1
-                    results['failed_files'].append(result)
+                    results['failed_files_list'].append(result)
                     
             except Exception as e:
                 results['failed_files'] += 1
-                results['failed_files'].append({
+                results['failed_files_list'].append({
                     'input_file': str(gif_file),
                     'success': False,
                     'error': str(e),
@@ -104,7 +104,7 @@ class GifBatchProcessor:
                     output_dir: Union[str, Path],
                     width: int,
                     height: int,
-                    **kwargs) -> Dict[str, Any]:
+                    **kwargs: Any) -> Dict[str, Any]:
         """
         Resize all GIF files in batch.
         
@@ -123,10 +123,10 @@ class GifBatchProcessor:
         )
     
     def optimize_batch(self,
-                      input_dir: Union[str, Path],
-                      output_dir: Union[str, Path],
-                      quality: int = 85,
-                      **kwargs) -> Dict[str, Any]:
+                       input_dir: Union[str, Path],
+                       output_dir: Union[str, Path],
+                       quality: int = 85,
+                       **kwargs: Any) -> Dict[str, Any]:
         """
         Optimize all GIF files in batch.
         
@@ -147,7 +147,7 @@ class GifBatchProcessor:
                             input_dir: Union[str, Path],
                             output_dir: Union[str, Path],
                             target_format: str,
-                            **kwargs) -> Dict[str, Any]:
+                            **kwargs: Any) -> Dict[str, Any]:
         """
         Convert format of all GIF files in batch.
         
@@ -168,7 +168,7 @@ class GifBatchProcessor:
                       input_dir: Union[str, Path],
                       output_dir: Union[str, Path],
                       text: str,
-                      **kwargs) -> Dict[str, Any]:
+                      **kwargs: Any) -> Dict[str, Any]:
         """
         Add text to all GIF files in batch.
         
@@ -188,8 +188,8 @@ class GifBatchProcessor:
     def custom_batch(self,
                     input_dir: Union[str, Path],
                     output_dir: Union[str, Path],
-                    operation_func: Callable,
-                    **kwargs) -> Dict[str, Any]:
+                    operation_func: Callable[[Path, Path], Path],
+                    **kwargs: Any) -> Dict[str, Any]:
         """
         Process batch with custom operation function.
         
@@ -223,7 +223,7 @@ class GifBatchProcessor:
             'processed_files': 0,
             'failed_files': 0,
             'success_files': [],
-            'failed_files': [],
+            'failed_files_list': [],
             'operation': 'custom',
             'input_dir': str(input_dir),
             'output_dir': str(output_dir)
@@ -248,7 +248,7 @@ class GifBatchProcessor:
                 
             except Exception as e:
                 results['failed_files'] += 1
-                results['failed_files'].append({
+                results['failed_files_list'].append({
                     'input_file': str(gif_file),
                     'success': False,
                     'error': str(e),
@@ -315,7 +315,7 @@ class GifBatchProcessor:
             'supported_operations': [
                 'resize', 'optimize', 'convert_format', 'add_text', 'custom'
             ],
-            'supported_formats': list(self._supported_formats.keys())
+            'supported_formats': self._supported_formats
         }
     
     def _get_gif_files(self, directory: Path) -> List[Path]:

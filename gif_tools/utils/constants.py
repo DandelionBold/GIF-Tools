@@ -45,6 +45,14 @@ SPEED_MULTIPLIERS = {
     'very_fast': 4.0
 }
 
+# Loop behavior settings
+LOOP_BEHAVIORS = {
+    'infinite': 0,      # Loop forever
+    'once': 1,          # Play once
+    'twice': 2,         # Play twice
+    'custom': None      # Custom loop count
+}
+
 # Filter effects
 FILTER_EFFECTS = {
     'blur': 'BLUR',
@@ -305,6 +313,7 @@ __all__ = [
     'MAX_DIMENSION',
     'QUALITY_LEVELS',
     'SPEED_MULTIPLIERS',
+    'LOOP_BEHAVIORS',
     'FILTER_EFFECTS',
     'COLOR_MODES',
     'TEXT_ALIGNMENT',

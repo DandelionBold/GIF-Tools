@@ -25,7 +25,7 @@ from ..utils import (
 class GifSpeedController:
     """GIF speed control utility class."""
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize GIF speed controller."""
         self.image_processor = get_image_processor()
     
@@ -192,7 +192,7 @@ class GifSpeedController:
                     raise ValidationError("Cannot set frame durations for non-animated GIF")
                 
                 # Get frame count
-                frame_count = gif.n_frames
+                frame_count = getattr(gif, 'n_frames', 1) if hasattr(gif, 'n_frames') else 1
                 
                 if len(durations) != frame_count:
                     raise ValidationError(f"Durations count ({len(durations)}) must match frame count ({frame_count})")
@@ -287,7 +287,7 @@ class GifSpeedController:
         
         try:
             # Get frame count
-            frame_count = gif.n_frames
+            frame_count = getattr(gif, 'n_frames', 1) if hasattr(gif, 'n_frames') else 1
             
             for frame_idx in range(frame_count):
                 gif.seek(frame_idx)
@@ -344,7 +344,7 @@ class GifSpeedController:
         
         try:
             # Get frame count
-            frame_count = gif.n_frames
+            frame_count = getattr(gif, 'n_frames', 1) if hasattr(gif, 'n_frames') else 1
             
             for frame_idx in range(frame_count):
                 gif.seek(frame_idx)
