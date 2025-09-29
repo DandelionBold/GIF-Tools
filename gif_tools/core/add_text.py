@@ -39,11 +39,13 @@ class GifTextAdder:
                  font_family: str = 'Arial',
                  font_size: int = 24,
                  color: Union[str, Tuple[int, int, int], Tuple[int, int, int, int]] = (255, 255, 255),
+                 text_opacity: float = 1.0,
                  alignment: str = 'left',
                  background_color: Optional[Union[str, Tuple[int, int, int], Tuple[int, int, int, int]]] = None,
                  background_opacity: float = 0.0,
                  stroke_width: int = 0,
                  stroke_color: Union[str, Tuple[int, int, int], Tuple[int, int, int, int]] = (0, 0, 0),
+                 stroke_opacity: float = 1.0,
                  quality: int = 85) -> Path:
         """
         Add text to GIF.
@@ -56,11 +58,13 @@ class GifTextAdder:
             font_family: Font family name
             font_size: Font size
             color: Text color
+            text_opacity: Text opacity (0.0-1.0)
             alignment: Text alignment
             background_color: Background color for text
             background_opacity: Background opacity (0.0-1.0)
             stroke_width: Text stroke width
             stroke_color: Text stroke color
+            stroke_opacity: Stroke opacity (0.0-1.0)
             quality: Output quality (1-100)
             
         Returns:
@@ -89,14 +93,20 @@ class GifTextAdder:
         if not 0.0 <= background_opacity <= 1.0:
             raise ValidationError("Background opacity must be between 0.0 and 1.0")
         
+        if not 0.0 <= text_opacity <= 1.0:
+            raise ValidationError("Text opacity must be between 0.0 and 1.0")
+        
+        if not 0.0 <= stroke_opacity <= 1.0:
+            raise ValidationError("Stroke opacity must be between 0.0 and 1.0")
+        
         try:
             # Load GIF
             with Image.open(input_path) as gif:
                 # Add text to GIF
                 text_gif = self._add_text_to_gif(
-                    gif, text, position, font_family, font_size, color,
+                    gif, text, position, font_family, font_size, color, text_opacity,
                     alignment, background_color, background_opacity,
-                    stroke_width, stroke_color
+                    stroke_width, stroke_color, stroke_opacity
                 )
                 
                 # Save text GIF
@@ -226,9 +236,9 @@ class GifTextAdder:
     
     def _add_text_to_gif(self, gif: Image.Image, text: str, position: Tuple[int, int],
                         font_family: str, font_size: int, color: Tuple[int, int, int, int],
-                        alignment: str, background_color: Optional[Tuple[int, int, int, int]],
+                        text_opacity: float, alignment: str, background_color: Optional[Tuple[int, int, int, int]],
                         background_opacity: float, stroke_width: int,
-                        stroke_color: Tuple[int, int, int, int]) -> Image.Image:
+                        stroke_color: Tuple[int, int, int, int], stroke_opacity: float) -> Image.Image:
         """
         Add text to animated GIF.
         
@@ -239,11 +249,13 @@ class GifTextAdder:
             font_family: Font family
             font_size: Font size
             color: Text color
+            text_opacity: Text opacity
             alignment: Text alignment
             background_color: Background color
             background_opacity: Background opacity
             stroke_width: Stroke width
             stroke_color: Stroke color
+            stroke_opacity: Stroke opacity
             
         Returns:
             GIF with text added
@@ -251,9 +263,9 @@ class GifTextAdder:
         if not getattr(gif, 'is_animated', False):
             # Not animated, simple text addition
             return self.image_processor.add_text(
-                gif, text, position, font_family, font_size, color,
+                gif, text, position, font_family, font_size, color, text_opacity,
                 alignment, background_color, background_opacity,
-                stroke_width, stroke_color
+                stroke_width, stroke_color, stroke_opacity
             )
         
         # Animated GIF - add text to each frame
@@ -269,9 +281,9 @@ class GifTextAdder:
                 
                 # Add text to frame
                 text_frame = self.image_processor.add_text(
-                    gif, text, position, font_family, font_size, color,
+                    gif, text, position, font_family, font_size, color, text_opacity,
                     alignment, background_color, background_opacity,
-                    stroke_width, stroke_color
+                    stroke_width, stroke_color, stroke_opacity
                 )
                 frames.append(text_frame)
                 
@@ -295,17 +307,17 @@ class GifTextAdder:
                 return Image.open('temp_text.gif')
             else:
                 return self.image_processor.add_text(
-                    gif, text, position, font_family, font_size, color,
+                    gif, text, position, font_family, font_size, color, text_opacity,
                     alignment, background_color, background_opacity,
-                    stroke_width, stroke_color
+                    stroke_width, stroke_color, stroke_opacity
                 )
                 
         except Exception as e:
             # Fallback to simple text addition
             return self.image_processor.add_text(
-                gif, text, position, font_family, font_size, color,
+                gif, text, position, font_family, font_size, color, text_opacity,
                 alignment, background_color, background_opacity,
-                stroke_width, stroke_color
+                stroke_width, stroke_color, stroke_opacity
             )
     
     def _add_multiple_text_to_gif(self, gif: Image.Image, 

@@ -608,12 +608,14 @@ class GifToolsApp:
                     position=settings.get('position', (10, 10)),
                     font_family=settings.get('font_family', 'Arial'),
                     font_size=settings.get('font_size', 24),
-                    color=settings.get('color', 'white'),
+                    color=settings.get('color', (255, 255, 255)),
+                    text_opacity=settings.get('text_opacity', 1.0),
                     alignment=settings.get('alignment', 'left'),
                     background_color=settings.get('background_color'),
                     background_opacity=settings.get('background_opacity', 0.0),
                     stroke_width=settings.get('stroke_width', 0),
-                    stroke_color=settings.get('stroke_color', 'black'),
+                    stroke_color=settings.get('stroke_color', (0, 0, 0)),
+                    stroke_opacity=settings.get('stroke_opacity', 1.0),
                     quality=settings.get('quality', 85)
                 )
             else:
