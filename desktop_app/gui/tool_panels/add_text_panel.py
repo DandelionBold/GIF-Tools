@@ -11,6 +11,7 @@ from typing import Optional, Callable, Any
 import threading
 import math
 
+from PIL import Image, ImageDraw, ImageFont, ImageTk
 from gif_tools.core.add_text import add_text_to_gif
 
 
@@ -460,7 +461,6 @@ class AddTextPanel:
             return None
         
         try:
-            from PIL import Image, ImageDraw, ImageFont
             
             # Get current frame
             if self.preview_gif.is_animated:
@@ -523,7 +523,6 @@ class AddTextPanel:
         """Display a frame in the preview canvas."""
         try:
             # Convert PIL image to PhotoImage
-            from PIL import ImageTk
             
             # Resize to fit canvas
             canvas_width = self.preview_canvas.winfo_width()
@@ -687,7 +686,6 @@ class AddTextPanel:
     def load_gif_preview(self, file_path: Path):
         """Load GIF for preview."""
         try:
-            from PIL import Image
             
             # Load GIF
             self.preview_gif = Image.open(file_path)
