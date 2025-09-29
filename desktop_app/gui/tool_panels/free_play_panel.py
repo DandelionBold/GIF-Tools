@@ -240,7 +240,7 @@ class FreePlayPanel:
             height=self.canvas_height,
             bg='black'
         )
-        self.preview_canvas.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
+        self.preview_canvas.pack(fill=tk.NONE, expand=False, pady=(0, 10))
         self.preview_canvas.bind('<Button-1>', self.on_canvas_click)
         
         # Instructions for canvas
@@ -591,7 +591,7 @@ class FreePlayPanel:
                 bg='black',
                 highlightthickness=0
             )
-            self.preview_canvas.pack(pady=10, fill=tk.BOTH, expand=True)
+            self.preview_canvas.pack(pady=10, fill=tk.NONE, expand=False)
             self.preview_canvas.bind('<Button-1>', self.on_canvas_click)
             
             # Update the preview frame
