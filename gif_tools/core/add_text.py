@@ -117,7 +117,7 @@ class GifTextAdder:
                 return output_path
                 
         except Exception as e:
-            raise ValidationError(f"GIF text addition failed: {e}")
+            raise ValidationError(f"GIF text addition failed: {str(e)}")
     
     def add_multiple_text(self,
                          input_path: Union[str, Path],

@@ -88,6 +88,7 @@ class AddTextPanel:
         )
         font_combo.grid(row=row, column=1, sticky=tk.W, padx=(5, 0), pady=5)
         font_combo.bind('<<ComboboxSelected>>', self.on_font_change)
+        font_combo.bind('<FocusOut>', self.on_font_change)
         row += 1
         
         # Font size
@@ -106,6 +107,7 @@ class AddTextPanel:
         size_scale.grid(row=row, column=1, sticky=tk.W, padx=(5, 0), pady=5)
         self.size_label = ttk.Label(self.controls_frame, text="24")
         self.size_label.grid(row=row, column=2, sticky=tk.W, padx=(5, 0), pady=5)
+        size_scale.bind('<ButtonRelease-1>', lambda e: self.update_preview())
         row += 1
         
         # Text color with picker
@@ -555,10 +557,18 @@ class AddTextPanel:
             print(f"Preview creation error: {e}")
             return None
     
-    def display_preview_frame(self, frame):
+    def display_preview_frame(self, frame=None):
         """Display a frame in the preview canvas."""
         try:
+            # Use provided frame or create preview
+            if frame is None:
+                frame = self.create_text_preview()
+            
+            if frame is None:
+                return
+            
             # Convert PIL image to PhotoImage
+            photo = ImageTk.PhotoImage(frame)
             
             # Resize to fit canvas
             canvas_width = self.preview_canvas.winfo_width()
@@ -609,35 +619,33 @@ class AddTextPanel:
     
     def play_loop(self):
         """Play loop for animated preview."""
-        while self.is_playing and self.preview_gif and self.preview_gif.is_animated:
-            try:
-                # Update preview
-                preview_frame = self.create_text_preview()
-                if preview_frame:
-                    self.parent.after(0, lambda: self.display_preview_frame(preview_frame))
-                
-                # Move to next frame
-                self.current_frame = (self.current_frame + 1) % len(self.preview_frames)
-                
-                # Update UI elements safely
-                def update_ui():
-                    try:
-                        if hasattr(self, 'frame_var') and self.frame_var:
-                            self.frame_var.set(str(self.current_frame))
-                        if hasattr(self, 'frame_scale') and self.frame_scale:
-                            self.frame_scale.set(self.current_frame)
-                    except:
-                        pass
-                
-                self.parent.after(0, update_ui)
-                
-                # Wait based on speed
-                import time
-                time.sleep(0.1 / self.speed_var.get())
-                
-            except Exception as e:
-                print(f"Play loop error: {e}")
-                break
+        if not self.is_playing or not self.preview_gif or not self.preview_gif.is_animated:
+            return
+        
+        try:
+            # Update preview
+            preview_frame = self.create_text_preview()
+            if preview_frame:
+                self.display_preview_frame(preview_frame)
+            
+            # Move to next frame
+            self.current_frame = (self.current_frame + 1) % len(self.preview_frames)
+            
+            # Update UI elements safely
+            if hasattr(self, 'frame_var') and self.frame_var:
+                self.frame_var.set(str(self.current_frame))
+            if hasattr(self, 'frame_scale') and self.frame_scale:
+                self.frame_scale.set(self.current_frame)
+            
+            # Schedule next frame
+            delay = int(1000 / (self.speed_var.get() * 10))  # Convert speed to delay
+            self.parent.after(delay, self.play_loop)
+            
+        except Exception as e:
+            print(f"Play loop error: {e}")
+            self.is_playing = False
+            if hasattr(self, 'play_btn') and self.play_btn:
+                self.play_btn.config(text="▶")
     
     def on_frame_change(self, event):
         """Handle frame number change."""
