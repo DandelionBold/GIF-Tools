@@ -31,18 +31,24 @@ def layer_gifs_free_play(
     if not gif_layers:
         raise ValueError("No GIF layers provided")
     
-    # Debug: Check data types
-    print(f"Debug: gif_layers type: {type(gif_layers)}")
-    print(f"Debug: gif_layers length: {len(gif_layers)}")
-    for i, layer in enumerate(gif_layers):
-        print(f"Debug: Layer {i} type: {type(layer)}")
-        if isinstance(layer, dict):
-            print(f"Debug: Layer {i} keys: {list(layer.keys())}")
-        else:
-            print(f"Debug: Layer {i} value: {layer}")
-    
     # Convert to Path
     output_path = Path(output_path)
+    
+    # Validate gif_layers data structure
+    if not isinstance(gif_layers, list):
+        raise ValueError(f"gif_layers must be a list, got {type(gif_layers)}")
+    
+    for i, layer in enumerate(gif_layers):
+        if not isinstance(layer, dict):
+            raise ValueError(f"Layer {i} must be a dictionary, got {type(layer)}: {layer}")
+        if 'frames' not in layer:
+            raise ValueError(f"Layer {i} missing 'frames' key")
+        if 'durations' not in layer:
+            raise ValueError(f"Layer {i} missing 'durations' key")
+        if 'position' not in layer:
+            raise ValueError(f"Layer {i} missing 'position' key")
+        if 'is_animated' not in layer:
+            raise ValueError(f"Layer {i} missing 'is_animated' key")
     
     # Create output frames
     output_frames = []
