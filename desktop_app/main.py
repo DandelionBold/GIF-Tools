@@ -27,7 +27,7 @@ from gif_tools.core import (
     # Basic tools
     convert_video_to_gif, resize_gif, rotate_gif, crop_gif, split_gif, merge_gifs,
     # Advanced tools
-    add_text_to_gif, rearrange_gif_frames, reverse_gif, optimize_gif, 
+    layer_gifs_free_play, rearrange_gif_frames, reverse_gif, optimize_gif, 
     change_gif_speed, apply_gif_filter,
     # Additional tools
     extract_gif_frames, set_gif_loop_count, convert_gif_format, 
@@ -38,7 +38,7 @@ from gif_tools.core import (
 from desktop_app.gui.tool_panels import (
     RearrangePanel,
     VideoToGifPanel,
-    AddTextPanel
+    FreePlayPanel
 )
 from gif_tools.utils import validate_animated_file, get_supported_extensions
 
@@ -182,7 +182,7 @@ class GifToolsApp:
         
         # Create tool buttons
         tools = [
-            ("Add Text", self.open_add_text_dialog),
+            ("Free Play", self.open_free_play_dialog),
             ("Rearrange Frames", self.open_rearrange_dialog),
             ("Reverse", self.open_reverse_dialog),
             ("Optimize", self.open_optimize_dialog),
@@ -258,7 +258,7 @@ class GifToolsApp:
         # Advanced tools submenu
         advanced_menu = tk.Menu(tools_menu, tearoff=0)
         tools_menu.add_cascade(label="Advanced Tools", menu=advanced_menu)
-        advanced_menu.add_command(label="Add Text", command=self.open_add_text_dialog)
+        advanced_menu.add_command(label="Free Play", command=self.open_free_play_dialog)
         advanced_menu.add_command(label="Rearrange Frames", command=self.open_rearrange_dialog)
         advanced_menu.add_command(label="Reverse", command=self.open_reverse_dialog)
         advanced_menu.add_command(label="Optimize", command=self.open_optimize_dialog)
@@ -599,23 +599,11 @@ class GifToolsApp:
                         loop_count=settings.get('loop_count', 0),
                         quality=settings.get('quality', 85)
                     )
-            elif tool_name == 'add_text':
-                # Add text to GIF
-                return add_text_to_gif(
-                    input_path=input_path,
+            elif tool_name == 'free_play':
+                # Layer GIFs using Free Play
+                return layer_gifs_free_play(
+                    gif_layers=settings.get('gif_layers', []),
                     output_path=output_path,
-                    text=settings.get('text', ''),
-                    position=settings.get('position', (10, 10)),
-                    font_family=settings.get('font_family', 'Arial'),
-                    font_size=settings.get('font_size', 24),
-                    color=settings.get('color', (255, 255, 255)),
-                    text_opacity=settings.get('text_opacity', 1.0),
-                    alignment=settings.get('alignment', 'center'),
-                    background_color=settings.get('background_color'),
-                    background_opacity=settings.get('background_opacity', 0.0),
-                    stroke_width=settings.get('stroke_width', 0),
-                    stroke_color=settings.get('stroke_color', (0, 0, 0)),
-                    stroke_opacity=settings.get('stroke_opacity', 1.0),
                     quality=settings.get('quality', 85)
                 )
             else:
@@ -814,14 +802,10 @@ class GifToolsApp:
         y = (dialog.winfo_screenheight() // 2) - (dialog.winfo_height() // 2)
         dialog.geometry(f"+{x}+{y}")
     
-    def open_add_text_dialog(self):
-        """Open add text dialog."""
-        if not self.current_file:
-            messagebox.showwarning("No File", "Please select a GIF file first.")
-            return
-        
+    def open_free_play_dialog(self):
+        """Open free play dialog for layering GIFs."""
         dialog = tk.Toplevel(self.root)
-        dialog.title("Add Text to GIF")
+        dialog.title("Free Play - Layer GIFs")
         dialog.geometry("1200x800")
         dialog.resizable(True, True)
         dialog.minsize(800, 600)
@@ -830,13 +814,9 @@ class GifToolsApp:
         dialog.transient(self.root)
         dialog.grab_set()
         
-        # Create add text panel
-        add_text_panel = AddTextPanel(dialog, self.process_tool)
-        add_text_panel.get_widget().pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
-        
-        # Auto-load the current GIF
-        if self.current_file:
-            add_text_panel.auto_load_gif(self.current_file)
+        # Create free play panel
+        free_play_panel = FreePlayPanel(dialog, self.process_tool)
+        free_play_panel.get_widget().pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
     
     def open_rearrange_dialog(self):
         """Open rearrange dialog."""

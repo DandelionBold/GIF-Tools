@@ -10,7 +10,7 @@ from .rotate import *
 from .crop import *
 from .split import *
 from .merge import *
-from .add_text import *
+from .free_play import *
 from .rearrange import *
 from .reverse import *
 from .optimize import *
@@ -70,12 +70,9 @@ __all__ = [
     'merge_gifs_with_timing',
     'get_merge_info',
     
-    # Add Text
-    'GifTextAdder',
-    'add_text_to_gif',
-    'add_multiple_text_to_gif',
-    'add_animated_text_to_gif',
-    'get_text_info',
+    # Free Play
+    'layer_gifs_free_play',
+    'create_gif_layer',
     
     # Rearrange
     'GifRearranger',
