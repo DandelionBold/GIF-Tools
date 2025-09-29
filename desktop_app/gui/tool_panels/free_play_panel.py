@@ -187,6 +187,19 @@ class FreePlayPanel:
         ttk.Button(controls_row4, text="Apply", command=self.apply_frame_start).pack(side=tk.LEFT, padx=(5, 0))
         row += 1
         
+        # Frame information display
+        frame_info_frame = ttk.Frame(self.controls_frame)
+        frame_info_frame.grid(row=row, column=0, columnspan=2, pady=5, sticky=tk.W+tk.E)
+        
+        self.frame_info_label = ttk.Label(
+            frame_info_frame, 
+            text="Select a layer to see frame information",
+            font=('Arial', 9, 'italic'),
+            foreground='blue'
+        )
+        self.frame_info_label.pack(anchor=tk.W)
+        row += 1
+        
         # Separator
         ttk.Separator(self.controls_frame, orient=tk.HORIZONTAL).grid(
             row=row, column=0, columnspan=2, sticky=tk.W+tk.E, pady=10
@@ -426,6 +439,7 @@ class FreePlayPanel:
             layer = self.gif_layers[self.selected_layer_index]
             self.frame_start_var.set(layer.get('frame_start', 0))
             self.update_selected_layer_label()
+            self.update_frame_info(layer)
             self.display_preview_frame()
         else:
             # Don't clear selection when clicking on canvas
@@ -481,6 +495,7 @@ class FreePlayPanel:
         self.selected_layer_index = -1
         self.update_layers_list()
         self.update_selected_layer_label()
+        self.update_frame_info(None)
         self.display_preview_frame()
         self.status_label.config(text="All layers cleared")
     
@@ -515,6 +530,26 @@ class FreePlayPanel:
             filename = os.path.basename(layer['file_path'])
             x, y = layer['position']
             self.selected_layer_label.config(text=f"Selected: {filename} at ({x}, {y})")
+    
+    def update_frame_info(self, layer):
+        """Update frame information display for selected layer."""
+        if not layer:
+            self.frame_info_label.config(text="Select a layer to see frame information")
+            return
+        
+        total_frames = len(layer['frames'])
+        frame_start = layer.get('frame_start', 0)
+        is_animated = layer.get('is_animated', False)
+        
+        if is_animated:
+            if frame_start == 0:
+                info_text = f"📊 Total frames: {total_frames} | Start: Frame 0 (default)"
+            else:
+                info_text = f"📊 Total frames: {total_frames} | Start: Frame {frame_start} (modified)"
+        else:
+            info_text = f"📊 Static image (1 frame) | Start: Frame 0"
+        
+        self.frame_info_label.config(text=info_text)
     
     def update_frame_controls(self):
         """Update frame controls based on loaded layers."""
@@ -630,6 +665,9 @@ class FreePlayPanel:
         
         # Update layers list
         self.update_layers_list()
+        
+        # Update frame info
+        self.update_frame_info(layer)
         
         # Update preview
         self.display_preview_frame()
