@@ -361,14 +361,15 @@ class FreePlayPanel:
         x, y = event.x, event.y
         
         # Convert canvas coordinates to GIF coordinates
-        canvas_width = self.preview_canvas.winfo_width()
-        canvas_height = self.preview_canvas.winfo_height()
+        # Get actual canvas widget size
+        widget_width = self.preview_canvas.winfo_width()
+        widget_height = self.preview_canvas.winfo_height()
         
-        if canvas_width <= 1 or canvas_height <= 1:
+        if widget_width <= 1 or widget_height <= 1:
             return
         
-        # Calculate scale
-        scale = min(canvas_width / self.canvas_width, canvas_height / self.canvas_height)
+        # Calculate scale based on how the image is displayed
+        scale = min(widget_width / self.canvas_width, widget_height / self.canvas_height)
         
         # Convert to GIF coordinates
         gif_x = int(x / scale)
@@ -559,9 +560,26 @@ class FreePlayPanel:
     def update_canvas_size(self, *args):
         """Update canvas size when controls change."""
         try:
-            self.canvas_width = self.canvas_width_var.get()
-            self.canvas_height = self.canvas_height_var.get()
+            new_width = self.canvas_width_var.get()
+            new_height = self.canvas_height_var.get()
+            
+            # Validate dimensions
+            if new_width < 200 or new_width > 2000 or new_height < 200 or new_height > 2000:
+                return
+            
+            # Update canvas dimensions
+            self.canvas_width = new_width
+            self.canvas_height = new_height
+            
+            # Resize the preview canvas
+            self.preview_canvas.config(width=new_width, height=new_height)
+            
+            # Update the preview frame
             self.display_preview_frame()
+            
+            # Update status
+            self.status_label.config(text=f"Canvas size: {new_width}x{new_height}")
+            
         except (ValueError, tk.TclError):
             # Handle empty or invalid values
             pass
@@ -640,12 +658,9 @@ class FreePlayPanel:
             # Convert PIL image to PhotoImage
             photo = ImageTk.PhotoImage(frame)
             
-            # Resize to fit canvas
-            canvas_width = self.preview_canvas.winfo_width()
-            canvas_height = self.preview_canvas.winfo_height()
-            
-            if canvas_width <= 1 or canvas_height <= 1:
-                return
+            # Use configured canvas size instead of widget size
+            canvas_width = self.canvas_width
+            canvas_height = self.canvas_height
             
             # Calculate scale to fit
             scale = min(canvas_width / frame.width, canvas_height / frame.height)
