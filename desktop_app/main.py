@@ -604,6 +604,8 @@ class GifToolsApp:
                 return layer_gifs_free_play(
                     gif_layers=settings.get('gif_layers', []),
                     output_path=output_path,
+                    canvas_width=settings.get('canvas_width', 600),
+                    canvas_height=settings.get('canvas_height', 400),
                     quality=settings.get('quality', 85)
                 )
             else:

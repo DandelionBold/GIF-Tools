@@ -11,14 +11,18 @@ import os
 def layer_gifs_free_play(
     gif_layers: List[Dict[str, Any]],
     output_path: Union[str, Path],
+    canvas_width: int = 600,
+    canvas_height: int = 400,
     quality: int = 85
 ) -> Path:
     """
     Layer multiple GIFs into one combined GIF.
     
     Args:
-        gif_layers: List of layer dictionaries with 'file_path', 'position', 'frames', 'durations', 'is_animated'
+        gif_layers: List of layer dictionaries with 'file_path', 'position', 'frames', 'durations', 'is_animated', 'frame_start'
         output_path: Path to save the combined GIF
+        canvas_width: Width of the output canvas
+        canvas_height: Height of the output canvas
         quality: Output quality (1-100)
         
     Returns:
@@ -30,16 +34,6 @@ def layer_gifs_free_play(
     # Convert to Path
     output_path = Path(output_path)
     
-    # Find the maximum dimensions needed
-    max_width = 0
-    max_height = 0
-    
-    for layer in gif_layers:
-        for frame in layer['frames']:
-            x, y = layer['position']
-            max_width = max(max_width, x + frame.width)
-            max_height = max(max_height, y + frame.height)
-    
     # Create output frames
     output_frames = []
     output_durations = []
@@ -48,15 +42,17 @@ def layer_gifs_free_play(
     max_frames = max(len(layer['frames']) for layer in gif_layers)
     
     for frame_idx in range(max_frames):
-        # Create base frame
-        base_frame = Image.new('RGBA', (max_width, max_height), (0, 0, 0, 0))
+        # Create base frame with custom canvas size
+        base_frame = Image.new('RGBA', (canvas_width, canvas_height), (0, 0, 0, 0))
         
         # Add each layer
         for layer in gif_layers:
             if layer['is_animated']:
-                # Use frame at current index (loop if necessary)
-                layer_frame = layer['frames'][frame_idx % len(layer['frames'])]
-                layer_duration = layer['durations'][frame_idx % len(layer['durations'])]
+                # Calculate frame index with frame start offset
+                layer_frame_start = layer.get('frame_start', 0)
+                layer_frame_idx = (frame_idx + layer_frame_start) % len(layer['frames'])
+                layer_frame = layer['frames'][layer_frame_idx]
+                layer_duration = layer['durations'][layer_frame_idx % len(layer['durations'])]
             else:
                 # Use first frame for static GIFs
                 layer_frame = layer['frames'][0]

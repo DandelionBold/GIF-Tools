@@ -17,13 +17,13 @@ class FreePlayPanel:
         self.on_process = on_process
         
         # GIF layers data
-        self.gif_layers = []  # List of {'file_path': str, 'position': (x, y), 'frames': list}
+        self.gif_layers = []  # List of {'file_path': str, 'position': (x, y), 'frames': list, 'frame_start': int}
         self.selected_layer_index = -1  # Index of currently selected layer
         self.preview_frames = []
         self.current_frame = 0
         self.is_playing = False
         
-        # Canvas dimensions
+        # Canvas dimensions (will be updated by controls)
         self.canvas_width = 600
         self.canvas_height = 400
         
@@ -89,6 +89,38 @@ class FreePlayPanel:
         positioning_combo.grid(row=row, column=1, sticky=tk.W, padx=(5, 0), pady=5)
         row += 1
         
+        # Canvas size controls
+        ttk.Label(self.controls_frame, text="Canvas Size:").grid(row=row, column=0, sticky=tk.W, pady=5)
+        canvas_size_frame = ttk.Frame(self.controls_frame)
+        canvas_size_frame.grid(row=row, column=1, sticky=tk.W, padx=(5, 0), pady=5)
+        
+        # Width
+        ttk.Label(canvas_size_frame, text="W:").pack(side=tk.LEFT)
+        self.canvas_width_var = tk.IntVar(value=600)
+        self.canvas_width_var.trace('w', self.update_canvas_size)
+        width_spin = ttk.Spinbox(
+            canvas_size_frame, 
+            from_=200, 
+            to=2000, 
+            textvariable=self.canvas_width_var,
+            width=8
+        )
+        width_spin.pack(side=tk.LEFT, padx=(2, 5))
+        
+        # Height
+        ttk.Label(canvas_size_frame, text="H:").pack(side=tk.LEFT)
+        self.canvas_height_var = tk.IntVar(value=400)
+        self.canvas_height_var.trace('w', self.update_canvas_size)
+        height_spin = ttk.Spinbox(
+            canvas_size_frame, 
+            from_=200, 
+            to=2000, 
+            textvariable=self.canvas_height_var,
+            width=8
+        )
+        height_spin.pack(side=tk.LEFT, padx=(2, 0))
+        row += 1
+        
         # Separator
         ttk.Separator(self.controls_frame, orient=tk.HORIZONTAL).grid(
             row=row, column=0, columnspan=2, sticky=tk.W+tk.E, pady=10
@@ -100,7 +132,7 @@ class FreePlayPanel:
         row += 1
         
         # Listbox for layers
-        self.layers_listbox = tk.Listbox(self.controls_frame, height=8, width=30)
+        self.layers_listbox = tk.Listbox(self.controls_frame, height=8, width=30, selectmode=tk.EXTENDED)
         self.layers_listbox.grid(row=row, column=0, columnspan=2, pady=5, sticky=tk.W+tk.E)
         self.layers_listbox.bind('<<ListboxSelect>>', self.on_layer_select)
         row += 1
@@ -119,9 +151,34 @@ class FreePlayPanel:
         
         # Second row of controls
         controls_row2 = ttk.Frame(layer_controls)
-        controls_row2.pack(fill=tk.X)
+        controls_row2.pack(fill=tk.X, pady=(0, 5))
         
         ttk.Button(controls_row2, text="Clear All", command=self.clear_all_layers).pack(side=tk.LEFT)
+        
+        # Third row - Selection controls
+        controls_row3 = ttk.Frame(layer_controls)
+        controls_row3.pack(fill=tk.X, pady=(0, 5))
+        
+        ttk.Button(controls_row3, text="Select All", command=self.select_all_layers).pack(side=tk.LEFT, padx=(0, 5))
+        ttk.Button(controls_row3, text="Deselect All", command=self.deselect_all_layers).pack(side=tk.LEFT, padx=(0, 5))
+        
+        # Fourth row - Frame start settings
+        controls_row4 = ttk.Frame(layer_controls)
+        controls_row4.pack(fill=tk.X)
+        
+        ttk.Label(controls_row4, text="Start Frame:").pack(side=tk.LEFT, padx=(0, 5))
+        self.frame_start_var = tk.IntVar(value=0)
+        self.frame_start_var.trace('w', self.update_layer_frame_start)
+        frame_start_spin = ttk.Spinbox(
+            controls_row4, 
+            from_=0, 
+            to=999, 
+            textvariable=self.frame_start_var,
+            width=8
+        )
+        frame_start_spin.pack(side=tk.LEFT, padx=(0, 5))
+        
+        ttk.Button(controls_row4, text="Apply", command=self.apply_frame_start).pack(side=tk.LEFT, padx=(5, 0))
         row += 1
         
         # Separator
@@ -229,7 +286,7 @@ class FreePlayPanel:
         self.speed_scale = ttk.Scale(
             controls_frame, 
             from_=0.1, 
-            to=5.0, 
+            to=10.0, 
             variable=self.speed_var,
             orient=tk.HORIZONTAL,
             length=100
@@ -275,7 +332,8 @@ class FreePlayPanel:
                     'position': (0, 0),
                     'frames': frames,
                     'durations': durations,
-                    'is_animated': gif.is_animated
+                    'is_animated': gif.is_animated,
+                    'frame_start': 0
                 }
                 
                 self.gif_layers.append(layer)
@@ -293,9 +351,10 @@ class FreePlayPanel:
             self.status_label.config(text=f"Loaded {loaded_count} GIF(s). Select a layer to place it.")
     
     def on_canvas_click(self, event):
-        """Handle canvas click to place/move selected layer."""
-        if self.selected_layer_index == -1:
-            messagebox.showwarning("No Layer Selected", "Please select a layer from the list first.")
+        """Handle canvas click to place/move selected layers."""
+        selection = self.layers_listbox.curselection()
+        if not selection:
+            messagebox.showwarning("No Layers Selected", "Please select one or more layers from the list first.")
             return
         
         # Get click position
@@ -315,17 +374,22 @@ class FreePlayPanel:
         gif_x = int(x / scale)
         gif_y = int(y / scale)
         
-        # Get the selected layer
-        layer = self.gif_layers[self.selected_layer_index]
-        
-        # Calculate position based on positioning mode
+        # Get positioning mode
         positioning_mode = self.positioning_var.get()
-        final_x, final_y = self.calculate_position(
-            gif_x, gif_y, layer, positioning_mode
-        )
         
-        # Update selected layer position
-        layer['position'] = (final_x, final_y)
+        # Move all selected layers
+        moved_count = 0
+        for layer_index in selection:
+            layer = self.gif_layers[layer_index]
+            
+            # Calculate position based on positioning mode
+            final_x, final_y = self.calculate_position(
+                gif_x, gif_y, layer, positioning_mode
+            )
+            
+            # Update layer position
+            layer['position'] = (final_x, final_y)
+            moved_count += 1
         
         # Update layers list
         self.update_layers_list()
@@ -334,8 +398,7 @@ class FreePlayPanel:
         self.display_preview_frame()
         
         # Update status
-        filename = os.path.basename(layer['file_path'])
-        self.status_label.config(text=f"Moved: {filename} to ({final_x}, {final_y}) - {positioning_mode}")
+        self.status_label.config(text=f"Moved {moved_count} layer(s) to ({gif_x}, {gif_y}) - {positioning_mode}")
     
     def update_layers_list(self):
         """Update the layers listbox."""
@@ -344,18 +407,22 @@ class FreePlayPanel:
         for i, layer in enumerate(self.gif_layers):
             filename = os.path.basename(layer['file_path'])
             x, y = layer['position']
-            self.layers_listbox.insert(tk.END, f"{i+1}. {filename} at ({x}, {y})")
+            frame_start = layer.get('frame_start', 0)
+            self.layers_listbox.insert(tk.END, f"{i+1}. {filename} at ({x}, {y}) start:{frame_start}")
     
     def on_layer_select(self, event):
         """Handle layer selection."""
         selection = self.layers_listbox.curselection()
         if selection:
+            # Use the first selected layer for frame start settings
             self.selected_layer_index = selection[0]
+            layer = self.gif_layers[self.selected_layer_index]
+            self.frame_start_var.set(layer.get('frame_start', 0))
             self.update_selected_layer_label()
             self.display_preview_frame()
         else:
-            self.selected_layer_index = -1
-            self.update_selected_layer_label()
+            # Don't clear selection when clicking on canvas
+            pass
     
     def move_layer_up(self):
         """Move selected layer up in the list."""
@@ -409,6 +476,20 @@ class FreePlayPanel:
         self.update_selected_layer_label()
         self.display_preview_frame()
         self.status_label.config(text="All layers cleared")
+    
+    def select_all_layers(self):
+        """Select all layers in the list."""
+        self.layers_listbox.select_set(0, tk.END)
+        self.on_layer_select(None)
+        self.status_label.config(text="All layers selected")
+    
+    def deselect_all_layers(self):
+        """Deselect all layers in the list."""
+        self.layers_listbox.selection_clear(0, tk.END)
+        self.selected_layer_index = -1
+        self.frame_start_var.set(0)
+        self.update_selected_layer_label()
+        self.status_label.config(text="All layers deselected")
     
     def update_selected_gifs_label(self):
         """Update the selected GIFs label."""
@@ -475,6 +556,49 @@ class FreePlayPanel:
         else:  # custom - same as top-left
             return (click_x, click_y)
     
+    def update_canvas_size(self, *args):
+        """Update canvas size when controls change."""
+        try:
+            self.canvas_width = self.canvas_width_var.get()
+            self.canvas_height = self.canvas_height_var.get()
+            self.display_preview_frame()
+        except (ValueError, tk.TclError):
+            # Handle empty or invalid values
+            pass
+    
+    def update_layer_frame_start(self, *args):
+        """Update frame start when control changes."""
+        # This will be called when the spinbox value changes
+        pass
+    
+    def apply_frame_start(self):
+        """Apply frame start setting to selected layer."""
+        if self.selected_layer_index == -1:
+            messagebox.showwarning("No Layer Selected", "Please select a layer first.")
+            return
+        
+        frame_start = self.frame_start_var.get()
+        layer = self.gif_layers[self.selected_layer_index]
+        
+        # Validate frame start
+        max_frames = len(layer['frames'])
+        if frame_start >= max_frames:
+            messagebox.showwarning("Invalid Frame", f"Frame start must be less than {max_frames}")
+            return
+        
+        # Update layer frame start
+        layer['frame_start'] = frame_start
+        
+        # Update layers list
+        self.update_layers_list()
+        
+        # Update preview
+        self.display_preview_frame()
+        
+        # Update status
+        filename = os.path.basename(layer['file_path'])
+        self.status_label.config(text=f"Set {filename} to start at frame {frame_start}")
+    
     def update_quality_label(self, value):
         """Update quality label."""
         self.quality_label.config(text=str(int(float(value))))
@@ -485,27 +609,15 @@ class FreePlayPanel:
             return
         
         try:
-            # Find the maximum dimensions needed
-            max_width = 0
-            max_height = 0
-            
-            for layer in self.gif_layers:
-                for frame in layer['frames']:
-                    x, y = layer['position']
-                    max_width = max(max_width, x + frame.width)
-                    max_height = max(max_height, y + frame.height)
-            
-            # Create base frame
-            if max_width > 0 and max_height > 0:
-                base_frame = Image.new('RGBA', (max_width, max_height), (0, 0, 0, 0))
-            else:
-                # Fallback to a default size
-                base_frame = Image.new('RGBA', (600, 400), (0, 0, 0, 0))
+            # Use custom canvas size
+            base_frame = Image.new('RGBA', (self.canvas_width, self.canvas_height), (0, 0, 0, 0))
             
             # Add each layer in order
             for layer in self.gif_layers:
                 if layer['is_animated']:
-                    layer_frame = layer['frames'][self.current_frame % len(layer['frames'])]
+                    # Calculate frame index with frame start offset
+                    frame_index = (self.current_frame + layer['frame_start']) % len(layer['frames'])
+                    layer_frame = layer['frames'][frame_index]
                 else:
                     layer_frame = layer['frames'][0]
                 
@@ -635,6 +747,8 @@ class FreePlayPanel:
         # Get settings
         settings = {
             'gif_layers': self.gif_layers,
+            'canvas_width': self.canvas_width,
+            'canvas_height': self.canvas_height,
             'quality': self.quality_var.get()
         }
         
