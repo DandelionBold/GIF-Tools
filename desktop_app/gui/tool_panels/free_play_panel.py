@@ -65,10 +65,28 @@ class FreePlayPanel:
         # Instructions
         instructions = ttk.Label(
             self.controls_frame, 
-            text="Instructions:\n1. Load multiple GIFs\n2. Select a layer from the list\n3. Click on preview to place/move it\n4. Reorder layers as needed\n5. Click 'Create Combined GIF'",
+            text="Instructions:\n1. Load multiple GIFs\n2. Select a layer from the list\n3. Choose positioning mode\n4. Click on preview to place/move it\n5. Reorder layers as needed\n6. Click 'Create Combined GIF'",
             wraplength=200
         )
         instructions.grid(row=row, column=0, columnspan=2, pady=10, sticky=tk.W)
+        row += 1
+        
+        # Positioning mode
+        ttk.Label(self.controls_frame, text="Positioning:").grid(row=row, column=0, sticky=tk.W, pady=5)
+        self.positioning_var = tk.StringVar(value="center")
+        positioning_combo = ttk.Combobox(
+            self.controls_frame, 
+            textvariable=self.positioning_var,
+            values=[
+                "top-left", "top-center", "top-right",
+                "center-left", "center", "center-right",
+                "bottom-left", "bottom-center", "bottom-right",
+                "custom"
+            ],
+            state="readonly",
+            width=15
+        )
+        positioning_combo.grid(row=row, column=1, sticky=tk.W, padx=(5, 0), pady=5)
         row += 1
         
         # Separator
@@ -165,7 +183,7 @@ class FreePlayPanel:
         # Instructions for canvas
         self.canvas_instructions = ttk.Label(
             self.preview_frame, 
-            text="Select a layer from the list, then click on canvas to place/move it",
+            text="Select a layer, choose positioning mode, then click on canvas to place/move it",
             font=('Arial', 10, 'italic')
         )
         self.canvas_instructions.pack(pady=5)
@@ -270,6 +288,7 @@ class FreePlayPanel:
             # Update UI
             self.update_layers_list()
             self.update_selected_gifs_label()
+            self.update_frame_controls()
             self.display_preview_frame()
             self.status_label.config(text=f"Loaded {loaded_count} GIF(s). Select a layer to place it.")
     
@@ -296,8 +315,17 @@ class FreePlayPanel:
         gif_x = int(x / scale)
         gif_y = int(y / scale)
         
+        # Get the selected layer
+        layer = self.gif_layers[self.selected_layer_index]
+        
+        # Calculate position based on positioning mode
+        positioning_mode = self.positioning_var.get()
+        final_x, final_y = self.calculate_position(
+            gif_x, gif_y, layer, positioning_mode
+        )
+        
         # Update selected layer position
-        self.gif_layers[self.selected_layer_index]['position'] = (gif_x, gif_y)
+        layer['position'] = (final_x, final_y)
         
         # Update layers list
         self.update_layers_list()
@@ -306,8 +334,8 @@ class FreePlayPanel:
         self.display_preview_frame()
         
         # Update status
-        filename = os.path.basename(self.gif_layers[self.selected_layer_index]['file_path'])
-        self.status_label.config(text=f"Moved: {filename} to ({gif_x}, {gif_y})")
+        filename = os.path.basename(layer['file_path'])
+        self.status_label.config(text=f"Moved: {filename} to ({final_x}, {final_y}) - {positioning_mode}")
     
     def update_layers_list(self):
         """Update the layers listbox."""
@@ -399,6 +427,53 @@ class FreePlayPanel:
             filename = os.path.basename(layer['file_path'])
             x, y = layer['position']
             self.selected_layer_label.config(text=f"Selected: {filename} at ({x}, {y})")
+    
+    def update_frame_controls(self):
+        """Update frame controls based on loaded layers."""
+        if not self.gif_layers:
+            self.frame_scale.config(to=0)
+            self.frame_var.set("0")
+            return
+        
+        # Find the maximum number of frames
+        max_frames = max(len(layer['frames']) for layer in self.gif_layers)
+        
+        # Update frame scale
+        self.frame_scale.config(to=max_frames - 1)
+        self.frame_var.set("0")
+        self.current_frame = 0
+    
+    def calculate_position(self, click_x, click_y, layer, positioning_mode):
+        """Calculate the final position based on positioning mode."""
+        # Get the current frame to get dimensions
+        if layer['is_animated']:
+            frame = layer['frames'][self.current_frame % len(layer['frames'])]
+        else:
+            frame = layer['frames'][0]
+        
+        width = frame.width
+        height = frame.height
+        
+        if positioning_mode == "top-left":
+            return (click_x, click_y)
+        elif positioning_mode == "top-center":
+            return (click_x - width // 2, click_y)
+        elif positioning_mode == "top-right":
+            return (click_x - width, click_y)
+        elif positioning_mode == "center-left":
+            return (click_x, click_y - height // 2)
+        elif positioning_mode == "center":
+            return (click_x - width // 2, click_y - height // 2)
+        elif positioning_mode == "center-right":
+            return (click_x - width, click_y - height // 2)
+        elif positioning_mode == "bottom-left":
+            return (click_x, click_y - height)
+        elif positioning_mode == "bottom-center":
+            return (click_x - width // 2, click_y - height)
+        elif positioning_mode == "bottom-right":
+            return (click_x - width, click_y - height)
+        else:  # custom - same as top-left
+            return (click_x, click_y)
     
     def update_quality_label(self, value):
         """Update quality label."""
