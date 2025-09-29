@@ -406,14 +406,22 @@ class GifToolsApp:
     
     def process_tool(self, tool_name: str, settings: dict, input_file: Optional[str] = None):
         """Process a tool operation."""
-        if not self.current_file and not input_file:
-            messagebox.showwarning("Warning", "No file loaded!")
-            return
-        
-        input_path = input_file or self.current_file
-        if not input_path:
-            messagebox.showwarning("Warning", "No input file specified!")
-            return
+        # Special handling for merge tool - it doesn't need a main file loaded
+        if tool_name == 'merge':
+            # For merge tool, check if files are provided in settings
+            if not settings.get('file_list'):
+                messagebox.showwarning("Warning", "Please add files to merge!")
+                return
+        else:
+            # For other tools, check if a file is loaded
+            if not self.current_file and not input_file:
+                messagebox.showwarning("Warning", "No file loaded!")
+                return
+            
+            input_path = input_file or self.current_file
+            if not input_path:
+                messagebox.showwarning("Warning", "No input file specified!")
+                return
         
         # Get output path
         if not self.output_dir_var.get():
@@ -423,27 +431,41 @@ class GifToolsApp:
         output_dir = Path(self.output_dir_var.get())
         output_dir.mkdir(parents=True, exist_ok=True)
         
-        # Generate output filename
-        input_file_path = Path(input_path)
-        
-        # Special handling for different tools
-        if tool_name == 'video_to_gif':
-            output_filename = f"{input_file_path.stem}_{tool_name}.gif"
+        # Generate output filename based on tool type
+        if tool_name == 'merge':
+            # For merge tool, create a generic output filename
+            output_filename = f"merged_{tool_name}.gif"
             output_path = output_dir / output_filename
-        elif tool_name == 'split':
-            # Split tool outputs to a directory, not a single file
-            output_path = output_dir / f"{input_file_path.stem}_frames"
         else:
-            output_filename = f"{input_file_path.stem}_{tool_name}{input_file_path.suffix}"
-            output_path = output_dir / output_filename
+            # For other tools, use the input file name
+            input_file_path = Path(input_path)
+            if tool_name == 'video_to_gif':
+                output_filename = f"{input_file_path.stem}_{tool_name}.gif"
+                output_path = output_dir / output_filename
+            elif tool_name == 'split':
+                # Split tool outputs to a directory, not a single file
+                output_path = output_dir / f"{input_file_path.stem}_frames"
+            else:
+                output_filename = f"{input_file_path.stem}_{tool_name}{input_file_path.suffix}"
+                output_path = output_dir / output_filename
         
         # Add to processing queue
-        task = {
-            'function': self._execute_tool,
-            'args': (tool_name, str(input_path), str(output_path), settings),
-            'kwargs': {},
-            'task_id': f"{tool_name}_{int(time.time())}"
-        }
+        if tool_name == 'merge':
+            # For merge tool, we don't have a single input path
+            task = {
+                'function': self._execute_tool,
+                'args': (tool_name, None, str(output_path), settings),
+                'kwargs': {},
+                'task_id': f"{tool_name}_{int(time.time())}"
+            }
+        else:
+            # For other tools, use the input path
+            task = {
+                'function': self._execute_tool,
+                'args': (tool_name, str(input_path), str(output_path), settings),
+                'kwargs': {},
+                'task_id': f"{tool_name}_{int(time.time())}"
+            }
         
         self.processing_queue.put(task)
         self.status_var.set(f"Processing {tool_name}...")
@@ -550,6 +572,31 @@ class GifToolsApp:
                         output_format=settings.get('output_format', 'png'),
                         naming_pattern=settings.get('naming_pattern', 'frame_{index:04d}'),
                         progress_callback=progress_callback
+                    )
+            elif tool_name == 'merge':
+                # Merge multiple GIFs/images into one
+                merge_mode = settings.get('mode', 'sequential')
+                
+                if merge_mode == 'sequential':
+                    # Sequential merge - one after another
+                    from gif_tools.core.merge import merge_gifs_sequential
+                    return merge_gifs_sequential(
+                        input_paths=settings.get('file_list', []),
+                        output_path=output_path,
+                        frame_duration=settings.get('duration', 100),
+                        loop_count=settings.get('loop_count', 0),
+                        quality=settings.get('quality', 85),
+                        progress_callback=progress_callback
+                    )
+                else:
+                    # Horizontal or vertical merge
+                    return merge_gifs(
+                        input_paths=settings.get('file_list', []),
+                        output_path=output_path,
+                        direction=settings.get('mode', 'horizontal'),
+                        frame_duration=settings.get('duration', 100),
+                        loop_count=settings.get('loop_count', 0),
+                        quality=settings.get('quality', 85)
                     )
             else:
                 raise ValueError(f"Unknown tool: {tool_name}")
@@ -687,7 +734,30 @@ class GifToolsApp:
     
     def open_merge_dialog(self):
         """Open merge dialog."""
-        messagebox.showinfo("Merge", "Merge tool - Coming soon!")
+        from desktop_app.gui.tool_panels.merge_panel import MergePanel
+        
+        # Create dialog window
+        dialog = tk.Toplevel(self.root)
+        dialog.title("GIF Merge Tool")
+        dialog.geometry("800x700")
+        dialog.resizable(True, True)
+        dialog.minsize(600, 500)
+        
+        # Create merge panel
+        merge_panel = MergePanel(dialog, self.process_tool)
+        
+        # Pack the panel
+        merge_panel.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Center the dialog
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Center on parent window
+        dialog.update_idletasks()
+        x = (dialog.winfo_screenwidth() // 2) - (dialog.winfo_width() // 2)
+        y = (dialog.winfo_screenheight() // 2) - (dialog.winfo_height() // 2)
+        dialog.geometry(f"+{x}+{y}")
     
     def open_reverse_dialog(self):
         """Open reverse dialog."""
