@@ -100,12 +100,12 @@ class AddTextPanel:
             to=72, 
             variable=self.font_size_var,
             orient=tk.HORIZONTAL,
-            length=150
+            length=150,
+            command=self.on_font_size_change
         )
         size_scale.grid(row=row, column=1, sticky=tk.W, padx=(5, 0), pady=5)
         self.size_label = ttk.Label(self.controls_frame, text="24")
         self.size_label.grid(row=row, column=2, sticky=tk.W, padx=(5, 0), pady=5)
-        size_scale.configure(command=self.update_size_label)
         row += 1
         
         # Text color with picker
@@ -372,6 +372,11 @@ class AddTextPanel:
     
     def on_font_change(self, event):
         """Handle font family change."""
+        self.update_preview()
+    
+    def on_font_size_change(self, value):
+        """Handle font size change."""
+        self.size_label.config(text=str(int(float(value))))
         self.update_preview()
     
     def choose_text_color(self):
