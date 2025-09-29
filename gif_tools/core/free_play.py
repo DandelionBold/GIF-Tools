@@ -68,21 +68,27 @@ def layer_gifs_free_play(
                 layer_frame_start = layer.get('frame_start', 0)
                 layer_frame_idx = (frame_idx + layer_frame_start) % len(layer['frames'])
                 layer_frame = layer['frames'][layer_frame_idx]
-                layer_duration = layer['durations'][layer_frame_idx % len(layer['durations'])]
             else:
                 # Use first frame for static GIFs
                 layer_frame = layer['frames'][0]
-                layer_duration = layer['durations'][0]
             
-            # Paste layer at its position
+            # Ensure layer frame is RGBA
+            if layer_frame.mode != 'RGBA':
+                layer_frame = layer_frame.convert('RGBA')
+            
+            # Paste layer at its position with proper alpha blending
             x, y = layer['position']
-            if layer_frame.mode == 'RGBA':
-                base_frame.paste(layer_frame, (x, y), layer_frame)
-            else:
-                base_frame.paste(layer_frame, (x, y))
+            base_frame.paste(layer_frame, (x, y), layer_frame)
         
-        output_frames.append(base_frame)
-        output_durations.append(layer_duration)
+        # Convert to RGB for GIF output (GIF doesn't support RGBA)
+        rgb_frame = Image.new('RGB', (canvas_width, canvas_height), (0, 0, 0))
+        rgb_frame.paste(base_frame, mask=base_frame.split()[-1])  # Use alpha channel as mask
+        
+        output_frames.append(rgb_frame)
+    
+    # Use consistent duration for all frames
+    consistent_duration = 100  # 100ms per frame (10 FPS)
+    output_durations = [consistent_duration] * len(output_frames)
     
     # Save combined GIF
     if len(output_frames) == 1:
@@ -90,15 +96,19 @@ def layer_gifs_free_play(
         output_frames[0].save(output_path, 'GIF', quality=quality, optimize=True)
     else:
         # Multiple frames - save as animated GIF
+        # Use consistent duration for all frames to prevent glitching
+        consistent_duration = 100  # 100ms per frame (10 FPS)
+        
         output_frames[0].save(
             output_path,
             'GIF',
             save_all=True,
             append_images=output_frames[1:],
-            duration=output_durations,
+            duration=[consistent_duration] * len(output_frames),
             loop=0,
-            quality=quality,
-            optimize=True
+            disposal=2,  # Clear to background
+            transparency=0,
+            optimize=False  # Disable optimization to prevent glitching
         )
     
     return output_path
