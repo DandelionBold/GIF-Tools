@@ -37,7 +37,8 @@ from gif_tools.core import (
 )
 from desktop_app.gui.tool_panels import (
     RearrangePanel,
-    VideoToGifPanel
+    VideoToGifPanel,
+    AddTextPanel
 )
 from gif_tools.utils import validate_animated_file, get_supported_extensions
 
@@ -598,6 +599,23 @@ class GifToolsApp:
                         loop_count=settings.get('loop_count', 0),
                         quality=settings.get('quality', 85)
                     )
+            elif tool_name == 'add_text':
+                # Add text to GIF
+                return add_text_to_gif(
+                    input_path=input_file_path,
+                    output_path=output_path,
+                    text=settings.get('text', ''),
+                    position=settings.get('position', (10, 10)),
+                    font_family=settings.get('font_family', 'Arial'),
+                    font_size=settings.get('font_size', 24),
+                    color=settings.get('color', 'white'),
+                    alignment=settings.get('alignment', 'left'),
+                    background_color=settings.get('background_color'),
+                    background_opacity=settings.get('background_opacity', 0.0),
+                    stroke_width=settings.get('stroke_width', 0),
+                    stroke_color=settings.get('stroke_color', 'black'),
+                    quality=settings.get('quality', 85)
+                )
             else:
                 raise ValueError(f"Unknown tool: {tool_name}")
                 
@@ -796,7 +814,27 @@ class GifToolsApp:
     
     def open_add_text_dialog(self):
         """Open add text dialog."""
-        messagebox.showinfo("Add Text", "Add Text tool - Coming soon!")
+        if not self.current_file:
+            messagebox.showwarning("No File", "Please select a GIF file first.")
+            return
+        
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Add Text to GIF")
+        dialog.geometry("600x500")
+        dialog.resizable(True, True)
+        dialog.minsize(500, 400)
+        
+        # Center the dialog
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Create add text panel
+        add_text_panel = AddTextPanel(dialog, self.process_tool)
+        add_text_panel.frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Auto-load the current GIF
+        if self.current_file:
+            add_text_panel.auto_load_gif(self.current_file)
     
     def open_rearrange_dialog(self):
         """Open rearrange dialog."""

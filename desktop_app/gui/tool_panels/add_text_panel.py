@@ -291,3 +291,13 @@ class AddTextPanel:
     def get_widget(self) -> tk.Widget:
         """Get the main widget for this panel."""
         return self.frame
+    
+    def auto_load_gif(self, file_path: Path):
+        """Auto-load GIF file for text addition."""
+        try:
+            self.current_file = file_path
+            # Update status or show preview if needed
+            if hasattr(self, 'status_label'):
+                self.status_label.config(text=f"Loaded: {file_path.name}")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to load GIF: {e}")
