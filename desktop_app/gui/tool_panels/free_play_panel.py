@@ -28,6 +28,8 @@ class FreePlayPanel:
         self.canvas_height = 400
         
         self.setup_ui()
+        # Initialize canvas size
+        self.update_canvas_size()
     
     def setup_ui(self):
         """Set up the user interface."""
@@ -98,27 +100,31 @@ class FreePlayPanel:
         ttk.Label(canvas_size_frame, text="W:").pack(side=tk.LEFT)
         self.canvas_width_var = tk.IntVar(value=600)
         self.canvas_width_var.trace('w', self.update_canvas_size)
-        width_spin = ttk.Spinbox(
+        self.width_spin = ttk.Spinbox(
             canvas_size_frame, 
             from_=200, 
             to=2000, 
             textvariable=self.canvas_width_var,
             width=8
         )
-        width_spin.pack(side=tk.LEFT, padx=(2, 5))
+        self.width_spin.pack(side=tk.LEFT, padx=(2, 5))
+        self.width_spin.bind('<FocusOut>', self.update_canvas_size)
+        self.width_spin.bind('<Return>', self.update_canvas_size)
         
         # Height
         ttk.Label(canvas_size_frame, text="H:").pack(side=tk.LEFT)
         self.canvas_height_var = tk.IntVar(value=400)
         self.canvas_height_var.trace('w', self.update_canvas_size)
-        height_spin = ttk.Spinbox(
+        self.height_spin = ttk.Spinbox(
             canvas_size_frame, 
             from_=200, 
             to=2000, 
             textvariable=self.canvas_height_var,
             width=8
         )
-        height_spin.pack(side=tk.LEFT, padx=(2, 0))
+        self.height_spin.pack(side=tk.LEFT, padx=(2, 0))
+        self.height_spin.bind('<FocusOut>', self.update_canvas_size)
+        self.height_spin.bind('<Return>', self.update_canvas_size)
         row += 1
         
         # Separator
@@ -563,16 +569,22 @@ class FreePlayPanel:
             new_width = self.canvas_width_var.get()
             new_height = self.canvas_height_var.get()
             
+            print(f"Canvas size changed to: {new_width}x{new_height}")  # Debug
+            
             # Validate dimensions
             if new_width < 200 or new_width > 2000 or new_height < 200 or new_height > 2000:
+                print(f"Invalid dimensions: {new_width}x{new_height}")  # Debug
                 return
             
             # Update canvas dimensions
             self.canvas_width = new_width
             self.canvas_height = new_height
             
-            # Resize the preview canvas
+            # Resize the preview canvas widget
             self.preview_canvas.config(width=new_width, height=new_height)
+            
+            # Force update the canvas
+            self.preview_canvas.update()
             
             # Update the preview frame
             self.display_preview_frame()
@@ -580,8 +592,9 @@ class FreePlayPanel:
             # Update status
             self.status_label.config(text=f"Canvas size: {new_width}x{new_height}")
             
-        except (ValueError, tk.TclError):
+        except (ValueError, tk.TclError) as e:
             # Handle empty or invalid values
+            print(f"Canvas size error: {e}")  # Debug
             pass
     
     def update_layer_frame_start(self, *args):
