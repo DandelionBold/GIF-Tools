@@ -822,9 +822,9 @@ class GifToolsApp:
         
         dialog = tk.Toplevel(self.root)
         dialog.title("Add Text to GIF")
-        dialog.geometry("600x500")
+        dialog.geometry("1200x800")
         dialog.resizable(True, True)
-        dialog.minsize(500, 400)
+        dialog.minsize(800, 600)
         
         # Center the dialog
         dialog.transient(self.root)
@@ -832,7 +832,7 @@ class GifToolsApp:
         
         # Create add text panel
         add_text_panel = AddTextPanel(dialog, self.process_tool)
-        add_text_panel.frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        add_text_panel.get_widget().pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         
         # Auto-load the current GIF
         if self.current_file:

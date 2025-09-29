@@ -300,7 +300,7 @@ class AddTextPanel:
     def setup_preview(self):
         """Setup the preview panel with media player controls."""
         # Preview canvas
-        self.preview_canvas = tk.Canvas(self.preview_frame, width=400, height=300, bg="black")
+        self.preview_canvas = tk.Canvas(self.preview_frame, width=600, height=500, bg="black")
         self.preview_canvas.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
         self.preview_canvas.bind("<Button-1>", self.on_canvas_click)
         
@@ -679,8 +679,8 @@ class AddTextPanel:
         """Auto-load GIF file for text addition."""
         try:
             self.current_file = file_path
-            # Schedule the loading after the UI is fully initialized
-            self.parent.after(100, lambda: self.load_gif_preview(file_path))
+            # Load immediately
+            self.load_gif_preview(file_path)
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load GIF: {e}")
     
