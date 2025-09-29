@@ -373,7 +373,9 @@ class AddTextPanel:
         """Open color picker for text color."""
         color = colorchooser.askcolor(title="Choose Text Color", color=self.text_color)[1]
         if color:
-            self.text_color = tuple(int(c) for c in color[1:].split(','))
+            # Convert hex color to RGB tuple
+            hex_color = color.lstrip('#')
+            self.text_color = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
             self.text_color_preview.config(bg=color)
             self.update_preview()
     
@@ -381,7 +383,9 @@ class AddTextPanel:
         """Open color picker for background color."""
         color = colorchooser.askcolor(title="Choose Background Color", color=self.bg_color)[1]
         if color:
-            self.bg_color = tuple(int(c) for c in color[1:].split(','))
+            # Convert hex color to RGB tuple
+            hex_color = color.lstrip('#')
+            self.bg_color = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
             self.bg_color_preview.config(bg=color)
             self.update_preview()
     
@@ -389,7 +393,9 @@ class AddTextPanel:
         """Open color picker for stroke color."""
         color = colorchooser.askcolor(title="Choose Stroke Color", color=self.stroke_color)[1]
         if color:
-            self.stroke_color = tuple(int(c) for c in color[1:].split(','))
+            # Convert hex color to RGB tuple
+            hex_color = color.lstrip('#')
+            self.stroke_color = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
             self.stroke_color_preview.config(bg=color)
             self.update_preview()
     
@@ -461,7 +467,6 @@ class AddTextPanel:
             return None
         
         try:
-            
             # Get current frame
             if self.preview_gif.is_animated:
                 frame = self.preview_frames[self.current_frame]
@@ -488,22 +493,43 @@ class AddTextPanel:
             except:
                 font_obj = ImageFont.load_default()
             
-            # Get text color with opacity
-            text_color = self.text_color + (int(self.text_opacity_var.get() * 255),)
+            # Calculate text bounds for alignment
+            bbox = draw.textbbox((0, 0), text, font=font_obj)
+            text_width = bbox[2] - bbox[0]
+            text_height = bbox[3] - bbox[1]
+            
+            # Adjust position based on alignment
+            if alignment == 'center':
+                position = (position[0] - text_width // 2, position[1])
+            elif alignment == 'right':
+                position = (position[0] - text_width, position[1])
+            
+            # Get colors with proper opacity
+            text_opacity = int(self.text_opacity_var.get() * 255)
+            text_color = self.text_color + (text_opacity,)
             
             # Draw background if enabled
             if self.bg_enabled_var.get():
-                bg_color = self.bg_color + (int(self.bg_opacity_var.get() * 255),)
-                # Calculate text bounds
-                bbox = draw.textbbox(position, text, font=font_obj)
-                draw.rectangle(bbox, fill=bg_color)
+                bg_opacity = int(self.bg_opacity_var.get() * 255)
+                bg_color = self.bg_color + (bg_opacity,)
+                
+                # Calculate background bounds
+                padding = 5
+                bg_bbox = (
+                    position[0] - padding,
+                    position[1] - padding,
+                    position[0] + text_width + padding,
+                    position[1] + text_height + padding
+                )
+                draw.rectangle(bg_bbox, fill=bg_color)
             
             # Draw stroke if enabled
             if self.stroke_enabled_var.get():
                 stroke_width = self.stroke_width_var.get()
-                stroke_color = self.stroke_color + (int(self.stroke_opacity_var.get() * 255),)
+                stroke_opacity = int(self.stroke_opacity_var.get() * 255)
+                stroke_color = self.stroke_color + (stroke_opacity,)
                 
-                # Draw stroke
+                # Draw stroke by drawing text multiple times with offset
                 for adj in range(-stroke_width, stroke_width + 1):
                     for adj2 in range(-stroke_width, stroke_width + 1):
                         if adj != 0 or adj2 != 0:
@@ -582,8 +608,18 @@ class AddTextPanel:
                 
                 # Move to next frame
                 self.current_frame = (self.current_frame + 1) % len(self.preview_frames)
-                self.parent.after(0, lambda: self.frame_var.set(str(self.current_frame)))
-                self.parent.after(0, lambda: self.frame_scale.set(self.current_frame))
+                
+                # Update UI elements safely
+                def update_ui():
+                    try:
+                        if hasattr(self, 'frame_var') and self.frame_var:
+                            self.frame_var.set(str(self.current_frame))
+                        if hasattr(self, 'frame_scale') and self.frame_scale:
+                            self.frame_scale.set(self.current_frame)
+                    except:
+                        pass
+                
+                self.parent.after(0, update_ui)
                 
                 # Wait based on speed
                 import time
