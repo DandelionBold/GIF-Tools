@@ -18,7 +18,7 @@ class FreePlayPanel:
         
         # GIF layers data
         self.gif_layers = []  # List of {'file_path': str, 'position': (x, y), 'frames': list}
-        self.current_gif = None
+        self.selected_layer_index = -1  # Index of currently selected layer
         self.preview_frames = []
         self.current_frame = 0
         self.is_playing = False
@@ -49,23 +49,23 @@ class FreePlayPanel:
         """Set up control widgets."""
         row = 0
         
-        # Load GIF button
+        # Load GIFs button
         ttk.Button(
             self.controls_frame, 
-            text="Load GIF", 
-            command=self.load_gif
+            text="Load GIFs", 
+            command=self.load_gifs
         ).grid(row=row, column=0, columnspan=2, pady=5, sticky=tk.W+tk.E)
         row += 1
         
-        # Current GIF info
-        self.current_gif_label = ttk.Label(self.controls_frame, text="No GIF loaded")
-        self.current_gif_label.grid(row=row, column=0, columnspan=2, pady=5, sticky=tk.W)
+        # Selected GIFs info
+        self.selected_gifs_label = ttk.Label(self.controls_frame, text="No GIFs selected")
+        self.selected_gifs_label.grid(row=row, column=0, columnspan=2, pady=5, sticky=tk.W)
         row += 1
         
         # Instructions
         instructions = ttk.Label(
             self.controls_frame, 
-            text="Instructions:\n1. Load a GIF\n2. Click on preview to place it\n3. Load more GIFs to layer\n4. Click 'Create Combined GIF'",
+            text="Instructions:\n1. Load multiple GIFs\n2. Select a layer from the list\n3. Click on preview to place/move it\n4. Reorder layers as needed\n5. Click 'Create Combined GIF'",
             wraplength=200
         )
         instructions.grid(row=row, column=0, columnspan=2, pady=10, sticky=tk.W)
@@ -91,8 +91,19 @@ class FreePlayPanel:
         layer_controls = ttk.Frame(self.controls_frame)
         layer_controls.grid(row=row, column=0, columnspan=2, pady=5, sticky=tk.W+tk.E)
         
-        ttk.Button(layer_controls, text="Remove", command=self.remove_selected_layer).pack(side=tk.LEFT, padx=(0, 5))
-        ttk.Button(layer_controls, text="Clear All", command=self.clear_all_layers).pack(side=tk.LEFT)
+        # First row of controls
+        controls_row1 = ttk.Frame(layer_controls)
+        controls_row1.pack(fill=tk.X, pady=(0, 5))
+        
+        ttk.Button(controls_row1, text="Move Up", command=self.move_layer_up).pack(side=tk.LEFT, padx=(0, 5))
+        ttk.Button(controls_row1, text="Move Down", command=self.move_layer_down).pack(side=tk.LEFT, padx=(0, 5))
+        ttk.Button(controls_row1, text="Remove", command=self.remove_selected_layer).pack(side=tk.LEFT, padx=(0, 5))
+        
+        # Second row of controls
+        controls_row2 = ttk.Frame(layer_controls)
+        controls_row2.pack(fill=tk.X)
+        
+        ttk.Button(controls_row2, text="Clear All", command=self.clear_all_layers).pack(side=tk.LEFT)
         row += 1
         
         # Separator
@@ -154,10 +165,19 @@ class FreePlayPanel:
         # Instructions for canvas
         self.canvas_instructions = ttk.Label(
             self.preview_frame, 
-            text="Click on the canvas to place the current GIF",
+            text="Select a layer from the list, then click on canvas to place/move it",
             font=('Arial', 10, 'italic')
         )
         self.canvas_instructions.pack(pady=5)
+        
+        # Selected layer info
+        self.selected_layer_label = ttk.Label(
+            self.preview_frame, 
+            text="No layer selected",
+            font=('Arial', 9, 'bold'),
+            foreground='blue'
+        )
+        self.selected_layer_label.pack(pady=2)
         
         # Media controls
         controls_frame = ttk.Frame(self.preview_frame)
@@ -202,64 +222,61 @@ class FreePlayPanel:
         self.status_label = ttk.Label(self.preview_frame, text="No GIFs loaded")
         self.status_label.pack(pady=5)
     
-    def load_gif(self):
-        """Load a GIF file."""
-        file_path = filedialog.askopenfilename(
-            title="Select GIF File",
+    def load_gifs(self):
+        """Load multiple GIF files."""
+        file_paths = filedialog.askopenfilenames(
+            title="Select GIF Files",
             filetypes=[("GIF files", "*.gif"), ("All files", "*.*")]
         )
         
-        if not file_path:
+        if not file_paths:
             return
         
-        try:
-            # Load GIF
-            gif = Image.open(file_path)
-            
-            # Extract frames
-            frames = []
-            durations = []
-            
-            if gif.is_animated:
-                for frame_idx in range(gif.n_frames):
-                    gif.seek(frame_idx)
+        loaded_count = 0
+        for file_path in file_paths:
+            try:
+                # Load GIF
+                gif = Image.open(file_path)
+                
+                # Extract frames
+                frames = []
+                durations = []
+                
+                if gif.is_animated:
+                    for frame_idx in range(gif.n_frames):
+                        gif.seek(frame_idx)
+                        frames.append(gif.copy().convert('RGBA'))
+                        durations.append(gif.info.get('duration', 100))
+                else:
                     frames.append(gif.copy().convert('RGBA'))
-                    durations.append(gif.info.get('duration', 100))
-            else:
-                frames.append(gif.copy().convert('RGBA'))
-                durations.append(100)
-            
-            # Store current GIF data
-            self.current_gif = {
-                'file_path': file_path,
-                'frames': frames,
-                'durations': durations,
-                'is_animated': gif.is_animated
-            }
-            
+                    durations.append(100)
+                
+                # Add to layers (initially at position 0,0)
+                layer = {
+                    'file_path': file_path,
+                    'position': (0, 0),
+                    'frames': frames,
+                    'durations': durations,
+                    'is_animated': gif.is_animated
+                }
+                
+                self.gif_layers.append(layer)
+                loaded_count += 1
+                
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to load {file_path}: {e}")
+        
+        if loaded_count > 0:
             # Update UI
-            filename = os.path.basename(file_path)
-            self.current_gif_label.config(text=f"Loaded: {filename}")
-            self.preview_frames = frames
-            self.current_frame = 0
-            
-            # Update frame controls
-            self.frame_scale.config(to=len(frames) - 1)
-            self.frame_var.set("0")
-            
-            # Display first frame
+            self.update_layers_list()
+            self.update_selected_gifs_label()
             self.display_preview_frame()
-            
-            # Update status
-            self.status_label.config(text=f"Ready to place: {filename}")
-            
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to load GIF: {e}")
+            self.status_label.config(text=f"Loaded {loaded_count} GIF(s). Select a layer to place it.")
     
     def on_canvas_click(self, event):
-        """Handle canvas click to place GIF."""
-        if not self.current_gif:
-            messagebox.showwarning("No GIF", "Please load a GIF first.")
+        """Handle canvas click to place/move selected layer."""
+        if self.selected_layer_index == -1:
+            messagebox.showwarning("No Layer Selected", "Please select a layer from the list first.")
             return
         
         # Get click position
@@ -279,16 +296,8 @@ class FreePlayPanel:
         gif_x = int(x / scale)
         gif_y = int(y / scale)
         
-        # Add to layers
-        layer = {
-            'file_path': self.current_gif['file_path'],
-            'position': (gif_x, gif_y),
-            'frames': self.current_gif['frames'],
-            'durations': self.current_gif['durations'],
-            'is_animated': self.current_gif['is_animated']
-        }
-        
-        self.gif_layers.append(layer)
+        # Update selected layer position
+        self.gif_layers[self.selected_layer_index]['position'] = (gif_x, gif_y)
         
         # Update layers list
         self.update_layers_list()
@@ -297,8 +306,8 @@ class FreePlayPanel:
         self.display_preview_frame()
         
         # Update status
-        filename = os.path.basename(self.current_gif['file_path'])
-        self.status_label.config(text=f"Placed: {filename} at ({gif_x}, {gif_y})")
+        filename = os.path.basename(self.gif_layers[self.selected_layer_index]['file_path'])
+        self.status_label.config(text=f"Moved: {filename} to ({gif_x}, {gif_y})")
     
     def update_layers_list(self):
         """Update the layers listbox."""
@@ -313,25 +322,83 @@ class FreePlayPanel:
         """Handle layer selection."""
         selection = self.layers_listbox.curselection()
         if selection:
-            # Highlight selected layer in preview
+            self.selected_layer_index = selection[0]
+            self.update_selected_layer_label()
             self.display_preview_frame()
+        else:
+            self.selected_layer_index = -1
+            self.update_selected_layer_label()
+    
+    def move_layer_up(self):
+        """Move selected layer up in the list."""
+        if self.selected_layer_index > 0:
+            # Swap with previous layer
+            self.gif_layers[self.selected_layer_index], self.gif_layers[self.selected_layer_index - 1] = \
+                self.gif_layers[self.selected_layer_index - 1], self.gif_layers[self.selected_layer_index]
+            
+            # Update selected index
+            self.selected_layer_index -= 1
+            
+            # Update UI
+            self.update_layers_list()
+            self.layers_listbox.selection_clear(0, tk.END)
+            self.layers_listbox.selection_set(self.selected_layer_index)
+            self.display_preview_frame()
+            self.status_label.config(text="Layer moved up")
+    
+    def move_layer_down(self):
+        """Move selected layer down in the list."""
+        if self.selected_layer_index < len(self.gif_layers) - 1:
+            # Swap with next layer
+            self.gif_layers[self.selected_layer_index], self.gif_layers[self.selected_layer_index + 1] = \
+                self.gif_layers[self.selected_layer_index + 1], self.gif_layers[self.selected_layer_index]
+            
+            # Update selected index
+            self.selected_layer_index += 1
+            
+            # Update UI
+            self.update_layers_list()
+            self.layers_listbox.selection_clear(0, tk.END)
+            self.layers_listbox.selection_set(self.selected_layer_index)
+            self.display_preview_frame()
+            self.status_label.config(text="Layer moved down")
     
     def remove_selected_layer(self):
         """Remove selected layer."""
-        selection = self.layers_listbox.curselection()
-        if selection:
-            index = selection[0]
-            del self.gif_layers[index]
+        if self.selected_layer_index != -1:
+            del self.gif_layers[self.selected_layer_index]
+            self.selected_layer_index = -1
             self.update_layers_list()
+            self.update_selected_layer_label()
             self.display_preview_frame()
             self.status_label.config(text="Layer removed")
     
     def clear_all_layers(self):
         """Clear all layers."""
         self.gif_layers.clear()
+        self.selected_layer_index = -1
         self.update_layers_list()
+        self.update_selected_layer_label()
         self.display_preview_frame()
         self.status_label.config(text="All layers cleared")
+    
+    def update_selected_gifs_label(self):
+        """Update the selected GIFs label."""
+        count = len(self.gif_layers)
+        if count == 0:
+            self.selected_gifs_label.config(text="No GIFs selected")
+        else:
+            self.selected_gifs_label.config(text=f"{count} GIF(s) loaded")
+    
+    def update_selected_layer_label(self):
+        """Update the selected layer label."""
+        if self.selected_layer_index == -1:
+            self.selected_layer_label.config(text="No layer selected")
+        else:
+            layer = self.gif_layers[self.selected_layer_index]
+            filename = os.path.basename(layer['file_path'])
+            x, y = layer['position']
+            self.selected_layer_label.config(text=f"Selected: {filename} at ({x}, {y})")
     
     def update_quality_label(self, value):
         """Update quality label."""
@@ -339,42 +406,43 @@ class FreePlayPanel:
     
     def display_preview_frame(self):
         """Display the current preview frame with all layers."""
-        if not self.preview_frames and not self.gif_layers:
+        if not self.gif_layers:
             return
         
         try:
-            # Create composite frame
-            if self.gif_layers:
-                # Use the first layer as base
-                base_layer = self.gif_layers[0]
-                if base_layer['is_animated']:
-                    base_frame = base_layer['frames'][self.current_frame % len(base_layer['frames'])]
-                else:
-                    base_frame = base_layer['frames'][0]
-                
-                # Create composite
-                composite = base_frame.copy()
-                
-                # Add other layers
-                for layer in self.gif_layers[1:]:
-                    if layer['is_animated']:
-                        layer_frame = layer['frames'][self.current_frame % len(layer['frames'])]
-                    else:
-                        layer_frame = layer['frames'][0]
-                    
-                    # Paste layer at its position
+            # Find the maximum dimensions needed
+            max_width = 0
+            max_height = 0
+            
+            for layer in self.gif_layers:
+                for frame in layer['frames']:
                     x, y = layer['position']
-                    if layer_frame.mode == 'RGBA':
-                        composite.paste(layer_frame, (x, y), layer_frame)
-                    else:
-                        composite.paste(layer_frame, (x, y))
-                
-                # Display composite
-                self.display_frame_on_canvas(composite)
+                    max_width = max(max_width, x + frame.width)
+                    max_height = max(max_height, y + frame.height)
+            
+            # Create base frame
+            if max_width > 0 and max_height > 0:
+                base_frame = Image.new('RGBA', (max_width, max_height), (0, 0, 0, 0))
             else:
-                # Display current GIF frame
-                frame = self.preview_frames[self.current_frame]
-                self.display_frame_on_canvas(frame)
+                # Fallback to a default size
+                base_frame = Image.new('RGBA', (600, 400), (0, 0, 0, 0))
+            
+            # Add each layer in order
+            for layer in self.gif_layers:
+                if layer['is_animated']:
+                    layer_frame = layer['frames'][self.current_frame % len(layer['frames'])]
+                else:
+                    layer_frame = layer['frames'][0]
+                
+                # Paste layer at its position
+                x, y = layer['position']
+                if layer_frame.mode == 'RGBA':
+                    base_frame.paste(layer_frame, (x, y), layer_frame)
+                else:
+                    base_frame.paste(layer_frame, (x, y))
+            
+            # Display composite
+            self.display_frame_on_canvas(base_frame)
                 
         except Exception as e:
             print(f"Display error: {e}")
@@ -418,7 +486,7 @@ class FreePlayPanel:
     
     def toggle_play(self):
         """Toggle play/pause animation."""
-        if not self.preview_frames and not self.gif_layers:
+        if not self.gif_layers:
             return
         
         self.is_playing = not self.is_playing
@@ -431,14 +499,16 @@ class FreePlayPanel:
     
     def start_play_loop(self):
         """Start the play loop."""
-        if self.is_playing:
+        if self.is_playing and self.gif_layers:
             self.display_preview_frame()
-            self.current_frame = (self.current_frame + 1) % max(len(self.preview_frames), 1)
+            
+            # Find the maximum number of frames
+            max_frames = max(len(layer['frames']) for layer in self.gif_layers) if self.gif_layers else 1
+            self.current_frame = (self.current_frame + 1) % max_frames
             
             # Update frame controls
-            if self.preview_frames:
-                self.frame_var.set(str(self.current_frame))
-                self.frame_scale.set(self.current_frame)
+            self.frame_var.set(str(self.current_frame))
+            self.frame_scale.set(self.current_frame)
             
             # Schedule next frame
             delay = int(1000 / (self.speed_var.get() * 10))
@@ -448,7 +518,8 @@ class FreePlayPanel:
         """Handle frame number change."""
         try:
             frame_num = int(self.frame_var.get())
-            if 0 <= frame_num < max(len(self.preview_frames), 1):
+            max_frames = max(len(layer['frames']) for layer in self.gif_layers) if self.gif_layers else 1
+            if 0 <= frame_num < max_frames:
                 self.current_frame = frame_num
                 self.frame_scale.set(frame_num)
                 self.display_preview_frame()
@@ -459,7 +530,8 @@ class FreePlayPanel:
         """Handle frame scale change."""
         try:
             frame_num = int(float(value))
-            if 0 <= frame_num < max(len(self.preview_frames), 1):
+            max_frames = max(len(layer['frames']) for layer in self.gif_layers) if self.gif_layers else 1
+            if 0 <= frame_num < max_frames:
                 self.current_frame = frame_num
                 self.frame_var.set(str(frame_num))
                 self.display_preview_frame()
