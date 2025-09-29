@@ -580,11 +580,19 @@ class FreePlayPanel:
             self.canvas_width = new_width
             self.canvas_height = new_height
             
-            # Resize the preview canvas widget
-            self.preview_canvas.config(width=new_width, height=new_height)
+            # Destroy and recreate the canvas with new size
+            self.preview_canvas.destroy()
             
-            # Force update the canvas
-            self.preview_canvas.update()
+            # Create new canvas with correct size
+            self.preview_canvas = tk.Canvas(
+                self.preview_frame,
+                width=new_width,
+                height=new_height,
+                bg='black',
+                highlightthickness=0
+            )
+            self.preview_canvas.pack(pady=10, fill=tk.BOTH, expand=True)
+            self.preview_canvas.bind('<Button-1>', self.on_canvas_click)
             
             # Update the preview frame
             self.display_preview_frame()
