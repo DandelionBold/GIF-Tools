@@ -322,11 +322,13 @@ class ImageProcessor:
                 font_family: str = DEFAULT_FONT['family'],
                 font_size: int = DEFAULT_FONT['size'],
                 color: Union[str, Tuple[int, int, int], Tuple[int, int, int, int]] = DEFAULT_FONT['color'],
+                text_opacity: float = 1.0,
                 alignment: str = 'left',
                 background_color: Optional[Union[str, Tuple[int, int, int], Tuple[int, int, int, int]]] = None,
                 background_opacity: float = 0.0,
                 stroke_width: int = 0,
-                stroke_color: Union[str, Tuple[int, int, int], Tuple[int, int, int, int]] = (0, 0, 0)) -> Image.Image:
+                stroke_color: Union[str, Tuple[int, int, int], Tuple[int, int, int, int]] = (0, 0, 0),
+                stroke_opacity: float = 1.0) -> Image.Image:
         """
         Add text to image.
         
@@ -337,11 +339,13 @@ class ImageProcessor:
             font_family: Font family name
             font_size: Font size
             color: Text color
+            text_opacity: Text opacity (0.0-1.0)
             alignment: Text alignment
             background_color: Background color for text
             background_opacity: Background opacity (0.0-1.0)
             stroke_width: Text stroke width
             stroke_color: Text stroke color
+            stroke_opacity: Stroke opacity (0.0-1.0)
             
         Returns:
             Image with text added
@@ -406,15 +410,22 @@ class ImageProcessor:
             result = Image.alpha_composite(result.convert('RGBA'), bg_image).convert(result.mode)
             draw = ImageDraw.Draw(result)
         
+        # Apply opacity to colors
+        text_alpha = int(255 * text_opacity)
+        text_color_with_alpha = color[:3] + (text_alpha,)
+        
+        stroke_alpha = int(255 * stroke_opacity)
+        stroke_color_with_alpha = stroke_color[:3] + (stroke_alpha,)
+        
         # Draw text stroke if specified
         if stroke_width > 0:
             for dx in range(-stroke_width, stroke_width + 1):
                 for dy in range(-stroke_width, stroke_width + 1):
                     if dx != 0 or dy != 0:
-                        draw.text((x + dx, y + dy), text, font=font, fill=stroke_color)
+                        draw.text((x + dx, y + dy), text, font=font, fill=stroke_color_with_alpha)
         
         # Draw text
-        draw.text((x, y), text, font=font, fill=color)
+        draw.text((x, y), text, font=font, fill=text_color_with_alpha)
         
         return result
     

@@ -13,7 +13,7 @@ import threading
 from gif_tools.core.merge import merge_gifs
 
 
-class MergePanel:
+class MergePanel(ttk.Frame):
     """Panel for GIF merge operations."""
     
     def __init__(self, parent: tk.Widget, on_process: Optional[Callable] = None):
@@ -24,21 +24,18 @@ class MergePanel:
             parent: Parent widget
             on_process: Callback function for processing
         """
-        self.parent = parent
+        super().__init__(parent)
         self.on_process = on_process
         self.file_list: List[str] = []
         self.setup_ui()
     
     def setup_ui(self):
         """Create the merge panel UI."""
-        # Main frame
-        self.frame = ttk.LabelFrame(self.parent, text="Merge GIFs", padding="10")
-        
         # File list
-        ttk.Label(self.frame, text="Files to Merge:").grid(row=0, column=0, sticky=tk.W, pady=5)
+        ttk.Label(self, text="Files to Merge:").grid(row=0, column=0, sticky=tk.W, pady=5)
         
         # File listbox with scrollbar
-        list_frame = ttk.Frame(self.frame)
+        list_frame = ttk.Frame(self)
         list_frame.grid(row=1, column=0, columnspan=3, sticky=(tk.W, tk.E, tk.N, tk.S), pady=5)
         
         self.file_listbox = tk.Listbox(list_frame, height=6, width=50)
@@ -49,7 +46,7 @@ class MergePanel:
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
         # File controls
-        file_controls = ttk.Frame(self.frame)
+        file_controls = ttk.Frame(self)
         file_controls.grid(row=2, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=5)
         
         ttk.Button(file_controls, text="Add Files", command=self.add_files).pack(side=tk.LEFT, padx=(0, 5))
@@ -57,18 +54,18 @@ class MergePanel:
         ttk.Button(file_controls, text="Clear All", command=self.clear_all).pack(side=tk.LEFT, padx=(0, 5))
         
         # Move controls
-        move_controls = ttk.Frame(self.frame)
+        move_controls = ttk.Frame(self)
         move_controls.grid(row=3, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=5)
         
         ttk.Button(move_controls, text="Move Up", command=self.move_up).pack(side=tk.LEFT, padx=(0, 5))
         ttk.Button(move_controls, text="Move Down", command=self.move_down).pack(side=tk.LEFT, padx=(0, 5))
         
         # Merge options
-        ttk.Label(self.frame, text="Merge Options:").grid(row=4, column=0, sticky=tk.W, pady=5)
+        ttk.Label(self, text="Merge Options:").grid(row=4, column=0, sticky=tk.W, pady=5)
         
         # Merge mode
         self.merge_mode_var = tk.StringVar(value="sequential")
-        mode_frame = ttk.Frame(self.frame)
+        mode_frame = ttk.Frame(self)
         mode_frame.grid(row=4, column=1, columnspan=2, sticky=(tk.W, tk.E), pady=5)
         
         mode_options = [
@@ -87,22 +84,18 @@ class MergePanel:
             btn.pack(side=tk.LEFT, padx=(0, 10))
         
         # Timing controls
-        timing_frame = ttk.LabelFrame(self.frame, text="Timing", padding="5")
+        timing_frame = ttk.LabelFrame(self, text="Timing", padding="5")
         timing_frame.grid(row=5, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=5)
         
         ttk.Label(timing_frame, text="Frame Duration (ms):").grid(row=0, column=0, sticky=tk.W, pady=2)
         self.duration_var = tk.StringVar(value="100")
         ttk.Entry(timing_frame, textvariable=self.duration_var, width=10).grid(row=0, column=1, sticky=tk.W, padx=(5, 0), pady=2)
         
-        ttk.Label(timing_frame, text="Transition Duration (ms):").grid(row=1, column=0, sticky=tk.W, pady=2)
-        self.transition_var = tk.StringVar(value="0")
-        ttk.Entry(timing_frame, textvariable=self.transition_var, width=10).grid(row=1, column=1, sticky=tk.W, padx=(5, 0), pady=2)
-        
         # Loop settings
-        ttk.Label(self.frame, text="Loop Count:").grid(row=6, column=0, sticky=tk.W, pady=5)
+        ttk.Label(self, text="Loop Count:").grid(row=6, column=0, sticky=tk.W, pady=5)
         self.loop_var = tk.StringVar(value="0")
         loop_combo = ttk.Combobox(
-            self.frame, 
+            self, 
             textvariable=self.loop_var,
             values=["0 (infinite)", "1", "2", "3", "5", "10"],
             state="readonly",
@@ -111,10 +104,10 @@ class MergePanel:
         loop_combo.grid(row=6, column=1, sticky=tk.W, padx=(5, 0), pady=5)
         
         # Quality controls
-        ttk.Label(self.frame, text="Quality:").grid(row=7, column=0, sticky=tk.W, pady=5)
+        ttk.Label(self, text="Quality:").grid(row=7, column=0, sticky=tk.W, pady=5)
         self.quality_var = tk.IntVar(value=85)
         quality_scale = ttk.Scale(
-            self.frame, 
+            self, 
             from_=1, 
             to=100, 
             variable=self.quality_var,
@@ -124,7 +117,7 @@ class MergePanel:
         quality_scale.grid(row=7, column=1, columnspan=2, sticky=tk.W, padx=(5, 0), pady=5)
         
         # Quality value label
-        self.quality_label = ttk.Label(self.frame, text="85")
+        self.quality_label = ttk.Label(self, text="85")
         self.quality_label.grid(row=7, column=3, sticky=tk.W, padx=(5, 0), pady=5)
         
         # Update quality label when scale changes
@@ -132,7 +125,7 @@ class MergePanel:
         
         # Process button
         self.process_btn = ttk.Button(
-            self.frame, 
+            self, 
             text="Merge GIFs", 
             command=self.process_merge
         )
@@ -141,15 +134,15 @@ class MergePanel:
         # Progress bar
         self.progress_var = tk.DoubleVar()
         self.progress_bar = ttk.Progressbar(
-            self.frame, 
+            self, 
             variable=self.progress_var,
             mode='indeterminate'
         )
         self.progress_bar.grid(row=9, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=5)
         
         # Configure grid weights
-        self.frame.grid_columnconfigure(1, weight=1)
-        self.frame.grid_rowconfigure(1, weight=1)
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_rowconfigure(1, weight=1)
     
     def add_files(self):
         """Add files to the merge list."""
@@ -216,7 +209,6 @@ class MergePanel:
         """Get current merge settings."""
         try:
             duration = int(self.duration_var.get())
-            transition = int(self.transition_var.get())
             quality = self.quality_var.get()
             
             # Parse loop count
@@ -232,7 +224,6 @@ class MergePanel:
         return {
             'mode': self.merge_mode_var.get(),
             'duration': duration,
-            'transition': transition,
             'loop_count': loop_count,
             'quality': quality,
             'file_list': self.file_list.copy()
@@ -248,7 +239,8 @@ class MergePanel:
             settings = self.get_settings()
             
             if self.on_process:
-                self.on_process('merge', settings)
+                # For merge, we don't need a single input file, so pass None
+                self.on_process('merge', settings, None)
             else:
                 messagebox.showinfo("Merge", f"Merge settings: {settings}")
                 
@@ -267,6 +259,3 @@ class MergePanel:
         self.progress_bar.stop()
         self.process_btn.config(state=tk.NORMAL)
     
-    def get_widget(self) -> tk.Widget:
-        """Get the main widget for this panel."""
-        return self.frame
