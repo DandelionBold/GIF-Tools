@@ -87,6 +87,7 @@ class AddTextPanel:
             width=20
         )
         font_combo.grid(row=row, column=1, sticky=tk.W, padx=(5, 0), pady=5)
+        font_combo.bind('<<ComboboxSelected>>', self.on_font_change)
         row += 1
         
         # Font size
@@ -140,7 +141,7 @@ class AddTextPanel:
         
         # Alignment
         ttk.Label(self.controls_frame, text="Alignment:").grid(row=row, column=0, sticky=tk.W, pady=5)
-        self.alignment_var = tk.StringVar(value="left")
+        self.alignment_var = tk.StringVar(value="center")
         self.alignment_var.trace('w', self.update_preview)
         align_combo = ttk.Combobox(
             self.controls_frame, 
@@ -328,7 +329,7 @@ class AddTextPanel:
         # Speed control
         ttk.Label(controls_frame, text="Speed:").pack(side=tk.LEFT, padx=(10, 5))
         self.speed_var = tk.DoubleVar(value=1.0)
-        speed_scale = ttk.Scale(controls_frame, from_=0.1, to=3.0, variable=self.speed_var, 
+        speed_scale = ttk.Scale(controls_frame, from_=0.1, to=10.0, variable=self.speed_var, 
                               orient=tk.HORIZONTAL, length=100)
         speed_scale.pack(side=tk.LEFT, padx=(0, 5))
         
@@ -368,6 +369,10 @@ class AddTextPanel:
     def on_click_position(self, event):
         """Handle click on position label."""
         self.click_pos_var.set("Click on preview to position")
+    
+    def on_font_change(self, event):
+        """Handle font family change."""
+        self.update_preview()
     
     def choose_text_color(self):
         """Open color picker for text color."""

@@ -602,7 +602,7 @@ class GifToolsApp:
             elif tool_name == 'add_text':
                 # Add text to GIF
                 return add_text_to_gif(
-                    input_path=input_file_path,
+                    input_path=input_path,
                     output_path=output_path,
                     text=settings.get('text', ''),
                     position=settings.get('position', (10, 10)),
@@ -610,7 +610,7 @@ class GifToolsApp:
                     font_size=settings.get('font_size', 24),
                     color=settings.get('color', (255, 255, 255)),
                     text_opacity=settings.get('text_opacity', 1.0),
-                    alignment=settings.get('alignment', 'left'),
+                    alignment=settings.get('alignment', 'center'),
                     background_color=settings.get('background_color'),
                     background_opacity=settings.get('background_opacity', 0.0),
                     stroke_width=settings.get('stroke_width', 0),
