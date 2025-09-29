@@ -31,6 +31,16 @@ def layer_gifs_free_play(
     if not gif_layers:
         raise ValueError("No GIF layers provided")
     
+    # Debug: Check data types
+    print(f"Debug: gif_layers type: {type(gif_layers)}")
+    print(f"Debug: gif_layers length: {len(gif_layers)}")
+    for i, layer in enumerate(gif_layers):
+        print(f"Debug: Layer {i} type: {type(layer)}")
+        if isinstance(layer, dict):
+            print(f"Debug: Layer {i} keys: {list(layer.keys())}")
+        else:
+            print(f"Debug: Layer {i} value: {layer}")
+    
     # Convert to Path
     output_path = Path(output_path)
     
