@@ -174,7 +174,6 @@ class AddTextPanel:
         self.bg_color_button.grid(row=row, column=1, sticky=tk.W, padx=(5, 0), pady=5)
         self.bg_color_preview = tk.Frame(self.controls_frame, width=30, height=20, bg="black")
         self.bg_color_preview.grid(row=row, column=2, sticky=tk.W, padx=(5, 0), pady=5)
-        self.bg_color_preview.config(state=tk.DISABLED)
         row += 1
         
         # Background opacity
@@ -239,7 +238,6 @@ class AddTextPanel:
         self.stroke_color_button.grid(row=row, column=1, sticky=tk.W, padx=(5, 0), pady=5)
         self.stroke_color_preview = tk.Frame(self.controls_frame, width=30, height=20, bg="black")
         self.stroke_color_preview.grid(row=row, column=2, sticky=tk.W, padx=(5, 0), pady=5)
-        self.stroke_color_preview.config(state=tk.DISABLED)
         row += 1
         
         # Stroke opacity
@@ -398,11 +396,9 @@ class AddTextPanel:
         """Toggle background controls."""
         if self.bg_enabled_var.get():
             self.bg_color_button.config(state=tk.NORMAL)
-            self.bg_color_preview.config(state=tk.NORMAL)
             self.bg_opacity_scale.config(state=tk.NORMAL)
         else:
             self.bg_color_button.config(state=tk.DISABLED)
-            self.bg_color_preview.config(state=tk.DISABLED)
             self.bg_opacity_scale.config(state=tk.DISABLED)
         self.update_preview()
     
@@ -411,12 +407,10 @@ class AddTextPanel:
         if self.stroke_enabled_var.get():
             self.stroke_width_scale.config(state=tk.NORMAL)
             self.stroke_color_button.config(state=tk.NORMAL)
-            self.stroke_color_preview.config(state=tk.NORMAL)
             self.stroke_opacity_scale.config(state=tk.NORMAL)
         else:
             self.stroke_width_scale.config(state=tk.DISABLED)
             self.stroke_color_button.config(state=tk.DISABLED)
-            self.stroke_color_preview.config(state=tk.DISABLED)
             self.stroke_opacity_scale.config(state=tk.DISABLED)
         self.update_preview()
     
@@ -685,7 +679,8 @@ class AddTextPanel:
         """Auto-load GIF file for text addition."""
         try:
             self.current_file = file_path
-            self.load_gif_preview(file_path)
+            # Schedule the loading after the UI is fully initialized
+            self.parent.after(100, lambda: self.load_gif_preview(file_path))
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load GIF: {e}")
     
@@ -720,7 +715,10 @@ class AddTextPanel:
             self.text_position = (10, 10)
             self.click_pos_var.set("Position: (10, 10)")
             
-            # Display first frame
+            # Display first frame without text first
+            self.display_preview_frame(self.preview_frames[0])
+            
+            # Then update with text
             self.update_preview()
             
         except Exception as e:
