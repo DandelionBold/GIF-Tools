@@ -407,11 +407,16 @@ class GifToolsApp:
     
     def process_tool(self, tool_name: str, settings: dict, input_file: Optional[str] = None):
         """Process a tool operation."""
-        # Special handling for merge tool - it doesn't need a main file loaded
+        # Special handling for tools that don't need a main file loaded
         if tool_name == 'merge':
             # For merge tool, check if files are provided in settings
             if not settings.get('file_list'):
                 messagebox.showwarning("Warning", "Please add files to merge!")
+                return
+        elif tool_name == 'free_play':
+            # For free_play tool, check if layers are provided in settings
+            if not settings.get('gif_layers'):
+                messagebox.showwarning("Warning", "Please load GIFs to layer!")
                 return
         else:
             # For other tools, check if a file is loaded
@@ -437,6 +442,10 @@ class GifToolsApp:
             # For merge tool, create a generic output filename
             output_filename = f"merged_{tool_name}.gif"
             output_path = output_dir / output_filename
+        elif tool_name == 'free_play':
+            # For free_play tool, create a generic output filename
+            output_filename = f"layered_{tool_name}.gif"
+            output_path = output_dir / output_filename
         else:
             # For other tools, use the input file name
             input_file_path = Path(input_path)
@@ -451,8 +460,8 @@ class GifToolsApp:
                 output_path = output_dir / output_filename
         
         # Add to processing queue
-        if tool_name == 'merge':
-            # For merge tool, we don't have a single input path
+        if tool_name in ['merge', 'free_play']:
+            # For merge and free_play tools, we don't have a single input path
             task = {
                 'function': self._execute_tool,
                 'args': (tool_name, None, str(output_path), settings),
