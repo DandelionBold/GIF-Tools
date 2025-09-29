@@ -80,11 +80,9 @@ def layer_gifs_free_play(
             x, y = layer['position']
             base_frame.paste(layer_frame, (x, y), layer_frame)
         
-        # Convert to RGB for GIF output (GIF doesn't support RGBA)
-        rgb_frame = Image.new('RGB', (canvas_width, canvas_height), (0, 0, 0))
-        rgb_frame.paste(base_frame, mask=base_frame.split()[-1])  # Use alpha channel as mask
-        
-        output_frames.append(rgb_frame)
+        # Keep transparency for GIF output
+        # Use RGBA mode and let PIL handle transparency
+        output_frames.append(base_frame)
     
     # Use consistent duration for all frames
     consistent_duration = 100  # 100ms per frame (10 FPS)
@@ -92,10 +90,17 @@ def layer_gifs_free_play(
     
     # Save combined GIF
     if len(output_frames) == 1:
-        # Single frame - save as static image
-        output_frames[0].save(output_path, 'GIF', quality=quality, optimize=True)
+        # Single frame - save as static image with transparency
+        output_frames[0].save(
+            output_path, 
+            'GIF', 
+            quality=quality, 
+            optimize=True,
+            transparency=0,
+            disposal=2
+        )
     else:
-        # Multiple frames - save as animated GIF
+        # Multiple frames - save as animated GIF with transparency
         # Use consistent duration for all frames to prevent glitching
         consistent_duration = 100  # 100ms per frame (10 FPS)
         
@@ -107,7 +112,7 @@ def layer_gifs_free_play(
             duration=[consistent_duration] * len(output_frames),
             loop=0,
             disposal=2,  # Clear to background
-            transparency=0,
+            transparency=0,  # Use color index 0 as transparent
             optimize=False  # Disable optimization to prevent glitching
         )
     
