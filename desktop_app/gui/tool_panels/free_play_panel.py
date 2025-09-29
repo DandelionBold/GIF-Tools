@@ -826,10 +826,22 @@ class FreePlayPanel:
             'quality': self.quality_var.get()
         }
         
-        # Process
+        # Process directly (avoid serialization issues with PIL Image objects)
         try:
-            self.on_process('free_play', output_path, settings)
-            self.status_label.config(text="Combined GIF created successfully!")
+            from gif_tools.core.free_play import layer_gifs_free_play
+            
+            # Call the core function directly
+            result_path = layer_gifs_free_play(
+                gif_layers=self.gif_layers,
+                output_path=output_path,
+                canvas_width=self.canvas_width,
+                canvas_height=self.canvas_height,
+                quality=self.quality_var.get()
+            )
+            
+            self.status_label.config(text=f"Combined GIF created successfully: {result_path}")
+            messagebox.showinfo("Success", f"Combined GIF saved to:\n{result_path}")
+            
         except Exception as e:
             messagebox.showerror("Error", f"Failed to create combined GIF: {e}")
         finally:
