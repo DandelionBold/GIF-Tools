@@ -186,6 +186,128 @@ class GifMerger:
         
         return output_path
     
+    def merge_sequential(self,
+                        input_paths: List[Union[str, Path]],
+                        output_path: Union[str, Path],
+                        frame_duration: int = 100,
+                        loop_count: int = 0,
+                        quality: int = 85,
+                        progress_callback: Optional[callable] = None) -> Path:
+        """
+        Merge multiple GIFs sequentially (one after another).
+        
+        Args:
+            input_paths: List of input file paths
+            output_path: Path to output GIF file
+            frame_duration: Frame duration in milliseconds
+            loop_count: Loop count (0 for infinite)
+            quality: Output quality (1-100)
+            progress_callback: Optional callback for progress updates
+            
+        Returns:
+            Path to output GIF file
+        """
+        # Validate inputs
+        input_paths = validate_batch_input(input_paths)
+        output_path = validate_output_path(output_path)
+        
+        if progress_callback:
+            progress_callback(0, "Loading GIFs...")
+        
+        # Load all GIFs
+        loaded_files = []
+        total_frames = 0
+        
+        for i, path in enumerate(input_paths):
+            if progress_callback:
+                progress_callback(int((i / len(input_paths)) * 30), f"Loading {Path(path).name}...")
+            
+            try:
+                with Image.open(path) as img:
+                    frames = []
+                    durations = []
+                    
+                    if getattr(img, 'is_animated', False):
+                        # Animated GIF
+                        for frame_idx in range(getattr(img, 'n_frames', 1)):
+                            img.seek(frame_idx)
+                            frames.append(img.copy())
+                            durations.append(img.info.get('duration', frame_duration))
+                    else:
+                        # Static image
+                        frames.append(img.copy())
+                        durations.append(frame_duration)
+                    
+                    loaded_files.append({
+                        'frames': frames,
+                        'durations': durations,
+                        'path': path
+                    })
+                    total_frames += len(frames)
+                    
+            except Exception as e:
+                raise ValidationError(f"Failed to load {path}: {e}")
+        
+        if progress_callback:
+            progress_callback(30, "Merging frames sequentially...")
+        
+        # Merge all frames sequentially with centering
+        merged_frames = []
+        merged_durations = []
+        
+        # Find the maximum dimensions for centering
+        max_width = max(frame.width for file_data in loaded_files for frame in file_data['frames'])
+        max_height = max(frame.height for file_data in loaded_files for frame in file_data['frames'])
+        
+        for i, file_data in enumerate(loaded_files):
+            if progress_callback:
+                progress = 30 + int((i / len(loaded_files)) * 60)
+                progress_callback(progress, f"Processing {Path(file_data['path']).name}...")
+            
+            # Center each frame
+            for frame in file_data['frames']:
+                # Create centered frame
+                centered_frame = Image.new('RGBA', (max_width, max_height), (0, 0, 0, 0))
+                
+                # Calculate center position
+                x_offset = (max_width - frame.width) // 2
+                y_offset = (max_height - frame.height) // 2
+                
+                # Paste frame centered
+                if frame.mode == 'RGBA':
+                    centered_frame.paste(frame, (x_offset, y_offset), frame)
+                else:
+                    centered_frame.paste(frame, (x_offset, y_offset))
+                
+                merged_frames.append(centered_frame)
+            
+            merged_durations.extend(file_data['durations'])
+        
+        if progress_callback:
+            progress_callback(90, "Saving merged GIF...")
+        
+        # Create merged GIF
+        if merged_frames:
+            # Use the first frame as base
+            merged_gif = merged_frames[0].copy()
+            
+            # Save with proper disposal method to prevent transparency issues
+            merged_gif.save(
+                output_path,
+                save_all=True,
+                append_images=merged_frames[1:],
+                duration=merged_durations,
+                loop=loop_count,
+                disposal=2,  # Clear to background
+                transparency=0,
+                optimize=False  # Disable optimization to prevent transparency issues
+            )
+        
+        if progress_callback:
+            progress_callback(100, "Merge complete!")
+        
+        return output_path
+    
     def get_merge_info(self, input_paths: List[Union[str, Path]]) -> Dict[str, Any]:
         """
         Get merge information for input files.
@@ -353,7 +475,9 @@ class GifMerger:
                 append_images=output_frames[1:],
                 duration=output_durations,
                 loop=0,
-                optimize=True
+                disposal=2,  # Clear to background
+                transparency=0,
+                optimize=False  # Disable optimization to prevent transparency issues
             )
             
             # Load the saved GIF
@@ -570,11 +694,38 @@ def get_merge_info(input_paths: List[Union[str, Path]]) -> Dict[str, Any]:
 
 
 # Export all functions and classes
+def merge_gifs_sequential(input_paths: List[Union[str, Path]],
+                          output_path: Union[str, Path],
+                          frame_duration: int = 100,
+                          loop_count: int = 0,
+                          quality: int = 85,
+                          progress_callback: Optional[callable] = None) -> Path:
+    """
+    Merge multiple GIFs sequentially (one after another).
+    
+    Args:
+        input_paths: List of input file paths
+        output_path: Path to output GIF file
+        frame_duration: Frame duration in milliseconds
+        loop_count: Loop count (0 for infinite)
+        quality: Output quality (1-100)
+        progress_callback: Optional callback for progress updates
+        
+    Returns:
+        Path to output GIF file
+    """
+    merger = GifMerger()
+    return merger.merge_sequential(
+        input_paths, output_path, frame_duration, loop_count, quality, progress_callback
+    )
+
+
 __all__ = [
     'GifMerger',
     'merge_gifs',
     'merge_gifs_horizontal',
     'merge_gifs_vertical',
     'merge_gifs_with_timing',
+    'merge_gifs_sequential',
     'get_merge_info'
 ]
