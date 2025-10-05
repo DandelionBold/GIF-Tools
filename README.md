@@ -249,18 +249,19 @@ The Combine step restores original timing (per‑frame duration) and key GIF pro
 ```
 GIF-Tools/
 ├── gif_tools/                 # Core processing library
-│   ├── core/                  # Core processing modules
-│   ├── utils/                 # Utility modules
-│   └── tests/                 # Core library tests
-├── desktop_app/               # Desktop GUI application
-│   ├── gui/                   # GUI modules
-│   ├── assets/                # GUI assets
-│   └── tests/                 # Desktop app tests
-├── web_api/                   # Future web API
-├── docs/                      # Documentation
-├── requirements/              # Dependency management
-├── tests/                     # Integration tests
-└── scripts/                   # Utility scripts
+│   ├── core/                  # Algorithms: video_to_gif, split, merge, reverse, etc.
+│   └── utils/                 # Utilities: constants, image utils, validation
+├── desktop_app/               # Desktop GUI (Tkinter)
+│   ├── gui/
+│   │   └── tool_panels/       # Each tool panel (Resize, Split, Merge, Free Play, ...)
+│   ├── assets/                # Images/icons/fonts for the UI
+│   └── main.py                # App entry and dialogs
+├── docs/                      # Sphinx docs
+├── requirements/              # requirements/*.txt (desktop, base, dev, web)
+├── run_gui.py                 # Simple launcher (python run_gui.py)
+├── web_api/                   # Future: REST API scaffolding
+├── pyproject.toml             # Packaging and tooling config
+└── README.md                  # This file
 ```
 
 ## 🧪 Testing
