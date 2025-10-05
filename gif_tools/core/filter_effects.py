@@ -312,7 +312,9 @@ class GifFilterApplier:
                     append_images=frames[1:],
                     duration=durations,
                     loop=gif.info.get('loop', 0),
-                    optimize=True
+                    disposal=2,  # Clear to background
+                    transparency=0,
+                    optimize=False  # Disable optimization to prevent glitching
                 )
                 
                 # Load the saved GIF
@@ -375,7 +377,9 @@ class GifFilterApplier:
                     append_images=frames[1:],
                     duration=durations,
                     loop=gif.info.get('loop', 0),
-                    optimize=True
+                    disposal=2,  # Clear to background
+                    transparency=0,
+                    optimize=False  # Disable optimization to prevent glitching
                 )
                 
                 # Load the saved GIF
@@ -406,19 +410,8 @@ class GifFilterApplier:
             Filtered image
         """
         try:
-            if filter_name in FILTER_EFFECTS:
-                # Apply PIL filter
-                filter_method = getattr(ImageFilter, FILTER_EFFECTS[filter_name])
-                filtered_image = image.filter(filter_method)
-                
-                # Apply intensity if supported
-                if intensity != 1.0 and hasattr(filtered_image, 'enhance'):
-                    # Some filters support enhancement
-                    pass
-                
-                return filtered_image
-            else:
-                return image.copy()
+            # Use image processor to apply filter with intensity
+            return self.image_processor.apply_filter(image, filter_name, intensity)
         except Exception:
             return image.copy()
     
@@ -501,7 +494,9 @@ class GifFilterApplier:
                     append_images=frames[1:],
                     duration=durations,
                     loop=gif.info.get('loop', 0),
-                    optimize=True
+                    disposal=2,  # Clear to background
+                    transparency=0,
+                    optimize=False  # Disable optimization to prevent glitching
                 )
                 
                 # Load the saved GIF
@@ -620,7 +615,9 @@ class GifFilterApplier:
                     append_images=frames[1:],
                     duration=durations,
                     loop=gif.info.get('loop', 0),
-                    optimize=True
+                    disposal=2,  # Clear to background
+                    transparency=0,
+                    optimize=False  # Disable optimization to prevent glitching
                 )
                 
                 # Load the saved GIF

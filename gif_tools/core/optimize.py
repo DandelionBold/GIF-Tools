@@ -242,6 +242,8 @@ class GifOptimizer:
                     append_images=frames[1:],
                     duration=durations,
                     loop=gif.info.get('loop', 0),
+                    disposal=2,  # Clear to background
+                    transparency=0,
                     optimize=optimize,
                     method=method,
                     interlace=interlace

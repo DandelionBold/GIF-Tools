@@ -260,7 +260,9 @@ class GifLoopController:
                     append_images=frames[1:],
                     duration=durations,
                     loop=loop_count,
-                    optimize=True
+                    disposal=2,  # Clear to background
+                    transparency=0,
+                    optimize=False  # Disable optimization to prevent glitching
                 )
                 
                 # Load the saved GIF

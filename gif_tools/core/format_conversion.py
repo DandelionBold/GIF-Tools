@@ -56,7 +56,9 @@ class GifFormatConverter:
         output_path = validate_output_path(output_path)
         
         target_format = target_format.upper()
-        if target_format not in SUPPORTED_ANIMATED_FORMATS:
+        # Check if format is supported (with or without dot)
+        format_extensions = [fmt.upper() for fmt in SUPPORTED_ANIMATED_FORMATS]
+        if target_format not in format_extensions and f".{target_format}" not in format_extensions:
             raise ValidationError(f"Unsupported target format: {target_format}")
         
         if not 1 <= quality <= 100:

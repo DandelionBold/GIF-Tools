@@ -26,6 +26,7 @@ class ReversePanel:
         """
         self.parent = parent
         self.on_process = on_process
+        self.current_gif_path = None
         self.setup_ui()
     
     def setup_ui(self):
@@ -127,6 +128,10 @@ class ReversePanel:
         )
         self.progress_bar.grid(row=7, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=5)
         
+        # Status label
+        self.status_label = ttk.Label(self.frame, text="No GIF loaded", foreground="gray")
+        self.status_label.grid(row=8, column=0, columnspan=3, pady=5)
+        
         # Configure grid weights
         self.frame.grid_columnconfigure(1, weight=1)
         
@@ -155,11 +160,15 @@ class ReversePanel:
     
     def get_settings(self) -> dict:
         """Get current reverse settings."""
+        if not self.current_gif_path:
+            raise ValueError("No GIF file loaded")
+            
         try:
             mode = self.reverse_mode_var.get()
             quality = self.quality_var.get()
             
             settings = {
+                'input_path': self.current_gif_path,
                 'mode': mode,
                 'quality': quality,
                 'preserve_timing': self.preserve_timing_var.get()
@@ -214,3 +223,9 @@ class ReversePanel:
     def get_widget(self) -> tk.Widget:
         """Get the main widget for this panel."""
         return self.frame
+    
+    def auto_load_gif(self, gif_path: str):
+        """Auto-load GIF for reverse operations."""
+        # For now, just store the path - the actual loading will be done during processing
+        self.current_gif_path = gif_path
+        self.status_label.config(text=f"GIF loaded: {Path(gif_path).name}")

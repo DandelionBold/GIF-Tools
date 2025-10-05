@@ -26,6 +26,7 @@ class OptimizePanel:
         """
         self.parent = parent
         self.on_process = on_process
+        self.current_gif_path = None
         self.setup_ui()
     
     def setup_ui(self):
@@ -235,11 +236,15 @@ class OptimizePanel:
     
     def get_settings(self) -> dict:
         """Get current optimize settings."""
+        if not self.current_gif_path:
+            raise ValueError("No GIF file loaded")
+            
         try:
             level = self.optimization_level_var.get()
             quality = self.quality_var.get()
             
             settings = {
+                'input_path': self.current_gif_path,
                 'level': level,
                 'quality': quality,
                 'remove_duplicates': self.remove_duplicates_var.get(),
@@ -294,3 +299,10 @@ class OptimizePanel:
     def get_widget(self) -> tk.Widget:
         """Get the main widget for this panel."""
         return self.frame
+    
+    def auto_load_gif(self, gif_path: str):
+        """Auto-load GIF for optimization."""
+        # Store the path and update status if status_label exists
+        self.current_gif_path = gif_path
+        if hasattr(self, 'status_label'):
+            self.status_label.config(text=f"GIF loaded: {Path(gif_path).name}")

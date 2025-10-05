@@ -30,7 +30,7 @@ from gif_tools.core import (
     layer_gifs_free_play, rearrange_gif_frames, reverse_gif, optimize_gif, 
     change_gif_speed, apply_gif_filter,
     # Additional tools
-    extract_gif_frames, set_gif_loop_count, convert_gif_format, 
+    extract_gif_frames, set_gif_loop_count, 
     process_gif_batch,
     # Split modes
     split_gif_into_two, extract_gif_region, remove_gif_region
@@ -38,7 +38,14 @@ from gif_tools.core import (
 from desktop_app.gui.tool_panels import (
     RearrangePanel,
     VideoToGifPanel,
-    FreePlayPanel
+    FreePlayPanel,
+    ReversePanel,
+    OptimizePanel,
+    SpeedControlPanel,
+    FilterEffectsPanel,
+    ExtractFramesPanel,
+    CombineFramesPanel,
+    LoopSettingsPanel
 )
 from gif_tools.utils import validate_animated_file, get_supported_extensions
 
@@ -186,8 +193,10 @@ class GifToolsApp:
             ("Rearrange Frames", self.open_rearrange_dialog),
             ("Reverse", self.open_reverse_dialog),
             ("Optimize", self.open_optimize_dialog),
-            ("Speed Control", self.open_speed_dialog),
+            ("Speed Control", self.open_speed_control_dialog),
             ("Filter Effects", self.open_filter_dialog),
+            ("Extract Frames", self.open_extract_frames_dialog),
+            ("Loop Settings", self.open_loop_settings_dialog),
         ]
         
         for i, (name, command) in enumerate(tools):
@@ -207,9 +216,8 @@ class GifToolsApp:
         # Create tool buttons
         tools = [
             ("Extract Frames", self.open_extract_frames_dialog),
+            ("Combine Frames", self.open_combine_frames_dialog),
             ("Loop Settings", self.open_loop_settings_dialog),
-            ("Format Conversion", self.open_format_conversion_dialog),
-            ("Watermark", self.open_watermark_dialog),
         ]
         
         for i, (name, command) in enumerate(tools):
@@ -262,8 +270,11 @@ class GifToolsApp:
         advanced_menu.add_command(label="Rearrange Frames", command=self.open_rearrange_dialog)
         advanced_menu.add_command(label="Reverse", command=self.open_reverse_dialog)
         advanced_menu.add_command(label="Optimize", command=self.open_optimize_dialog)
-        advanced_menu.add_command(label="Speed Control", command=self.open_speed_dialog)
+        advanced_menu.add_command(label="Speed Control", command=self.open_speed_control_dialog)
         advanced_menu.add_command(label="Filter Effects", command=self.open_filter_dialog)
+        advanced_menu.add_command(label="Extract Frames", command=self.open_extract_frames_dialog)
+        advanced_menu.add_command(label="Combine Frames", command=self.open_combine_frames_dialog)
+        advanced_menu.add_command(label="Loop Settings", command=self.open_loop_settings_dialog)
         
         # Help menu
         help_menu = tk.Menu(menubar, tearoff=0)
@@ -418,6 +429,11 @@ class GifToolsApp:
             if not settings.get('gif_layers'):
                 messagebox.showwarning("Warning", "Please load GIFs to layer!")
                 return
+        elif tool_name == 'combine_frames':
+            # For combine_frames tool, check if CSV file is provided in settings
+            if not settings.get('csv_file'):
+                messagebox.showwarning("Warning", "Please select a CSV file!")
+                return
         else:
             # For other tools, check if a file is loaded
             if not self.current_file and not input_file:
@@ -446,6 +462,9 @@ class GifToolsApp:
             # For free_play tool, create a generic output filename
             output_filename = f"layered_{tool_name}.gif"
             output_path = output_dir / output_filename
+        elif tool_name == 'combine_frames':
+            # For combine_frames tool, use the output path from settings
+            output_path = Path(settings.get('output_path'))
         else:
             # For other tools, use the input file name
             input_file_path = Path(input_path)
@@ -460,8 +479,8 @@ class GifToolsApp:
                 output_path = output_dir / output_filename
         
         # Add to processing queue
-        if tool_name in ['merge', 'free_play']:
-            # For merge and free_play tools, we don't have a single input path
+        if tool_name in ['merge', 'free_play', 'combine_frames']:
+            # For merge, free_play, and combine_frames tools, we don't have a single input path
             task = {
                 'function': self._execute_tool,
                 'args': (tool_name, None, str(output_path), settings),
@@ -617,11 +636,318 @@ class GifToolsApp:
                     canvas_height=settings.get('canvas_height', 400),
                     quality=settings.get('quality', 85)
                 )
+            elif tool_name == 'reverse':
+                # Reverse GIF animation
+                return reverse_gif(
+                    input_path=settings.get('input_path', input_path),
+                    output_path=output_path,
+                    quality=settings.get('quality', 85)
+                )
+            elif tool_name == 'optimize':
+                # Optimize GIF for size reduction
+                return optimize_gif(
+                    input_path=settings.get('input_path', input_path),
+                    output_path=output_path,
+                    quality=settings.get('quality', 85),
+                    optimize=settings.get('optimize', True),
+                    colors=settings.get('max_colors', 256),
+                    dither=settings.get('dither', 'FLOYDSTEINBERG'),
+                    interlace=settings.get('interlace', False)
+                )
+            elif tool_name == 'speed_control':
+                # Change GIF playback speed
+                return change_gif_speed(
+                    input_path=settings.get('input_path', input_path),
+                    output_path=output_path,
+                    multiplier=settings.get('multiplier', 1.0),
+                    min_duration=0.001,  # Very low minimum (1ms)
+                    max_duration=10.0,   # High maximum (10s)
+                    quality=settings.get('quality', 85)
+                )
+            elif tool_name == 'filter_effects':
+                # Apply filter effects to GIF
+                if settings.get('mode') == 'multiple':
+                    # Apply multiple filters
+                    return apply_gif_filters(
+                        input_path=settings.get('input_path', input_path),
+                        output_path=output_path,
+                        filters=settings.get('filters', []),
+                        quality=settings.get('quality', 85)
+                    )
+                else:
+                    # Apply single filter
+                    return apply_gif_filter(
+                        input_path=settings.get('input_path', input_path),
+                        output_path=output_path,
+                        filter_name=settings.get('filter_name', 'blur'),
+                        intensity=settings.get('intensity', 1.0),
+                        quality=settings.get('quality', 85)
+                    )
+            elif tool_name == 'extract_frames':
+                # Extract frames from GIF
+                # Convert GUI settings to frame_indices
+                print(f"DEBUG: Original settings: {settings}")
+                frame_indices = self._convert_extract_settings_to_indices(settings)
+                print(f"DEBUG: Converted frame_indices: {frame_indices}")
+                # Extract frames
+                result = extract_gif_frames(
+                    input_path=settings.get('input_path', input_path),
+                    output_dir=settings.get('output_dir', 'frames_output'),
+                    frame_indices=frame_indices,
+                    output_format=settings.get('output_format', 'PNG'),
+                    quality=settings.get('quality', 95),
+                    prefix=settings.get('prefix', 'frame')
+                )
+                
+                # Export CSV if requested
+                if settings.get('csv_export', True):
+                    self._export_frame_csv(settings, result)
+                
+                return result
+            elif tool_name == 'loop_settings':
+                # Set loop count for GIF
+                return set_gif_loop_count(
+                    input_path=settings.get('input_path', input_path),
+                    output_path=output_path,
+                    loop_count=settings.get('loop_count', 0),
+                    quality=settings.get('quality', 85)
+                )
+            elif tool_name == 'combine_frames':
+                # Combine frames from CSV
+                return self._combine_frames_from_csv(settings)
             else:
                 raise ValueError(f"Unknown tool: {tool_name}")
                 
         except Exception as e:
             raise Exception(f"Tool execution failed: {e}")
+    
+    def _convert_extract_settings_to_indices(self, settings: dict) -> list:
+        """Convert extract frames GUI settings to frame_indices list."""
+        method = settings.get('method', 'all')
+        
+        if method == 'all':
+            # Extract all frames - return None to indicate this
+            return None
+        elif method == 'specific':
+            # Use the specific frame indices from GUI
+            return settings.get('frame_indices', [])
+        elif method == 'range':
+            # Convert range to list of indices
+            frame_range = settings.get('frame_range', (1, 10))
+            start, end = frame_range
+            # Convert to 0-based indices
+            return list(range(start - 1, end))
+        elif method == 'interval':
+            # Extract every nth frame
+            interval = settings.get('interval', 2)
+            # We need to know the total frame count to generate indices
+            # For now, we'll extract with a reasonable range
+            # The core function can handle this
+            return None  # Let the core function handle interval extraction
+        else:
+            return None
+    
+    def _export_frame_csv(self, settings: dict, extracted_files: list):
+        """Export frame information to CSV file with detailed GIF metadata."""
+        try:
+            import csv
+            from pathlib import Path
+            from PIL import Image
+            
+            output_dir = Path(settings.get('output_dir', 'frames_output'))
+            csv_path = output_dir / 'frame_list.csv'
+            input_path = Path(settings.get('input_path'))
+            
+            # Get GIF metadata
+            gif_info = {}
+            frame_durations = []
+            
+            try:
+                with Image.open(input_path) as gif:
+                    gif_info = {
+                        'total_frames': getattr(gif, 'n_frames', 1),
+                        'is_animated': getattr(gif, 'is_animated', False),
+                        'size': gif.size,
+                        'mode': gif.mode,
+                        'format': gif.format,
+                        'loop_count': gif.info.get('loop', 0),
+                        'background': gif.info.get('background', 0),
+                        'transparency': gif.info.get('transparency', 0),
+                        'duration_total': 0
+                    }
+                    
+                    # Get frame durations
+                    if gif_info['is_animated']:
+                        for frame_idx in range(gif_info['total_frames']):
+                            gif.seek(frame_idx)
+                            duration = gif.info.get('duration', 100)
+                            frame_durations.append(duration)
+                            gif_info['duration_total'] += duration
+                        
+                        gif_info['fps'] = 1000 / (gif_info['duration_total'] / gif_info['total_frames']) if gif_info['total_frames'] > 0 else 10
+                    else:
+                        frame_durations = [100]  # Default for single frame
+                        gif_info['fps'] = 10
+                        
+            except Exception as e:
+                print(f"Warning: Could not read GIF metadata: {e}")
+                gif_info = {
+                    'total_frames': len(extracted_files),
+                    'is_animated': False,
+                    'size': (0, 0),
+                    'mode': 'RGB',
+                    'format': 'GIF',
+                    'loop_count': 0,
+                    'background': 0,
+                    'transparency': 0,
+                    'duration_total': len(extracted_files) * 100,
+                    'fps': 10
+                }
+                frame_durations = [100] * len(extracted_files)
+            
+            with open(csv_path, 'w', newline='', encoding='utf-8') as csvfile:
+                writer = csv.writer(csvfile)
+                
+                # Write GIF metadata header
+                writer.writerow(['# GIF Metadata'])
+                writer.writerow(['total_frames', gif_info['total_frames']])
+                writer.writerow(['is_animated', gif_info['is_animated']])
+                writer.writerow(['width', gif_info['size'][0]])
+                writer.writerow(['height', gif_info['size'][1]])
+                writer.writerow(['mode', gif_info['mode']])
+                writer.writerow(['format', gif_info['format']])
+                writer.writerow(['loop_count', gif_info['loop_count']])
+                writer.writerow(['background', gif_info['background']])
+                writer.writerow(['transparency', gif_info['transparency']])
+                writer.writerow(['duration_total_ms', gif_info['duration_total']])
+                writer.writerow(['fps', round(gif_info['fps'], 2)])
+                writer.writerow([''])  # Empty row separator
+                
+                # Write frame data header
+                writer.writerow(['# Frame Data'])
+                writer.writerow(['frame_number', 'filename', 'original_frame_index', 'file_path', 'duration_ms', 'disposal_method'])
+                
+                # Write frame data
+                for i, file_path in enumerate(extracted_files):
+                    filename = Path(file_path).name
+                    duration = frame_durations[i] if i < len(frame_durations) else 100
+                    disposal = 2  # Default disposal method
+                    
+                    writer.writerow([
+                        i + 1,  # Frame number (1-based)
+                        filename,
+                        i,  # Original frame index (0-based)
+                        str(file_path),
+                        duration,
+                        disposal
+                    ])
+            
+            print(f"DEBUG: Enhanced CSV exported to {csv_path}")
+            print(f"DEBUG: GIF Info - Frames: {gif_info['total_frames']}, Duration: {gif_info['duration_total']}ms, FPS: {gif_info['fps']:.2f}")
+            
+        except Exception as e:
+            print(f"DEBUG: CSV export failed: {e}")
+    
+    def _combine_frames_from_csv(self, settings: dict):
+        """Combine frames from CSV file into a GIF using original timing and metadata."""
+        try:
+            import csv
+            from pathlib import Path
+            from PIL import Image
+            
+            csv_file = Path(settings.get('csv_file'))
+            output_path = Path(settings.get('output_path'))
+            quality = settings.get('quality', 85)
+            
+            if not csv_file.exists():
+                raise FileNotFoundError(f"CSV file not found: {csv_file}")
+            
+            # Read CSV file and parse metadata
+            gif_metadata = {}
+            frames = []
+            durations = []
+            disposal_methods = []
+            
+            with open(csv_file, 'r', newline='', encoding='utf-8') as csvfile:
+                reader = csv.reader(csvfile)
+                
+                # Read GIF metadata section
+                for row in reader:
+                    if row and row[0] == '# GIF Metadata':
+                        # Read metadata rows
+                        for meta_row in reader:
+                            if not meta_row or meta_row[0] == '':
+                                break
+                            if len(meta_row) >= 2:
+                                gif_metadata[meta_row[0]] = meta_row[1]
+                        break
+                
+                # Skip to frame data section
+                for row in reader:
+                    if row and row[0] == '# Frame Data':
+                        # Skip header row
+                        next(reader)
+                        break
+                
+                # Read frame data
+                for row in reader:
+                    if not row or len(row) < 6:
+                        continue
+                    
+                    frame_path = Path(row[3])  # file_path column
+                    if frame_path.exists():
+                        frames.append(Image.open(frame_path))
+                        durations.append(int(row[4]))  # duration_ms column
+                        disposal_methods.append(int(row[5]))  # disposal_method column
+                    else:
+                        print(f"Warning: Frame file not found: {frame_path}")
+            
+            if not frames:
+                raise ValueError("No valid frames found in CSV file")
+            
+            # Use original GIF metadata if available
+            loop_count = int(gif_metadata.get('loop_count', 0))
+            background = int(gif_metadata.get('background', 0))
+            transparency = int(gif_metadata.get('transparency', 0))
+            
+            print(f"DEBUG: Using original timing - {len(frames)} frames, durations: {durations[:5]}...")
+            print(f"DEBUG: GIF metadata - Loop: {loop_count}, Background: {background}, Transparency: {transparency}")
+            
+            # Create GIF from frames with original timing
+            if len(frames) == 1:
+                # Single frame
+                frames[0].save(
+                    output_path,
+                    format='GIF',
+                    quality=quality,
+                    disposal=disposal_methods[0] if disposal_methods else 2,
+                    transparency=transparency,
+                    background=background,
+                    optimize=False
+                )
+            else:
+                # Multiple frames with original timing
+                frames[0].save(
+                    output_path,
+                    save_all=True,
+                    append_images=frames[1:],
+                    duration=durations,
+                    loop=loop_count,
+                    disposal=disposal_methods[0] if disposal_methods else 2,
+                    transparency=transparency,
+                    background=background,
+                    optimize=False
+                )
+            
+            # Close frames to free memory
+            for frame in frames:
+                frame.close()
+            
+            print(f"DEBUG: Combined {len(frames)} frames into {output_path} with original timing")
+            return output_path
+            
+        except Exception as e:
+            raise Exception(f"Failed to combine frames from CSV: {e}")
     
     def _update_progress(self, progress: int, message: str):
         """Update progress bar and status message."""
@@ -673,6 +999,12 @@ class GifToolsApp:
         if dir_path:
             self.output_dir_var.set(dir_path)
             self.output_dir = Path(dir_path)
+    
+    def update_output_directory(self, new_path: str):
+        """Update the output directory and notify panels."""
+        self.output_dir = Path(new_path)
+        # Update any open panels that use the output directory
+        # This could be extended to notify other panels if needed
     
     # Tool dialog methods
     def open_video_to_gif_dialog(self):
@@ -780,11 +1112,90 @@ class GifToolsApp:
     
     def open_reverse_dialog(self):
         """Open reverse dialog."""
-        messagebox.showinfo("Reverse", "Reverse tool - Coming soon!")
+        if not self.current_file:
+            messagebox.showwarning("No File", "Please select a GIF file first.")
+            return
+        
+        # Create reverse dialog
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Reverse GIF")
+        dialog.geometry("500x400")
+        dialog.minsize(400, 300)
+        
+        # Make dialog modal
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Center dialog
+        dialog.update_idletasks()
+        x = (dialog.winfo_screenwidth() // 2) - (dialog.winfo_width() // 2)
+        y = (dialog.winfo_screenheight() // 2) - (dialog.winfo_height() // 2)
+        dialog.geometry(f"+{x}+{y}")
+        
+        # Create reverse panel
+        reverse_panel = ReversePanel(dialog, self.process_tool)
+        reverse_panel.get_widget().pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Auto-load the current GIF
+        reverse_panel.auto_load_gif(self.current_file)
     
     def open_optimize_dialog(self):
         """Open optimize dialog."""
-        messagebox.showinfo("Optimize", "Optimize tool - Coming soon!")
+        if not self.current_file:
+            messagebox.showwarning("No File", "Please select a GIF file first.")
+            return
+        
+        # Create optimize dialog
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Optimize GIF")
+        dialog.geometry("600x500")
+        dialog.minsize(500, 400)
+        
+        # Make dialog modal
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Center dialog
+        dialog.update_idletasks()
+        x = (dialog.winfo_screenwidth() // 2) - (dialog.winfo_width() // 2)
+        y = (dialog.winfo_screenheight() // 2) - (dialog.winfo_height() // 2)
+        dialog.geometry(f"+{x}+{y}")
+        
+        # Create optimize panel
+        optimize_panel = OptimizePanel(dialog, self.process_tool)
+        optimize_panel.get_widget().pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Auto-load the current GIF
+        optimize_panel.auto_load_gif(self.current_file)
+    
+    def open_speed_control_dialog(self):
+        """Open speed control dialog."""
+        if not self.current_file:
+            messagebox.showwarning("No File", "Please select a GIF file first.")
+            return
+        
+        # Create speed control dialog
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Speed Control")
+        dialog.geometry("600x600")
+        dialog.minsize(500, 500)
+        
+        # Make dialog modal
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Center dialog
+        dialog.update_idletasks()
+        x = (dialog.winfo_screenwidth() // 2) - (dialog.winfo_width() // 2)
+        y = (dialog.winfo_screenheight() // 2) - (dialog.winfo_height() // 2)
+        dialog.geometry(f"+{x}+{y}")
+        
+        # Create speed control panel
+        speed_panel = SpeedControlPanel(dialog, self.process_tool)
+        speed_panel.get_widget().pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Auto-load the current GIF
+        speed_panel.auto_load_gif(self.current_file)
     
     def _open_tool_dialog(self, title: str, panel_class):
         """Open a tool dialog with the specified panel."""
@@ -833,29 +1244,88 @@ class GifToolsApp:
         """Open rearrange dialog."""
         self._open_tool_dialog("Rearrange GIF Frames", RearrangePanel)
     
-    def open_speed_dialog(self):
-        """Open speed control dialog."""
-        messagebox.showinfo("Speed Control", "Speed Control tool - Coming soon!")
     
     def open_filter_dialog(self):
         """Open filter effects dialog."""
-        messagebox.showinfo("Filter Effects", "Filter Effects tool - Coming soon!")
+        if not self.current_file:
+            messagebox.showwarning("No File", "Please select a GIF file first.")
+            return
+        
+        # Create filter effects dialog
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Filter Effects")
+        dialog.geometry("600x700")
+        dialog.minsize(500, 600)
+        
+        # Make dialog modal
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Center dialog
+        dialog.update_idletasks()
+        x = (dialog.winfo_screenwidth() // 2) - (dialog.winfo_width() // 2)
+        y = (dialog.winfo_screenheight() // 2) - (dialog.winfo_height() // 2)
+        dialog.geometry(f"+{x}+{y}")
+        
+        # Create filter effects panel
+        filter_panel = FilterEffectsPanel(dialog, self.process_tool)
+        filter_panel.get_widget().pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Auto-load the current GIF
+        filter_panel.auto_load_gif(self.current_file)
     
     def open_extract_frames_dialog(self):
         """Open extract frames dialog."""
-        messagebox.showinfo("Extract Frames", "Extract Frames tool - Coming soon!")
+        if not self.current_file:
+            messagebox.showwarning("No File", "Please select a GIF file first.")
+            return
+
+        # Create dialog window
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Extract Frames from GIF")
+        dialog.geometry("800x700")
+        dialog.resizable(True, True)
+        dialog.minsize(600, 500)
+        
+        # Create extract frames panel
+        extract_panel = ExtractFramesPanel(dialog, self.process_tool, self.output_dir)
+        extract_panel.get_widget().pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Auto-load the current GIF
+        extract_panel.auto_load_gif(self.current_file)
+    
+    def open_combine_frames_dialog(self):
+        """Open combine frames dialog."""
+        # Create dialog window
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Combine Frames from CSV")
+        dialog.geometry("700x500")
+        dialog.resizable(True, True)
+        dialog.minsize(600, 400)
+        
+        # Create combine frames panel
+        combine_panel = CombineFramesPanel(dialog, self.process_tool, str(self.output_dir))
+        combine_panel.get_widget().pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
     
     def open_loop_settings_dialog(self):
         """Open loop settings dialog."""
-        messagebox.showinfo("Loop Settings", "Loop Settings tool - Coming soon!")
-    
-    def open_format_conversion_dialog(self):
-        """Open format conversion dialog."""
-        messagebox.showinfo("Format Conversion", "Format Conversion tool - Coming soon!")
-    
-    def open_watermark_dialog(self):
-        """Open watermark dialog."""
-        messagebox.showinfo("Watermark", "Watermark tool - Coming soon!")
+        if not self.current_file:
+            messagebox.showwarning("No File", "Please select a GIF file first.")
+            return
+
+        # Create dialog window
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Loop Settings")
+        dialog.geometry("700x600")
+        dialog.resizable(True, True)
+        dialog.minsize(500, 400)
+        
+        # Create loop settings panel
+        loop_panel = LoopSettingsPanel(dialog, self.process_tool)
+        loop_panel.get_widget().pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Auto-load the current GIF
+        loop_panel.auto_load_gif(self.current_file)
     
     
     def show_about(self):
@@ -871,8 +1341,8 @@ Features:
 • Resize, rotate, crop, split, merge
 • Add text, rearrange frames, reverse
 • Optimize, speed control, filter effects
-• Extract frames, loop settings, format conversion
-• Batch processing and watermarking
+• Extract frames, loop settings
+• Batch processing
 
 Author: Kamal Nady
 License: MIT
