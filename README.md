@@ -33,38 +33,35 @@ Key Tools in Action
 
 ## 🚀 Features
 
-### ✅ **ALL CORE TOOLS IMPLEMENTED** (Ready to Use)
+### Core Tools (ready to use)
 
-- **Video to GIF** - Convert video files to animated GIFs with auto-optimization
-- **Resize** - Change GIF dimensions with aspect ratio control and quality settings
-- **Rotate** - Rotate GIFs by 90°, 180°, or 270° degrees with progress tracking
-- **Crop** - Professional visual crop tool with aspect ratio presets and drag selection
-- **Split** - Media player interface with timeline for frame extraction and GIF splitting
-- **Merge** - Combine multiple GIFs with horizontal, vertical, and sequential modes
-- **Rearrange** - Advanced drag-and-drop frame reordering with visual preview
-- **Reverse** - Play GIF animations backwards with one-click operation
-- **Free Play** - Multi-GIF layering tool with click-to-place positioning and transparency support
+- **Video → GIF**: Convert videos with smart auto‑optimization (resolution/FPS/quality)
+- **Resize**: Resize with aspect ratio control and quality settings
+- **Rotate**: 90°/180°/270° rotations with progress feedback
+- **Crop**: Visual crop with drag handles and aspect‑ratio presets
+- **Split**: Media‑player timeline to split or extract ranges
+- **Merge**: Horizontal, vertical, and sequential modes (centered, transparency‑safe)
+- **Rearrange**: Drag‑and‑drop frame reordering with live preview
+- **Reverse**: One‑click reverse and ping‑pong styles
 
-### 🎨 **Advanced Features**
+### Advanced Toolkit
 
-- **Free Play Tool** - Professional GIF layering with 9 positioning anchor points
-- **Dynamic Canvas Control** - Resize canvas from 200px to 2000px
-- **Frame Start Settings** - Each layer can start from a different frame
-- **Multi-Layer Selection** - Select and manage multiple layers simultaneously
-- **Transparency Support** - Full RGBA and transparency handling
-- **Real-time Preview** - Live preview with timeline controls
-- **Frame Information** - Display total frames and start frame for each layer
+- **Speed Control**: Change playback speed with safe per‑frame timing
+- **Filter Effects**: Apply visual filters (blur, sharpen, brightness, contrast, etc.)
+- **Extract Frames**: Export frames to images and CSV with full GIF metadata
+- **Combine Frames**: Rebuild GIFs from CSV (original timing and properties)
+- **Free Play (Layer GIFs)**: Click‑to‑place layers with 9 anchor positions and canvas control
 
-### 📋 **Future Enhancements** (Coming Soon)
+### Why outputs don’t glitch
 
-- **Optimize** - Reduce file size while maintaining quality
-- **Speed Control** - Adjust playback speed
-- **Filter Effects** - Apply visual effects like blur, sharpen, etc.
-- **Extract Frames** - Save specific frames as static images
-- **Loop Settings** - Control loop count and behavior
-- **Format Conversion** - Convert between GIF, WebP, APNG formats
-- **Batch Processing** - Process multiple files at once
-- **Watermark** - Add image or text watermarks
+All writers use transparency‑safe parameters (e.g., `disposal=2`, `optimize=False`, correct `transparency`) for clean playback across viewers.
+
+### 📋 Roadmap (next)
+
+- Web API (FastAPI) for server use
+- Batch pipelines and presets
+- Optional format converters (WebP/APNG) and loop settings
+- Optional watermarking and additional effects
 
 ### 🎨 **Desktop Application Features**
 
