@@ -236,6 +236,14 @@ The Combine step restores original timing (per‑frame duration) and key GIF pro
 - Free Play and layered exports composite in RGBA before saving to GIF palette.
 - Speed and Reverse preserve per‑frame durations; single‑frame GIFs are handled cleanly.
 
+## 🚀 Performance tips (large media)
+
+- Prefer shorter clips and lower resolutions for long videos (e.g., 720p → 480p)
+- Reduce FPS for GIF export (e.g., 30 → 10–15) to cut size dramatically
+- Use the Video → GIF tool’s auto‑optimization when files exceed 100MB
+- Avoid extreme color effects on very long animations (palette bloat)
+- Close other heavy apps while processing to keep UI responsive
+
 ## 🏗️ Project Structure
 
 ```
