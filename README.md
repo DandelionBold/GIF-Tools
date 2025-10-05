@@ -5,6 +5,32 @@ Professional, open‑source desktop suite for fast, high‑quality GIF creation 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 
+### Visual Highlights
+
+<!-- Replace the placeholder paths below with real screenshots/GIFs in `desktop_app/assets/images/` -->
+
+Dashboard (Home)
+
+![Dashboard](desktop_app/assets/images/preview_dashboard.png)
+
+Key Tools in Action
+
+- Rearrange Frames: drag-and-drop grid with live preview
+
+  ![Rearrange](desktop_app/assets/images/preview_rearrange.gif)
+
+- Merge (Sequential): perfectly centered sequences with transparency-safe export
+
+  ![Merge Sequential](desktop_app/assets/images/preview_merge_sequential.gif)
+
+- Extract → CSV → Combine: preserve original timing and metadata
+
+  ![Extract Combine](desktop_app/assets/images/preview_extract_combine.gif)
+
+- Free Play (Layer GIFs): click-to-place with anchor positions and canvas control
+
+  ![Free Play](desktop_app/assets/images/preview_free_play.gif)
+
 ## 🚀 Features
 
 ### ✅ **ALL CORE TOOLS IMPLEMENTED** (Ready to Use)
