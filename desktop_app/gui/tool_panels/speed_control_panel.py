@@ -163,27 +163,6 @@ class SpeedControlPanel:
         self.quality_label = ttk.Label(self.advanced_frame, text="85")
         self.quality_label.grid(row=1, column=0, columnspan=3, pady=5)
         
-        # Minimum duration
-        ttk.Label(self.advanced_frame, text="Min Duration (ms):").grid(row=2, column=0, sticky=tk.W, pady=5)
-        self.min_duration_var = tk.IntVar(value=10)
-        ttk.Spinbox(
-            self.advanced_frame,
-            from_=1,
-            to=1000,
-            textvariable=self.min_duration_var,
-            width=10
-        ).grid(row=2, column=1, padx=(10, 0), pady=5, sticky=tk.W)
-        
-        # Maximum duration
-        ttk.Label(self.advanced_frame, text="Max Duration (ms):").grid(row=3, column=0, sticky=tk.W, pady=5)
-        self.max_duration_var = tk.IntVar(value=1000)
-        ttk.Spinbox(
-            self.advanced_frame,
-            from_=100,
-            to=5000,
-            textvariable=self.max_duration_var,
-            width=10
-        ).grid(row=3, column=1, padx=(10, 0), pady=5, sticky=tk.W)
         
         # Process button
         self.process_btn = ttk.Button(
@@ -261,8 +240,6 @@ class SpeedControlPanel:
             'input_path': self.current_gif_path,
             'method': method,
             'quality': int(self.quality_var.get()),
-            'min_duration': self.min_duration_var.get() / 1000.0,  # Convert to seconds
-            'max_duration': self.max_duration_var.get() / 1000.0,  # Convert to seconds
         }
         
         if method == "multiplier":
