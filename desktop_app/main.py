@@ -39,7 +39,8 @@ from desktop_app.gui.tool_panels import (
     RearrangePanel,
     VideoToGifPanel,
     FreePlayPanel,
-    ReversePanel
+    ReversePanel,
+    OptimizePanel
 )
 from gif_tools.utils import validate_animated_file, get_supported_extensions
 
@@ -625,6 +626,17 @@ class GifToolsApp:
                     output_path=output_path,
                     quality=settings.get('quality', 85)
                 )
+            elif tool_name == 'optimize':
+                # Optimize GIF for size reduction
+                return optimize_gif(
+                    input_path=settings.get('input_path', input_path),
+                    output_path=output_path,
+                    quality=settings.get('quality', 85),
+                    optimize=settings.get('optimize', True),
+                    colors=settings.get('max_colors', 256),
+                    dither=settings.get('dither', 'FLOYDSTEINBERG'),
+                    interlace=settings.get('interlace', False)
+                )
             else:
                 raise ValueError(f"Unknown tool: {tool_name}")
                 
@@ -817,7 +829,32 @@ class GifToolsApp:
     
     def open_optimize_dialog(self):
         """Open optimize dialog."""
-        messagebox.showinfo("Optimize", "Optimize tool - Coming soon!")
+        if not self.current_file:
+            messagebox.showwarning("No File", "Please select a GIF file first.")
+            return
+        
+        # Create optimize dialog
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Optimize GIF")
+        dialog.geometry("600x500")
+        dialog.minsize(500, 400)
+        
+        # Make dialog modal
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Center dialog
+        dialog.update_idletasks()
+        x = (dialog.winfo_screenwidth() // 2) - (dialog.winfo_width() // 2)
+        y = (dialog.winfo_screenheight() // 2) - (dialog.winfo_height() // 2)
+        dialog.geometry(f"+{x}+{y}")
+        
+        # Create optimize panel
+        optimize_panel = OptimizePanel(dialog, self._execute_tool)
+        optimize_panel.get_widget().pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Auto-load the current GIF
+        optimize_panel.auto_load_gif(self.current_file)
     
     def _open_tool_dialog(self, title: str, panel_class):
         """Open a tool dialog with the specified panel."""

@@ -128,6 +128,10 @@ class ReversePanel:
         )
         self.progress_bar.grid(row=7, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=5)
         
+        # Status label
+        self.status_label = ttk.Label(self.frame, text="No GIF loaded", foreground="gray")
+        self.status_label.grid(row=8, column=0, columnspan=3, pady=5)
+        
         # Configure grid weights
         self.frame.grid_columnconfigure(1, weight=1)
         
