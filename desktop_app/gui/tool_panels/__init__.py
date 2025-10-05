@@ -12,6 +12,7 @@ from .optimize_panel import OptimizePanel
 from .speed_control_panel import SpeedControlPanel
 from .filter_effects_panel import FilterEffectsPanel
 from .extract_frames_panel import ExtractFramesPanel
+from .loop_settings_panel import LoopSettingsPanel
 
 __all__ = [
     'RearrangePanel',
@@ -22,4 +23,5 @@ __all__ = [
     'SpeedControlPanel',
     'FilterEffectsPanel',
     'ExtractFramesPanel',
+    'LoopSettingsPanel',
 ]

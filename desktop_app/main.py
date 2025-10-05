@@ -43,7 +43,8 @@ from desktop_app.gui.tool_panels import (
     OptimizePanel,
     SpeedControlPanel,
     FilterEffectsPanel,
-    ExtractFramesPanel
+    ExtractFramesPanel,
+    LoopSettingsPanel
 )
 from gif_tools.utils import validate_animated_file, get_supported_extensions
 
@@ -194,6 +195,7 @@ class GifToolsApp:
             ("Speed Control", self.open_speed_control_dialog),
             ("Filter Effects", self.open_filter_dialog),
             ("Extract Frames", self.open_extract_frames_dialog),
+            ("Loop Settings", self.open_loop_settings_dialog),
         ]
         
         for i, (name, command) in enumerate(tools):
@@ -271,6 +273,7 @@ class GifToolsApp:
         advanced_menu.add_command(label="Speed Control", command=self.open_speed_control_dialog)
         advanced_menu.add_command(label="Filter Effects", command=self.open_filter_dialog)
         advanced_menu.add_command(label="Extract Frames", command=self.open_extract_frames_dialog)
+        advanced_menu.add_command(label="Loop Settings", command=self.open_loop_settings_dialog)
         
         # Help menu
         help_menu = tk.Menu(menubar, tearoff=0)
@@ -684,6 +687,14 @@ class GifToolsApp:
                     quality=settings.get('quality', 95),
                     prefix=settings.get('prefix', 'frame')
                 )
+            elif tool_name == 'loop_settings':
+                # Set loop count for GIF
+                return set_gif_loop_count(
+                    input_path=settings.get('input_path', input_path),
+                    output_path=output_path,
+                    loop_count=settings.get('loop_count', 0),
+                    quality=settings.get('quality', 85)
+                )
             else:
                 raise ValueError(f"Unknown tool: {tool_name}")
                 
@@ -1031,7 +1042,23 @@ class GifToolsApp:
     
     def open_loop_settings_dialog(self):
         """Open loop settings dialog."""
-        messagebox.showinfo("Loop Settings", "Loop Settings tool - Coming soon!")
+        if not self.current_file:
+            messagebox.showwarning("No File", "Please select a GIF file first.")
+            return
+
+        # Create dialog window
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Loop Settings")
+        dialog.geometry("700x600")
+        dialog.resizable(True, True)
+        dialog.minsize(500, 400)
+        
+        # Create loop settings panel
+        loop_panel = LoopSettingsPanel(dialog, self.process_tool)
+        loop_panel.get_widget().pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Auto-load the current GIF
+        loop_panel.auto_load_gif(self.current_file)
     
     def open_format_conversion_dialog(self):
         """Open format conversion dialog."""
