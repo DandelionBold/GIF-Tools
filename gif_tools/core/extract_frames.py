@@ -56,7 +56,9 @@ class GifFrameExtractor:
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
         
-        if output_format.upper() not in SUPPORTED_IMAGE_FORMATS:
+        # Check if format is supported (with or without dot)
+        format_extensions = [fmt.upper() for fmt in SUPPORTED_IMAGE_FORMATS]
+        if output_format.upper() not in format_extensions and f".{output_format.upper()}" not in format_extensions:
             raise ValidationError(f"Unsupported output format: {output_format}")
         
         if not 1 <= quality <= 100:

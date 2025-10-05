@@ -198,8 +198,6 @@ class GifToolsApp:
             ("Filter Effects", self.open_filter_dialog),
             ("Extract Frames", self.open_extract_frames_dialog),
             ("Loop Settings", self.open_loop_settings_dialog),
-            ("Format Conversion", self.open_format_conversion_dialog),
-            ("Watermark", self.open_watermark_dialog),
         ]
         
         for i, (name, command) in enumerate(tools):
@@ -278,8 +276,6 @@ class GifToolsApp:
         advanced_menu.add_command(label="Filter Effects", command=self.open_filter_dialog)
         advanced_menu.add_command(label="Extract Frames", command=self.open_extract_frames_dialog)
         advanced_menu.add_command(label="Loop Settings", command=self.open_loop_settings_dialog)
-        advanced_menu.add_command(label="Format Conversion", command=self.open_format_conversion_dialog)
-        advanced_menu.add_command(label="Watermark", command=self.open_watermark_dialog)
         
         # Help menu
         help_menu = tk.Menu(menubar, tearoff=0)
