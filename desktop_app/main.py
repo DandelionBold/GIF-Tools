@@ -42,7 +42,8 @@ from desktop_app.gui.tool_panels import (
     ReversePanel,
     OptimizePanel,
     SpeedControlPanel,
-    FilterEffectsPanel
+    FilterEffectsPanel,
+    ExtractFramesPanel
 )
 from gif_tools.utils import validate_animated_file, get_supported_extensions
 
@@ -192,6 +193,7 @@ class GifToolsApp:
             ("Optimize", self.open_optimize_dialog),
             ("Speed Control", self.open_speed_control_dialog),
             ("Filter Effects", self.open_filter_dialog),
+            ("Extract Frames", self.open_extract_frames_dialog),
         ]
         
         for i, (name, command) in enumerate(tools):
@@ -268,6 +270,7 @@ class GifToolsApp:
         advanced_menu.add_command(label="Optimize", command=self.open_optimize_dialog)
         advanced_menu.add_command(label="Speed Control", command=self.open_speed_control_dialog)
         advanced_menu.add_command(label="Filter Effects", command=self.open_filter_dialog)
+        advanced_menu.add_command(label="Extract Frames", command=self.open_extract_frames_dialog)
         
         # Help menu
         help_menu = tk.Menu(menubar, tearoff=0)
@@ -668,6 +671,19 @@ class GifToolsApp:
                         intensity=settings.get('intensity', 1.0),
                         quality=settings.get('quality', 85)
                     )
+            elif tool_name == 'extract_frames':
+                # Extract frames from GIF
+                return extract_gif_frames(
+                    input_path=settings.get('input_path', input_path),
+                    output_dir=settings.get('output_dir', 'frames_output'),
+                    frame_indices=settings.get('frame_indices'),
+                    frame_range=settings.get('frame_range'),
+                    interval=settings.get('interval'),
+                    method=settings.get('method', 'all'),
+                    output_format=settings.get('output_format', 'PNG'),
+                    quality=settings.get('quality', 95),
+                    prefix=settings.get('prefix', 'frame')
+                )
             else:
                 raise ValueError(f"Unknown tool: {tool_name}")
                 
@@ -995,7 +1011,23 @@ class GifToolsApp:
     
     def open_extract_frames_dialog(self):
         """Open extract frames dialog."""
-        messagebox.showinfo("Extract Frames", "Extract Frames tool - Coming soon!")
+        if not self.current_file:
+            messagebox.showwarning("No File", "Please select a GIF file first.")
+            return
+
+        # Create dialog window
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Extract Frames from GIF")
+        dialog.geometry("800x700")
+        dialog.resizable(True, True)
+        dialog.minsize(600, 500)
+        
+        # Create extract frames panel
+        extract_panel = ExtractFramesPanel(dialog, self.process_tool)
+        extract_panel.get_widget().pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Auto-load the current GIF
+        extract_panel.auto_load_gif(self.current_file)
     
     def open_loop_settings_dialog(self):
         """Open loop settings dialog."""
