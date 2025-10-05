@@ -13,6 +13,7 @@ from .speed_control_panel import SpeedControlPanel
 from .filter_effects_panel import FilterEffectsPanel
 from .extract_frames_panel import ExtractFramesPanel
 from .loop_settings_panel import LoopSettingsPanel
+from .format_conversion_panel import FormatConversionPanel
 
 __all__ = [
     'RearrangePanel',
@@ -24,4 +25,5 @@ __all__ = [
     'FilterEffectsPanel',
     'ExtractFramesPanel',
     'LoopSettingsPanel',
+    'FormatConversionPanel',
 ]

@@ -44,7 +44,8 @@ from desktop_app.gui.tool_panels import (
     SpeedControlPanel,
     FilterEffectsPanel,
     ExtractFramesPanel,
-    LoopSettingsPanel
+    LoopSettingsPanel,
+    FormatConversionPanel
 )
 from gif_tools.utils import validate_animated_file, get_supported_extensions
 
@@ -196,6 +197,7 @@ class GifToolsApp:
             ("Filter Effects", self.open_filter_dialog),
             ("Extract Frames", self.open_extract_frames_dialog),
             ("Loop Settings", self.open_loop_settings_dialog),
+            ("Format Conversion", self.open_format_conversion_dialog),
         ]
         
         for i, (name, command) in enumerate(tools):
@@ -274,6 +276,7 @@ class GifToolsApp:
         advanced_menu.add_command(label="Filter Effects", command=self.open_filter_dialog)
         advanced_menu.add_command(label="Extract Frames", command=self.open_extract_frames_dialog)
         advanced_menu.add_command(label="Loop Settings", command=self.open_loop_settings_dialog)
+        advanced_menu.add_command(label="Format Conversion", command=self.open_format_conversion_dialog)
         
         # Help menu
         help_menu = tk.Menu(menubar, tearoff=0)
@@ -695,6 +698,16 @@ class GifToolsApp:
                     loop_count=settings.get('loop_count', 0),
                     quality=settings.get('quality', 85)
                 )
+            elif tool_name == 'format_conversion':
+                # Convert GIF format
+                return convert_gif_format(
+                    input_path=settings.get('input_path', input_path),
+                    output_path=output_path,
+                    target_format=settings.get('target_format', 'WebP'),
+                    quality=settings.get('quality', 85),
+                    lossless=settings.get('lossless', False),
+                    **{k: v for k, v in settings.items() if k in ['method', 'effort']}
+                )
             else:
                 raise ValueError(f"Unknown tool: {tool_name}")
                 
@@ -1062,7 +1075,23 @@ class GifToolsApp:
     
     def open_format_conversion_dialog(self):
         """Open format conversion dialog."""
-        messagebox.showinfo("Format Conversion", "Format Conversion tool - Coming soon!")
+        if not self.current_file:
+            messagebox.showwarning("No File", "Please select a GIF file first.")
+            return
+
+        # Create dialog window
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Format Conversion")
+        dialog.geometry("700x700")
+        dialog.resizable(True, True)
+        dialog.minsize(600, 500)
+        
+        # Create format conversion panel
+        format_panel = FormatConversionPanel(dialog, self.process_tool)
+        format_panel.get_widget().pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Auto-load the current GIF
+        format_panel.auto_load_gif(self.current_file)
     
     def open_watermark_dialog(self):
         """Open watermark dialog."""
