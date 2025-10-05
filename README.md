@@ -59,9 +59,10 @@ All writers use transparency‑safe parameters (e.g., `disposal=2`, `optimize=Fa
 ### 📋 Roadmap (next)
 
 - Web API (FastAPI) for server use
-- Batch pipelines and presets
+- Batch pipelines and reusable presets
 - Optional format converters (WebP/APNG) and loop settings
 - Optional watermarking and additional effects
+- Packaging (Windows installer), downloadable releases
 
 ### 🎨 **Desktop Application Features**
 
