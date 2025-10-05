@@ -30,7 +30,7 @@ from gif_tools.core import (
     layer_gifs_free_play, rearrange_gif_frames, reverse_gif, optimize_gif, 
     change_gif_speed, apply_gif_filter,
     # Additional tools
-    extract_gif_frames, set_gif_loop_count, convert_gif_format, 
+    extract_gif_frames, set_gif_loop_count, 
     process_gif_batch,
     # Split modes
     split_gif_into_two, extract_gif_region, remove_gif_region
@@ -44,9 +44,7 @@ from desktop_app.gui.tool_panels import (
     SpeedControlPanel,
     FilterEffectsPanel,
     ExtractFramesPanel,
-    LoopSettingsPanel,
-    FormatConversionPanel,
-    WatermarkPanel
+    LoopSettingsPanel
 )
 from gif_tools.utils import validate_animated_file, get_supported_extensions
 
@@ -218,8 +216,6 @@ class GifToolsApp:
         tools = [
             ("Extract Frames", self.open_extract_frames_dialog),
             ("Loop Settings", self.open_loop_settings_dialog),
-            ("Format Conversion", self.open_format_conversion_dialog),
-            ("Watermark", self.open_watermark_dialog),
         ]
         
         for i, (name, command) in enumerate(tools):
@@ -705,45 +701,6 @@ class GifToolsApp:
                     loop_count=settings.get('loop_count', 0),
                     quality=settings.get('quality', 85)
                 )
-            elif tool_name == 'format_conversion':
-                # Convert GIF format
-                return convert_gif_format(
-                    input_path=settings.get('input_path', input_path),
-                    output_path=output_path,
-                    target_format=settings.get('target_format', 'WebP'),
-                    quality=settings.get('quality', 85),
-                    lossless=settings.get('lossless', False),
-                    **{k: v for k, v in settings.items() if k in ['method', 'effort']}
-                )
-            elif tool_name == 'watermark':
-                # Add watermark to GIF
-                if 'text' in settings:
-                    # Text watermark
-                    return add_text_watermark_to_gif(
-                        input_path=settings.get('input_path', input_path),
-                        output_path=output_path,
-                        text=settings.get('text', ''),
-                        position=settings.get('position', 'bottom_right'),
-                        opacity=settings.get('opacity', 0.7),
-                        font_family=settings.get('font_family', 'Arial'),
-                        font_size=settings.get('font_size', 24),
-                        color=settings.get('color', (255, 255, 255)),
-                        background_color=settings.get('background_color'),
-                        padding=settings.get('padding', 10),
-                        quality=settings.get('quality', 85)
-                    )
-                else:
-                    # Image watermark
-                    return add_image_watermark_to_gif(
-                        input_path=settings.get('input_path', input_path),
-                        output_path=output_path,
-                        watermark_image=settings.get('watermark_image'),
-                        position=settings.get('position', 'bottom_right'),
-                        opacity=settings.get('opacity', 0.7),
-                        scale=settings.get('scale', 1.0),
-                        padding=settings.get('padding', 10),
-                        quality=settings.get('quality', 85)
-                    )
             else:
                 raise ValueError(f"Unknown tool: {tool_name}")
                 
@@ -1165,46 +1122,6 @@ class GifToolsApp:
         # Auto-load the current GIF
         loop_panel.auto_load_gif(self.current_file)
     
-    def open_format_conversion_dialog(self):
-        """Open format conversion dialog."""
-        if not self.current_file:
-            messagebox.showwarning("No File", "Please select a GIF file first.")
-            return
-
-        # Create dialog window
-        dialog = tk.Toplevel(self.root)
-        dialog.title("Format Conversion")
-        dialog.geometry("700x700")
-        dialog.resizable(True, True)
-        dialog.minsize(600, 500)
-        
-        # Create format conversion panel
-        format_panel = FormatConversionPanel(dialog, self.process_tool)
-        format_panel.get_widget().pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
-        
-        # Auto-load the current GIF
-        format_panel.auto_load_gif(self.current_file)
-    
-    def open_watermark_dialog(self):
-        """Open watermark dialog."""
-        if not self.current_file:
-            messagebox.showwarning("No File", "Please select a GIF file first.")
-            return
-
-        # Create dialog window
-        dialog = tk.Toplevel(self.root)
-        dialog.title("Add Watermark to GIF")
-        dialog.geometry("800x800")
-        dialog.resizable(True, True)
-        dialog.minsize(600, 600)
-        
-        # Create watermark panel
-        watermark_panel = WatermarkPanel(dialog, self.process_tool)
-        watermark_panel.get_widget().pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
-        
-        # Auto-load the current GIF
-        watermark_panel.auto_load_gif(self.current_file)
-    
     
     def show_about(self):
         """Show about dialog."""
@@ -1219,8 +1136,8 @@ Features:
 • Resize, rotate, crop, split, merge
 • Add text, rearrange frames, reverse
 • Optimize, speed control, filter effects
-• Extract frames, loop settings, format conversion
-• Batch processing and watermarking
+• Extract frames, loop settings
+• Batch processing
 
 Author: Kamal Nady
 License: MIT
