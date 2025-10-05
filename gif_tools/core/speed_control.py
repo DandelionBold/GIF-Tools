@@ -391,7 +391,7 @@ def change_gif_speed(input_path: Union[str, Path],
                     multiplier: float,
                     **kwargs) -> Path:
     """
-    Change GIF playback speed - SIMPLE AND RELIABLE VERSION.
+    Change GIF playback speed - ULTRA SIMPLE VERSION THAT ACTUALLY WORKS.
     
     Args:
         input_path: Path to input GIF file
@@ -414,50 +414,61 @@ def change_gif_speed(input_path: Union[str, Path],
         if multiplier <= 0:
             raise ValidationError("Speed multiplier must be positive")
         
-        # Load and process GIF
-        with Image.open(input_path) as gif:
-            # Check if animated
-            if not getattr(gif, 'is_animated', False):
-                # Single frame GIF - just copy
-                gif.save(output_path)
-                return Path(output_path)
-            
-            # Get frame count
-            frame_count = getattr(gif, 'n_frames', 1)
-            
-            # Extract frames with modified durations
-            processed_frames = []
-            
-            for frame_idx in range(frame_count):
-                gif.seek(frame_idx)
-                frame = gif.copy()
-                
-                # Get original duration
-                original_duration = gif.info.get('duration', 100)
-                if isinstance(original_duration, list):
-                    original_duration = original_duration[frame_idx] if frame_idx < len(original_duration) else 100
-                
-                # Apply speed multiplier
-                new_duration = int(original_duration / multiplier)
-                new_duration = max(1, new_duration)  # Minimum 1ms
-                
-                # Set duration directly on frame
-                frame.info['duration'] = new_duration
-                processed_frames.append(frame)
-            
-            # Create new GIF with modified frames
-            if processed_frames:
-                processed_frames[0].save(
-                    output_path,
-                    save_all=True,
-                    append_images=processed_frames[1:],
-                    loop=gif.info.get('loop', 0),
-                    disposal=2,
-                    transparency=0,
-                    optimize=False
-                )
-            
+        # Load GIF
+        gif = Image.open(input_path)
+        
+        # Check if animated
+        if not getattr(gif, 'is_animated', False):
+            # Single frame GIF - just copy
+            gif.save(output_path)
+            gif.close()
             return Path(output_path)
+        
+        # Get frame count
+        frame_count = getattr(gif, 'n_frames', 1)
+        
+        # Extract all frames
+        frames = []
+        for frame_idx in range(frame_count):
+            gif.seek(frame_idx)
+            frames.append(gif.copy())
+        
+        # Get all durations and apply multiplier
+        durations = []
+        for frame_idx in range(frame_count):
+            gif.seek(frame_idx)
+            original_duration = gif.info.get('duration', 100)
+            
+            # Handle list format
+            if isinstance(original_duration, list):
+                original_duration = original_duration[frame_idx] if frame_idx < len(original_duration) else 100
+            
+            # Apply speed multiplier
+            new_duration = int(original_duration / multiplier)
+            new_duration = max(1, new_duration)  # Minimum 1ms
+            durations.append(new_duration)
+        
+        # Close original GIF
+        gif.close()
+        
+        # Create new GIF with modified durations
+        if frames and durations:
+            frames[0].save(
+                output_path,
+                save_all=True,
+                append_images=frames[1:],
+                duration=durations,
+                loop=0,
+                disposal=2,
+                transparency=0,
+                optimize=False
+            )
+        
+        # Clean up frames
+        for frame in frames:
+            frame.close()
+        
+        return Path(output_path)
             
     except Exception as e:
         raise ValidationError(f"Speed control failed: {e}")

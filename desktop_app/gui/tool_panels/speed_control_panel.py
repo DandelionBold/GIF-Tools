@@ -71,7 +71,7 @@ class SpeedControlPanel:
         speed_scale = ttk.Scale(
             self.multiplier_frame,
             from_=0.1,
-            to=10.0,
+            to=20.0,
             variable=self.speed_var,
             orient=tk.HORIZONTAL,
             length=300,
@@ -95,6 +95,8 @@ class SpeedControlPanel:
             ("2.0x (Double Speed)", 2.0),
             ("5.0x (Fast)", 5.0),
             ("10.0x (Ultra Fast)", 10.0),
+            ("15.0x (Extreme)", 15.0),
+            ("20.0x (Maximum)", 20.0),
         ]
         
         for i, (text, value) in enumerate(presets):
@@ -220,8 +222,12 @@ class SpeedControlPanel:
             label = f"{speed:.1f}x (Fast)"
         elif speed <= 5.0:
             label = f"{speed:.1f}x (Very Fast)"
-        else:
+        elif speed <= 10.0:
             label = f"{speed:.1f}x (Ultra Fast)"
+        elif speed <= 15.0:
+            label = f"{speed:.1f}x (Extreme)"
+        else:
+            label = f"{speed:.1f}x (Maximum Speed)"
         
         self.speed_label.config(text=label)
     
@@ -258,6 +264,8 @@ class SpeedControlPanel:
                 "fast": 2.0,
                 "very_fast": 5.0,
                 "ultra_fast": 10.0,
+                "extreme": 15.0,
+                "maximum": 20.0,
                 "half_speed": 0.5,
                 "double_speed": 2.0,
                 "triple_speed": 3.0,
