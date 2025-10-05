@@ -40,7 +40,8 @@ from desktop_app.gui.tool_panels import (
     VideoToGifPanel,
     FreePlayPanel,
     ReversePanel,
-    OptimizePanel
+    OptimizePanel,
+    SpeedControlPanel
 )
 from gif_tools.utils import validate_animated_file, get_supported_extensions
 
@@ -188,7 +189,7 @@ class GifToolsApp:
             ("Rearrange Frames", self.open_rearrange_dialog),
             ("Reverse", self.open_reverse_dialog),
             ("Optimize", self.open_optimize_dialog),
-            ("Speed Control", self.open_speed_dialog),
+            ("Speed Control", self.open_speed_control_dialog),
             ("Filter Effects", self.open_filter_dialog),
         ]
         
@@ -264,7 +265,7 @@ class GifToolsApp:
         advanced_menu.add_command(label="Rearrange Frames", command=self.open_rearrange_dialog)
         advanced_menu.add_command(label="Reverse", command=self.open_reverse_dialog)
         advanced_menu.add_command(label="Optimize", command=self.open_optimize_dialog)
-        advanced_menu.add_command(label="Speed Control", command=self.open_speed_dialog)
+        advanced_menu.add_command(label="Speed Control", command=self.open_speed_control_dialog)
         advanced_menu.add_command(label="Filter Effects", command=self.open_filter_dialog)
         
         # Help menu
@@ -637,6 +638,16 @@ class GifToolsApp:
                     dither=settings.get('dither', 'FLOYDSTEINBERG'),
                     interlace=settings.get('interlace', False)
                 )
+            elif tool_name == 'speed_control':
+                # Change GIF playback speed
+                return change_gif_speed(
+                    input_path=settings.get('input_path', input_path),
+                    output_path=output_path,
+                    multiplier=settings.get('multiplier', 1.0),
+                    min_duration=settings.get('min_duration', 0.01),
+                    max_duration=settings.get('max_duration', 1.0),
+                    quality=settings.get('quality', 85)
+                )
             else:
                 raise ValueError(f"Unknown tool: {tool_name}")
                 
@@ -856,6 +867,35 @@ class GifToolsApp:
         # Auto-load the current GIF
         optimize_panel.auto_load_gif(self.current_file)
     
+    def open_speed_control_dialog(self):
+        """Open speed control dialog."""
+        if not self.current_file:
+            messagebox.showwarning("No File", "Please select a GIF file first.")
+            return
+        
+        # Create speed control dialog
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Speed Control")
+        dialog.geometry("600x600")
+        dialog.minsize(500, 500)
+        
+        # Make dialog modal
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Center dialog
+        dialog.update_idletasks()
+        x = (dialog.winfo_screenwidth() // 2) - (dialog.winfo_width() // 2)
+        y = (dialog.winfo_screenheight() // 2) - (dialog.winfo_height() // 2)
+        dialog.geometry(f"+{x}+{y}")
+        
+        # Create speed control panel
+        speed_panel = SpeedControlPanel(dialog, self._execute_tool)
+        speed_panel.get_widget().pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Auto-load the current GIF
+        speed_panel.auto_load_gif(self.current_file)
+    
     def _open_tool_dialog(self, title: str, panel_class):
         """Open a tool dialog with the specified panel."""
         # Create dialog window
@@ -903,9 +943,6 @@ class GifToolsApp:
         """Open rearrange dialog."""
         self._open_tool_dialog("Rearrange GIF Frames", RearrangePanel)
     
-    def open_speed_dialog(self):
-        """Open speed control dialog."""
-        messagebox.showinfo("Speed Control", "Speed Control tool - Coming soon!")
     
     def open_filter_dialog(self):
         """Open filter effects dialog."""
