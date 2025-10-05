@@ -231,7 +231,9 @@ class GifReverser:
                     append_images=reversed_frames[1:],
                     duration=reversed_durations,
                     loop=gif.info.get('loop', 0),
-                    optimize=True
+                    disposal=2,  # Clear to background
+                    transparency=0,
+                    optimize=False  # Disable optimization to prevent glitching
                 )
                 
                 # Load the saved GIF
