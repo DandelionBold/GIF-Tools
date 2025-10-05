@@ -426,6 +426,11 @@ class GifToolsApp:
             if not settings.get('gif_layers'):
                 messagebox.showwarning("Warning", "Please load GIFs to layer!")
                 return
+        elif tool_name == 'combine_frames':
+            # For combine_frames tool, check if CSV file is provided in settings
+            if not settings.get('csv_file'):
+                messagebox.showwarning("Warning", "Please select a CSV file!")
+                return
         else:
             # For other tools, check if a file is loaded
             if not self.current_file and not input_file:
@@ -454,6 +459,9 @@ class GifToolsApp:
             # For free_play tool, create a generic output filename
             output_filename = f"layered_{tool_name}.gif"
             output_path = output_dir / output_filename
+        elif tool_name == 'combine_frames':
+            # For combine_frames tool, use the output path from settings
+            output_path = Path(settings.get('output_path'))
         else:
             # For other tools, use the input file name
             input_file_path = Path(input_path)
@@ -468,8 +476,8 @@ class GifToolsApp:
                 output_path = output_dir / output_filename
         
         # Add to processing queue
-        if tool_name in ['merge', 'free_play']:
-            # For merge and free_play tools, we don't have a single input path
+        if tool_name in ['merge', 'free_play', 'combine_frames']:
+            # For merge, free_play, and combine_frames tools, we don't have a single input path
             task = {
                 'function': self._execute_tool,
                 'args': (tool_name, None, str(output_path), settings),
@@ -701,6 +709,9 @@ class GifToolsApp:
                     loop_count=settings.get('loop_count', 0),
                     quality=settings.get('quality', 85)
                 )
+            elif tool_name == 'combine_frames':
+                # Combine frames from CSV
+                return self._combine_frames_from_csv(settings)
             else:
                 raise ValueError(f"Unknown tool: {tool_name}")
                 
@@ -763,6 +774,72 @@ class GifToolsApp:
         except Exception as e:
             print(f"DEBUG: CSV export failed: {e}")
     
+    def _combine_frames_from_csv(self, settings: dict):
+        """Combine frames from CSV file into a GIF."""
+        try:
+            import csv
+            from pathlib import Path
+            from PIL import Image
+            
+            csv_file = Path(settings.get('csv_file'))
+            output_path = Path(settings.get('output_path'))
+            quality = settings.get('quality', 85)
+            
+            if not csv_file.exists():
+                raise FileNotFoundError(f"CSV file not found: {csv_file}")
+            
+            # Read CSV file
+            frames = []
+            durations = []
+            
+            with open(csv_file, 'r', newline='', encoding='utf-8') as csvfile:
+                reader = csv.DictReader(csvfile)
+                for row in reader:
+                    frame_path = Path(row['file_path'])
+                    if frame_path.exists():
+                        frames.append(Image.open(frame_path))
+                        # Use a default duration (100ms = 10 FPS)
+                        durations.append(100)
+                    else:
+                        print(f"Warning: Frame file not found: {frame_path}")
+            
+            if not frames:
+                raise ValueError("No valid frames found in CSV file")
+            
+            # Create GIF from frames
+            if len(frames) == 1:
+                # Single frame
+                frames[0].save(
+                    output_path,
+                    format='GIF',
+                    quality=quality,
+                    disposal=2,
+                    transparency=0,
+                    optimize=False
+                )
+            else:
+                # Multiple frames
+                frames[0].save(
+                    output_path,
+                    save_all=True,
+                    append_images=frames[1:],
+                    duration=durations,
+                    loop=0,  # Infinite loop
+                    disposal=2,
+                    transparency=0,
+                    optimize=False
+                )
+            
+            # Close frames to free memory
+            for frame in frames:
+                frame.close()
+            
+            print(f"DEBUG: Combined {len(frames)} frames into {output_path}")
+            return output_path
+            
+        except Exception as e:
+            raise Exception(f"Failed to combine frames from CSV: {e}")
+    
     def _update_progress(self, progress: int, message: str):
         """Update progress bar and status message."""
         self.progress_var.set(progress)
@@ -813,6 +890,12 @@ class GifToolsApp:
         if dir_path:
             self.output_dir_var.set(dir_path)
             self.output_dir = Path(dir_path)
+    
+    def update_output_directory(self, new_path: str):
+        """Update the output directory and notify panels."""
+        self.output_dir = Path(new_path)
+        # Update any open panels that use the output directory
+        # This could be extended to notify other panels if needed
     
     # Tool dialog methods
     def open_video_to_gif_dialog(self):
@@ -1096,7 +1179,7 @@ class GifToolsApp:
         dialog.minsize(600, 500)
         
         # Create extract frames panel
-        extract_panel = ExtractFramesPanel(dialog, self.process_tool)
+        extract_panel = ExtractFramesPanel(dialog, self.process_tool, self.output_dir)
         extract_panel.get_widget().pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         
         # Auto-load the current GIF

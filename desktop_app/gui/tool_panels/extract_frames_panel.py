@@ -16,17 +16,19 @@ from gif_tools.core.extract_frames import extract_gif_frames
 class ExtractFramesPanel:
     """Panel for GIF frame extraction operations."""
     
-    def __init__(self, parent: tk.Widget, on_process: Optional[Callable] = None):
+    def __init__(self, parent: tk.Widget, on_process: Optional[Callable] = None, default_output_dir: str = "frames_output"):
         """
         Initialize the extract frames panel.
         
         Args:
             parent: Parent widget
             on_process: Callback function for processing
+            default_output_dir: Default output directory path
         """
         self.parent = parent
         self.on_process = on_process
         self.current_gif_path = None
+        self.default_output_dir = default_output_dir
         self.setup_ui()
     
     def setup_ui(self):
@@ -121,7 +123,7 @@ class ExtractFramesPanel:
         
         # Output directory
         ttk.Label(self.output_frame, text="Output Directory:").grid(row=0, column=0, sticky=tk.W, pady=5)
-        self.output_dir_var = tk.StringVar(value="frames_output")
+        self.output_dir_var = tk.StringVar(value=self.default_output_dir)
         ttk.Entry(
             self.output_frame,
             textvariable=self.output_dir_var,
@@ -184,17 +186,28 @@ class ExtractFramesPanel:
         )
         csv_check.grid(row=6, column=0, columnspan=3, sticky=tk.W, pady=5)
         
-        # Process button
+        # Process buttons
+        button_frame = ttk.Frame(self.frame)
+        button_frame.grid(row=6, column=0, columnspan=3, pady=10)
+        
         self.process_btn = ttk.Button(
-            self.frame,
+            button_frame,
             text="🎬 Extract Frames",
             command=self.process_extract_frames
         )
+        self.process_btn.grid(row=0, column=0, padx=(0, 10))
+        
+        self.combine_btn = ttk.Button(
+            button_frame,
+            text="🔄 Combine Frames",
+            command=self.process_combine_frames
+        )
+        self.combine_btn.grid(row=0, column=1)
+        
         self.progress_bar = ttk.Progressbar(
             self.frame,
             mode='indeterminate'
         )
-        self.process_btn.grid(row=6, column=0, columnspan=3, pady=10)
         self.progress_bar.grid(row=7, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=5)
         
         # Status label
@@ -303,6 +316,44 @@ class ExtractFramesPanel:
         
         return frame_indices
     
+    def process_combine_frames(self):
+        """Process frame combination from CSV."""
+        try:
+            # Check if CSV file exists
+            output_dir = Path(self.output_dir_var.get())
+            csv_file = output_dir / "frame_list.csv"
+            
+            if not csv_file.exists():
+                messagebox.showerror("Error", f"CSV file not found: {csv_file}\n\nPlease extract frames first to create the CSV file.")
+                return
+            
+            # Ask for output GIF path
+            output_gif = filedialog.asksaveasfilename(
+                title="Save Combined GIF As",
+                defaultextension=".gif",
+                filetypes=[("GIF files", "*.gif"), ("All files", "*.*")],
+                initialdir=output_dir.parent
+            )
+            
+            if not output_gif:
+                return
+            
+            # Create settings for combine operation
+            settings = {
+                'csv_file': str(csv_file),
+                'output_path': output_gif,
+                'quality': int(self.quality_var.get()),
+                'operation': 'combine_frames'
+            }
+            
+            if self.on_process:
+                self.on_process('combine_frames', settings)
+            else:
+                messagebox.showinfo("Combine Frames", f"Combine frames settings: {settings}")
+                
+        except Exception as e:
+            messagebox.showerror("Error", f"Combine frames failed: {e}")
+    
     def process_extract_frames(self):
         """Process the extract frames operation."""
         try:
@@ -338,3 +389,7 @@ class ExtractFramesPanel:
         self.current_gif_path = gif_path
         if hasattr(self, 'status_label'):
             self.status_label.config(text=f"GIF loaded: {Path(gif_path).name}")
+    
+    def set_output_directory(self, output_dir: str):
+        """Set the output directory."""
+        self.output_dir_var.set(output_dir)
