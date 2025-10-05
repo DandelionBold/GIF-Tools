@@ -41,7 +41,8 @@ from desktop_app.gui.tool_panels import (
     FreePlayPanel,
     ReversePanel,
     OptimizePanel,
-    SpeedControlPanel
+    SpeedControlPanel,
+    FilterEffectsPanel
 )
 from gif_tools.utils import validate_animated_file, get_supported_extensions
 
@@ -648,6 +649,25 @@ class GifToolsApp:
                     max_duration=settings.get('max_duration', 1.0),
                     quality=settings.get('quality', 85)
                 )
+            elif tool_name == 'filter_effects':
+                # Apply filter effects to GIF
+                if settings.get('mode') == 'multiple':
+                    # Apply multiple filters
+                    return apply_gif_filters(
+                        input_path=settings.get('input_path', input_path),
+                        output_path=output_path,
+                        filters=settings.get('filters', []),
+                        quality=settings.get('quality', 85)
+                    )
+                else:
+                    # Apply single filter
+                    return apply_gif_filter(
+                        input_path=settings.get('input_path', input_path),
+                        output_path=output_path,
+                        filter_name=settings.get('filter_name', 'blur'),
+                        intensity=settings.get('intensity', 1.0),
+                        quality=settings.get('quality', 85)
+                    )
             else:
                 raise ValueError(f"Unknown tool: {tool_name}")
                 
@@ -946,7 +966,32 @@ class GifToolsApp:
     
     def open_filter_dialog(self):
         """Open filter effects dialog."""
-        messagebox.showinfo("Filter Effects", "Filter Effects tool - Coming soon!")
+        if not self.current_file:
+            messagebox.showwarning("No File", "Please select a GIF file first.")
+            return
+        
+        # Create filter effects dialog
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Filter Effects")
+        dialog.geometry("600x700")
+        dialog.minsize(500, 600)
+        
+        # Make dialog modal
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Center dialog
+        dialog.update_idletasks()
+        x = (dialog.winfo_screenwidth() // 2) - (dialog.winfo_width() // 2)
+        y = (dialog.winfo_screenheight() // 2) - (dialog.winfo_height() // 2)
+        dialog.geometry(f"+{x}+{y}")
+        
+        # Create filter effects panel
+        filter_panel = FilterEffectsPanel(dialog, self._execute_tool)
+        filter_panel.get_widget().pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Auto-load the current GIF
+        filter_panel.auto_load_gif(self.current_file)
     
     def open_extract_frames_dialog(self):
         """Open extract frames dialog."""
