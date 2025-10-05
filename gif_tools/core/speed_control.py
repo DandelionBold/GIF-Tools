@@ -289,8 +289,10 @@ class GifSpeedController:
             # Get frame count
             frame_count = getattr(gif, 'n_frames', 1) if hasattr(gif, 'n_frames') else 1
             
-            # Debug: Print multiplier
+            # Debug: Print multiplier and GIF info
             print(f"DEBUG: Speed multiplier = {multiplier}")
+            print(f"DEBUG: GIF info = {gif.info}")
+            print(f"DEBUG: Frame count = {frame_count}")
             
             for frame_idx in range(frame_count):
                 gif.seek(frame_idx)
@@ -298,6 +300,10 @@ class GifSpeedController:
                 
                 # Get original frame duration
                 original_duration = gif.info.get('duration', 100)  # Default 100ms
+                
+                # Debug: Print raw duration info
+                if frame_idx < 3:
+                    print(f"DEBUG: Frame {frame_idx} raw duration = {original_duration} (type: {type(original_duration)})")
                 
                 # Calculate new duration
                 new_duration_ms = original_duration / multiplier
@@ -313,6 +319,10 @@ class GifSpeedController:
             
             # Create new GIF
             if frames:
+                # Debug: Print first few durations we're saving
+                print(f"DEBUG: First 3 durations being saved: {durations[:3]}")
+                print(f"DEBUG: Original GIF loop = {gif.info.get('loop', 0)}")
+                
                 new_gif = frames[0].copy()
                 new_gif.save(
                     'temp_speed.gif',
@@ -325,8 +335,12 @@ class GifSpeedController:
                     optimize=False  # Disable optimization to prevent glitching
                 )
                 
+                # Debug: Check the saved GIF
+                saved_gif = Image.open('temp_speed.gif')
+                print(f"DEBUG: Saved GIF info = {saved_gif.info}")
+                
                 # Load the saved GIF
-                return Image.open('temp_speed.gif')
+                return saved_gif
             else:
                 return gif.copy()
                 
