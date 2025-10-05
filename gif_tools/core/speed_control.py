@@ -5,6 +5,7 @@ This module provides functionality to adjust the playback speed of GIF animation
 by modifying frame durations and applying speed multipliers.
 """
 
+import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
