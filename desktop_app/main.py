@@ -45,7 +45,8 @@ from desktop_app.gui.tool_panels import (
     FilterEffectsPanel,
     ExtractFramesPanel,
     LoopSettingsPanel,
-    FormatConversionPanel
+    FormatConversionPanel,
+    WatermarkPanel
 )
 from gif_tools.utils import validate_animated_file, get_supported_extensions
 
@@ -198,6 +199,7 @@ class GifToolsApp:
             ("Extract Frames", self.open_extract_frames_dialog),
             ("Loop Settings", self.open_loop_settings_dialog),
             ("Format Conversion", self.open_format_conversion_dialog),
+            ("Watermark", self.open_watermark_dialog),
         ]
         
         for i, (name, command) in enumerate(tools):
@@ -277,6 +279,7 @@ class GifToolsApp:
         advanced_menu.add_command(label="Extract Frames", command=self.open_extract_frames_dialog)
         advanced_menu.add_command(label="Loop Settings", command=self.open_loop_settings_dialog)
         advanced_menu.add_command(label="Format Conversion", command=self.open_format_conversion_dialog)
+        advanced_menu.add_command(label="Watermark", command=self.open_watermark_dialog)
         
         # Help menu
         help_menu = tk.Menu(menubar, tearoff=0)
@@ -708,6 +711,35 @@ class GifToolsApp:
                     lossless=settings.get('lossless', False),
                     **{k: v for k, v in settings.items() if k in ['method', 'effort']}
                 )
+            elif tool_name == 'watermark':
+                # Add watermark to GIF
+                if 'text' in settings:
+                    # Text watermark
+                    return add_text_watermark(
+                        input_path=settings.get('input_path', input_path),
+                        output_path=output_path,
+                        text=settings.get('text', ''),
+                        position=settings.get('position', 'bottom_right'),
+                        opacity=settings.get('opacity', 0.7),
+                        font_family=settings.get('font_family', 'Arial'),
+                        font_size=settings.get('font_size', 24),
+                        color=settings.get('color', (255, 255, 255)),
+                        background_color=settings.get('background_color'),
+                        padding=settings.get('padding', 10),
+                        quality=settings.get('quality', 85)
+                    )
+                else:
+                    # Image watermark
+                    return add_image_watermark(
+                        input_path=settings.get('input_path', input_path),
+                        output_path=output_path,
+                        watermark_image=settings.get('watermark_image'),
+                        position=settings.get('position', 'bottom_right'),
+                        opacity=settings.get('opacity', 0.7),
+                        scale=settings.get('scale', 1.0),
+                        padding=settings.get('padding', 10),
+                        quality=settings.get('quality', 85)
+                    )
             else:
                 raise ValueError(f"Unknown tool: {tool_name}")
                 
@@ -1095,7 +1127,23 @@ class GifToolsApp:
     
     def open_watermark_dialog(self):
         """Open watermark dialog."""
-        messagebox.showinfo("Watermark", "Watermark tool - Coming soon!")
+        if not self.current_file:
+            messagebox.showwarning("No File", "Please select a GIF file first.")
+            return
+
+        # Create dialog window
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Add Watermark to GIF")
+        dialog.geometry("800x800")
+        dialog.resizable(True, True)
+        dialog.minsize(600, 600)
+        
+        # Create watermark panel
+        watermark_panel = WatermarkPanel(dialog, self.process_tool)
+        watermark_panel.get_widget().pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Auto-load the current GIF
+        watermark_panel.auto_load_gif(self.current_file)
     
     
     def show_about(self):
