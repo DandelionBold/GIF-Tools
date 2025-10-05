@@ -38,7 +38,8 @@ from gif_tools.core import (
 from desktop_app.gui.tool_panels import (
     RearrangePanel,
     VideoToGifPanel,
-    FreePlayPanel
+    FreePlayPanel,
+    ReversePanel
 )
 from gif_tools.utils import validate_animated_file, get_supported_extensions
 
@@ -617,6 +618,13 @@ class GifToolsApp:
                     canvas_height=settings.get('canvas_height', 400),
                     quality=settings.get('quality', 85)
                 )
+            elif tool_name == 'reverse':
+                # Reverse GIF animation
+                return reverse_gif(
+                    input_path=settings.get('input_path', input_path),
+                    output_path=output_path,
+                    quality=settings.get('quality', 85)
+                )
             else:
                 raise ValueError(f"Unknown tool: {tool_name}")
                 
@@ -780,7 +788,32 @@ class GifToolsApp:
     
     def open_reverse_dialog(self):
         """Open reverse dialog."""
-        messagebox.showinfo("Reverse", "Reverse tool - Coming soon!")
+        if not self.current_file:
+            messagebox.showwarning("No File", "Please select a GIF file first.")
+            return
+        
+        # Create reverse dialog
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Reverse GIF")
+        dialog.geometry("500x400")
+        dialog.minsize(400, 300)
+        
+        # Make dialog modal
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Center dialog
+        dialog.update_idletasks()
+        x = (dialog.winfo_screenwidth() // 2) - (dialog.winfo_width() // 2)
+        y = (dialog.winfo_screenheight() // 2) - (dialog.winfo_height() // 2)
+        dialog.geometry(f"+{x}+{y}")
+        
+        # Create reverse panel
+        reverse_panel = ReversePanel(dialog, self._execute_tool)
+        reverse_panel.get_widget().pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Auto-load the current GIF
+        reverse_panel.auto_load_gif(self.current_file)
     
     def open_optimize_dialog(self):
         """Open optimize dialog."""
