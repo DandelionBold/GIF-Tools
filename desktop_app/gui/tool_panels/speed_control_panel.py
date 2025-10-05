@@ -70,8 +70,8 @@ class SpeedControlPanel:
         self.speed_var = tk.DoubleVar(value=1.0)
         speed_scale = ttk.Scale(
             self.multiplier_frame,
-            from_=0.1,
-            to=20.0,
+            from_=0.25,
+            to=2.0,
             variable=self.speed_var,
             orient=tk.HORIZONTAL,
             length=300,
@@ -93,10 +93,6 @@ class SpeedControlPanel:
             ("0.5x (Half Speed)", 0.5),
             ("1.0x (Normal)", 1.0),
             ("2.0x (Double Speed)", 2.0),
-            ("5.0x (Fast)", 5.0),
-            ("10.0x (Ultra Fast)", 10.0),
-            ("15.0x (Extreme)", 15.0),
-            ("20.0x (Maximum)", 20.0),
         ]
         
         for i, (text, value) in enumerate(presets):
@@ -213,21 +209,13 @@ class SpeedControlPanel:
         """Update the speed label when scale changes."""
         speed = float(value)
         if speed < 0.5:
-            label = f"{speed:.1f}x (Very Slow)"
+            label = f"{speed:.2f}x (Very Slow)"
         elif speed < 1.0:
-            label = f"{speed:.1f}x (Slow)"
+            label = f"{speed:.2f}x (Slow)"
         elif speed == 1.0:
-            label = f"{speed:.1f}x (Normal Speed)"
-        elif speed <= 2.0:
-            label = f"{speed:.1f}x (Fast)"
-        elif speed <= 5.0:
-            label = f"{speed:.1f}x (Very Fast)"
-        elif speed <= 10.0:
-            label = f"{speed:.1f}x (Ultra Fast)"
-        elif speed <= 15.0:
-            label = f"{speed:.1f}x (Extreme)"
+            label = f"{speed:.2f}x (Normal Speed)"
         else:
-            label = f"{speed:.1f}x (Maximum Speed)"
+            label = f"{speed:.2f}x (Fast)"
         
         self.speed_label.config(text=label)
     
@@ -262,13 +250,8 @@ class SpeedControlPanel:
                 "slow": 0.5,
                 "normal": 1.0,
                 "fast": 2.0,
-                "very_fast": 5.0,
-                "ultra_fast": 10.0,
-                "extreme": 15.0,
-                "maximum": 20.0,
                 "half_speed": 0.5,
                 "double_speed": 2.0,
-                "triple_speed": 3.0,
             }
             settings['multiplier'] = preset_multipliers.get(self.preset_var.get(), 1.0)
         elif method == "duration":
