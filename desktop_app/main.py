@@ -852,7 +852,7 @@ class GifToolsApp:
         dialog.geometry(f"+{x}+{y}")
         
         # Create reverse panel
-        reverse_panel = ReversePanel(dialog, self._execute_tool)
+        reverse_panel = ReversePanel(dialog, self.process_tool)
         reverse_panel.get_widget().pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         
         # Auto-load the current GIF
@@ -881,7 +881,7 @@ class GifToolsApp:
         dialog.geometry(f"+{x}+{y}")
         
         # Create optimize panel
-        optimize_panel = OptimizePanel(dialog, self._execute_tool)
+        optimize_panel = OptimizePanel(dialog, self.process_tool)
         optimize_panel.get_widget().pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         
         # Auto-load the current GIF
@@ -910,7 +910,7 @@ class GifToolsApp:
         dialog.geometry(f"+{x}+{y}")
         
         # Create speed control panel
-        speed_panel = SpeedControlPanel(dialog, self._execute_tool)
+        speed_panel = SpeedControlPanel(dialog, self.process_tool)
         speed_panel.get_widget().pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         
         # Auto-load the current GIF
@@ -987,7 +987,7 @@ class GifToolsApp:
         dialog.geometry(f"+{x}+{y}")
         
         # Create filter effects panel
-        filter_panel = FilterEffectsPanel(dialog, self._execute_tool)
+        filter_panel = FilterEffectsPanel(dialog, self.process_tool)
         filter_panel.get_widget().pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         
         # Auto-load the current GIF
