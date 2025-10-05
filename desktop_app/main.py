@@ -43,6 +43,7 @@ from desktop_app.gui.tool_panels import (
     OptimizePanel,
     SpeedControlPanel,
     FilterEffectsPanel,
+    ExtractFramesPanel,
     CombineFramesPanel,
     LoopSettingsPanel
 )
