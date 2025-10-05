@@ -175,6 +175,15 @@ class ExtractFramesPanel:
         
         ttk.Label(self.output_frame, text="(e.g., 'frame' → frame_001.png)", foreground="gray").grid(row=5, column=0, columnspan=2, sticky=tk.W, pady=2)
         
+        # CSV export option
+        self.csv_export_var = tk.BooleanVar(value=True)
+        csv_check = ttk.Checkbutton(
+            self.output_frame,
+            text="Export frame list to CSV (for recombining later)",
+            variable=self.csv_export_var
+        )
+        csv_check.grid(row=6, column=0, columnspan=3, sticky=tk.W, pady=5)
+        
         # Process button
         self.process_btn = ttk.Button(
             self.frame,
@@ -247,6 +256,7 @@ class ExtractFramesPanel:
             'quality': int(self.quality_var.get()),
             'prefix': self.prefix_var.get(),
             'method': method,
+            'csv_export': self.csv_export_var.get(),
         }
         
         if method == "specific":

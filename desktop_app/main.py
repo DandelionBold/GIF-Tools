@@ -683,8 +683,11 @@ class GifToolsApp:
             elif tool_name == 'extract_frames':
                 # Extract frames from GIF
                 # Convert GUI settings to frame_indices
+                print(f"DEBUG: Original settings: {settings}")
                 frame_indices = self._convert_extract_settings_to_indices(settings)
-                return extract_gif_frames(
+                print(f"DEBUG: Converted frame_indices: {frame_indices}")
+                # Extract frames
+                result = extract_gif_frames(
                     input_path=settings.get('input_path', input_path),
                     output_dir=settings.get('output_dir', 'frames_output'),
                     frame_indices=frame_indices,
@@ -692,6 +695,12 @@ class GifToolsApp:
                     quality=settings.get('quality', 95),
                     prefix=settings.get('prefix', 'frame')
                 )
+                
+                # Export CSV if requested
+                if settings.get('csv_export', True):
+                    self._export_frame_csv(settings, result)
+                
+                return result
             elif tool_name == 'loop_settings':
                 # Set loop count for GIF
                 return set_gif_loop_count(
@@ -770,6 +779,36 @@ class GifToolsApp:
             return None  # Let the core function handle interval extraction
         else:
             return None
+    
+    def _export_frame_csv(self, settings: dict, extracted_files: list):
+        """Export frame information to CSV file."""
+        try:
+            import csv
+            from pathlib import Path
+            
+            output_dir = Path(settings.get('output_dir', 'frames_output'))
+            csv_path = output_dir / 'frame_list.csv'
+            
+            with open(csv_path, 'w', newline='', encoding='utf-8') as csvfile:
+                writer = csv.writer(csvfile)
+                
+                # Write header
+                writer.writerow(['frame_number', 'filename', 'original_frame_index', 'file_path'])
+                
+                # Write frame data
+                for i, file_path in enumerate(extracted_files):
+                    filename = Path(file_path).name
+                    writer.writerow([
+                        i + 1,  # Frame number (1-based)
+                        filename,
+                        i,  # Original frame index (0-based)
+                        str(file_path)
+                    ])
+            
+            print(f"DEBUG: CSV exported to {csv_path}")
+            
+        except Exception as e:
+            print(f"DEBUG: CSV export failed: {e}")
     
     def _update_progress(self, progress: int, message: str):
         """Update progress bar and status message."""
