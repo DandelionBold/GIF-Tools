@@ -10,7 +10,7 @@ from .free_play_panel import FreePlayPanel
 from .reverse_panel import ReversePanel
 from .optimize_panel import OptimizePanel
 from .speed_control_panel import SpeedControlPanel
-from .filter_effects_panel import FilterEffectsPanel
+from .extract_frames_panel import ExtractFramesPanel
 from .combine_frames_panel import CombineFramesPanel
 from .loop_settings_panel import LoopSettingsPanel
 from .format_conversion_panel import FormatConversionPanel
@@ -23,7 +23,7 @@ __all__ = [
     'ReversePanel',
     'OptimizePanel',
     'SpeedControlPanel',
-    'FilterEffectsPanel',
+    'ExtractFramesPanel',
     'CombineFramesPanel',
     'LoopSettingsPanel',
     'FormatConversionPanel',
