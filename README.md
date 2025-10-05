@@ -238,6 +238,19 @@ The Combine step restores original timing (per‑frame duration) and key GIF pro
 - Speed and Reverse preserve per‑frame durations; single‑frame GIFs are handled cleanly.
 
 ## 🚀 Performance tips (large media)
+## 🧩 Troubleshooting
+
+- ModuleNotFoundError: No module named 'moviepy.editor'
+  - Activate venv and install desktop deps: `./venv/Scripts/Activate.ps1 && pip install -r requirements/desktop.txt`
+- ImportError for a panel (e.g., FilterEffectsPanel)
+  - Ensure you are on latest `main`: `git pull` and run `python run_gui.py`
+- Glitchy/black artifacts in transparency
+  - Re‑export with built‑in tools (they use `disposal=2`, `optimize=False`), avoid external optimizers
+- Very large video fails (size limit)
+  - Use Video → GIF with auto‑optimization, or reduce resolution/FPS
+- UI not refreshing during long tasks
+  - Wait for background processing; heavy media can take time
+
 
 - Prefer shorter clips and lower resolutions for long videos (e.g., 720p → 480p)
 - Reduce FPS for GIF export (e.g., 30 → 10–15) to cut size dramatically
