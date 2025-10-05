@@ -289,6 +289,9 @@ class GifSpeedController:
             # Get frame count
             frame_count = getattr(gif, 'n_frames', 1) if hasattr(gif, 'n_frames') else 1
             
+            # Debug: Print multiplier
+            print(f"DEBUG: Speed multiplier = {multiplier}")
+            
             for frame_idx in range(frame_count):
                 gif.seek(frame_idx)
                 frames.append(gif.copy())
@@ -298,6 +301,10 @@ class GifSpeedController:
                 
                 # Calculate new duration
                 new_duration_ms = original_duration / multiplier
+                
+                # Debug: Print duration changes for first few frames
+                if frame_idx < 3:
+                    print(f"DEBUG: Frame {frame_idx}: {original_duration}ms -> {new_duration_ms:.1f}ms (multiplier: {multiplier})")
                 
                 # Ensure minimum duration of 1ms to prevent zero duration
                 new_duration_ms = max(1, new_duration_ms)
