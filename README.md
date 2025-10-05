@@ -301,17 +301,21 @@ pytest -m performance  # Run performance tests
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+We welcome improvements and fixes.
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+- Branch from `main` using a clear name, e.g. `feat/merge-sequential-centering`
+- Use Conventional Commits, e.g. `feat: add sequential merge`, `fix: preserve transparency`
+- Keep PRs focused and small; include a brief description and screenshots/GIFs when UI is affected
+- After review/merge, clean up feature branches
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT — see [`LICENSE`](LICENSE).
+
+### Useful links
+
+- Issues: `https://github.com/DandelionBold/GIF-Tools/issues`
+- Repository: `https://github.com/DandelionBold/GIF-Tools`
 
 ## 🙏 Acknowledgments
 
