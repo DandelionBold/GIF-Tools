@@ -55,6 +55,7 @@ LOOP_BEHAVIORS = {
 
 # Filter effects
 FILTER_EFFECTS = {
+    # Basic filters
     'blur': 'BLUR',
     'sharpen': 'SHARPEN',
     'smooth': 'SMOOTH',
@@ -64,7 +65,12 @@ FILTER_EFFECTS = {
     'emboss': 'EMBOSS',
     'find_edges': 'FIND_EDGES',
     'contour': 'CONTOUR',
-    'detail': 'DETAIL'
+    'detail': 'DETAIL',
+    # Enhancement filters (handled specially)
+    'brightness': 'BRIGHTNESS',
+    'contrast': 'CONTRAST',
+    'saturation': 'SATURATION',
+    'color': 'COLOR'
 }
 
 # Color modes

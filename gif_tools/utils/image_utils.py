@@ -243,13 +243,14 @@ class ImageProcessor:
         else:
             return image.copy()
     
-    def apply_filter(self, image: Image.Image, filter_name: str) -> Image.Image:
+    def apply_filter(self, image: Image.Image, filter_name: str, intensity: float = 1.0) -> Image.Image:
         """
         Apply filter to image.
         
         Args:
             image: PIL Image object
             filter_name: Name of filter to apply
+            intensity: Filter intensity (for enhancement filters)
             
         Returns:
             Filtered image
@@ -257,8 +258,19 @@ class ImageProcessor:
         if filter_name not in FILTER_EFFECTS:
             raise ValidationError(f"Unknown filter: {filter_name}")
         
-        filter_method = getattr(ImageFilter, FILTER_EFFECTS[filter_name])
-        return image.filter(filter_method)
+        # Handle enhancement filters specially
+        if filter_name == 'brightness':
+            return self.adjust_brightness(image, intensity)
+        elif filter_name == 'contrast':
+            return self.adjust_contrast(image, intensity)
+        elif filter_name == 'saturation':
+            return self.adjust_saturation(image, intensity)
+        elif filter_name == 'color':
+            return self.adjust_color(image, intensity)
+        else:
+            # Handle basic PIL filters
+            filter_method = getattr(ImageFilter, FILTER_EFFECTS[filter_name])
+            return image.filter(filter_method)
     
     def adjust_brightness(self, image: Image.Image, factor: float) -> Image.Image:
         """
