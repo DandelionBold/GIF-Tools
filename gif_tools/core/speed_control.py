@@ -424,13 +424,12 @@ def change_gif_speed(input_path: Union[str, Path],
             # Get frame count
             frame_count = getattr(gif, 'n_frames', 1)
             
-            # Extract frames and modify durations
-            frames = []
-            durations = []
+            # Extract frames with modified durations
+            processed_frames = []
             
             for frame_idx in range(frame_count):
                 gif.seek(frame_idx)
-                frames.append(gif.copy())
+                frame = gif.copy()
                 
                 # Get original duration
                 original_duration = gif.info.get('duration', 100)
@@ -441,16 +440,16 @@ def change_gif_speed(input_path: Union[str, Path],
                 new_duration = int(original_duration / multiplier)
                 new_duration = max(1, new_duration)  # Minimum 1ms
                 
-                durations.append(new_duration)
+                # Set duration directly on frame
+                frame.info['duration'] = new_duration
+                processed_frames.append(frame)
             
-            # Create new GIF
-            if frames:
-                output_gif = frames[0].copy()
-                output_gif.save(
+            # Create new GIF with modified frames
+            if processed_frames:
+                processed_frames[0].save(
                     output_path,
                     save_all=True,
-                    append_images=frames[1:],
-                    duration=durations,
+                    append_images=processed_frames[1:],
                     loop=gif.info.get('loop', 0),
                     disposal=2,
                     transparency=0,
