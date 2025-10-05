@@ -195,6 +195,37 @@ python run_gui.py
 
 Tip: All exports use transparency‑safe settings to avoid glitches.
 
+### Extract → CSV → Combine flow
+
+1) Open Extract Frames, choose method (All / Specific / Range / Interval)
+2) Enable “Export frame list to CSV” and Process
+3) Open Combine Frames, select the CSV, choose output path, Process
+
+CSV example (header + first frame rows):
+
+```csv
+# GIF Metadata
+total_frames,429
+is_animated,True
+width,320
+height,240
+mode,P
+format,GIF
+loop_count,0
+background,0
+transparency,0
+duration_total_ms,15380
+fps,27.89
+
+# Frame Data
+frame_number,filename,original_frame_index,file_path,duration_ms,disposal_method
+1,frame_0000.png,0,C:/path/frames/frame_0000.png,40,2
+2,frame_0001.png,1,C:/path/frames/frame_0001.png,60,2
+3,frame_0002.png,2,C:/path/frames/frame_0002.png,20,2
+```
+
+The Combine step restores original timing (per‑frame duration) and key GIF properties (loop, background, transparency).
+
 ## 🏗️ Project Structure
 
 ```
