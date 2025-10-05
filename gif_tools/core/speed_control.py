@@ -271,81 +271,68 @@ class GifSpeedController:
     def _change_gif_speed(self, gif: Image.Image, multiplier: float,
                          min_duration: float, max_duration: float) -> Image.Image:
         """
-        Change speed of animated GIF.
+        Change speed of animated GIF - SIMPLE AND RELIABLE VERSION.
         
         Args:
             gif: PIL Image object (GIF)
-            multiplier: Speed multiplier
-            min_duration: Minimum frame duration in seconds
-            max_duration: Maximum frame duration in seconds
+            multiplier: Speed multiplier (2.0 = 2x faster, 0.5 = 2x slower)
+            min_duration: Minimum frame duration in seconds (ignored)
+            max_duration: Maximum frame duration in seconds (ignored)
             
         Returns:
             Speed-controlled GIF
         """
-        frames = []
-        durations = []
-        
         try:
             # Get frame count
             frame_count = getattr(gif, 'n_frames', 1) if hasattr(gif, 'n_frames') else 1
             
-            # Debug: Print multiplier and GIF info
-            print(f"DEBUG: Speed multiplier = {multiplier}")
-            print(f"DEBUG: GIF info = {gif.info}")
-            print(f"DEBUG: Frame count = {frame_count}")
+            if frame_count <= 1:
+                # Single frame GIF - just return copy
+                return gif.copy()
+            
+            # Extract all frames and durations
+            frames = []
+            durations = []
             
             for frame_idx in range(frame_count):
                 gif.seek(frame_idx)
                 frames.append(gif.copy())
                 
-                # Get original frame duration
-                original_duration = gif.info.get('duration', 100)  # Default 100ms
+                # Get original duration - handle different formats
+                original_duration = gif.info.get('duration', 100)
                 
-                # Debug: Print raw duration info
-                if frame_idx < 3:
-                    print(f"DEBUG: Frame {frame_idx} raw duration = {original_duration} (type: {type(original_duration)})")
+                # Handle list format durations
+                if isinstance(original_duration, list):
+                    original_duration = original_duration[frame_idx] if frame_idx < len(original_duration) else 100
                 
-                # Calculate new duration
-                new_duration_ms = original_duration / multiplier
+                # Apply speed multiplier
+                new_duration = int(original_duration / multiplier)
                 
-                # Debug: Print duration changes for first few frames
-                if frame_idx < 3:
-                    print(f"DEBUG: Frame {frame_idx}: {original_duration}ms -> {new_duration_ms:.1f}ms (multiplier: {multiplier})")
+                # Ensure minimum 1ms duration
+                new_duration = max(1, new_duration)
                 
-                # Ensure minimum duration of 1ms to prevent zero duration
-                new_duration_ms = max(1, new_duration_ms)
-                
-                durations.append(int(new_duration_ms))
+                durations.append(new_duration)
             
-            # Create new GIF
-            if frames:
-                # Debug: Print first few durations we're saving
-                print(f"DEBUG: First 3 durations being saved: {durations[:3]}")
-                print(f"DEBUG: Original GIF loop = {gif.info.get('loop', 0)}")
-                
-                new_gif = frames[0].copy()
-                new_gif.save(
-                    'temp_speed.gif',
-                    save_all=True,
-                    append_images=frames[1:],
-                    duration=durations,
-                    loop=gif.info.get('loop', 0),
-                    disposal=2,  # Clear to background
-                    transparency=0,
-                    optimize=False  # Disable optimization to prevent glitching
-                )
-                
-                # Debug: Check the saved GIF
-                saved_gif = Image.open('temp_speed.gif')
-                print(f"DEBUG: Saved GIF info = {saved_gif.info}")
-                
-                # Load the saved GIF
-                return saved_gif
-            else:
-                return gif.copy()
-                
+            # Create new GIF with modified durations
+            output_gif = frames[0].copy()
+            
+            # Save with new durations
+            output_gif.save(
+                'temp_speed_control.gif',
+                save_all=True,
+                append_images=frames[1:],
+                duration=durations,
+                loop=gif.info.get('loop', 0),
+                disposal=2,
+                transparency=0,
+                optimize=False
+            )
+            
+            # Return the saved GIF
+            return Image.open('temp_speed_control.gif')
+            
         except Exception as e:
-            # Fallback to original GIF
+            # If anything fails, return original GIF
             return gif.copy()
     
     def _set_custom_durations(self, gif: Image.Image, durations: List[float]) -> Image.Image:
@@ -403,19 +390,77 @@ def change_gif_speed(input_path: Union[str, Path],
                     multiplier: float,
                     **kwargs) -> Path:
     """
-    Change GIF playback speed by applying a multiplier.
+    Change GIF playback speed - SIMPLE AND RELIABLE VERSION.
     
     Args:
         input_path: Path to input GIF file
         output_path: Path to output GIF file
-        multiplier: Speed multiplier
-        **kwargs: Additional speed control parameters
+        multiplier: Speed multiplier (2.0 = 2x faster, 0.5 = 2x slower)
+        **kwargs: Additional parameters (ignored)
         
     Returns:
         Path to output GIF file
     """
-    controller = GifSpeedController()
-    return controller.change_speed(input_path, output_path, multiplier, **kwargs)
+    try:
+        # Convert to string paths
+        input_path = str(input_path)
+        output_path = str(output_path)
+        
+        # Validate inputs
+        if not os.path.exists(input_path):
+            raise ValidationError("Input file does not exist")
+        
+        if multiplier <= 0:
+            raise ValidationError("Speed multiplier must be positive")
+        
+        # Load and process GIF
+        with Image.open(input_path) as gif:
+            # Check if animated
+            if not getattr(gif, 'is_animated', False):
+                # Single frame GIF - just copy
+                gif.save(output_path)
+                return Path(output_path)
+            
+            # Get frame count
+            frame_count = getattr(gif, 'n_frames', 1)
+            
+            # Extract frames and modify durations
+            frames = []
+            durations = []
+            
+            for frame_idx in range(frame_count):
+                gif.seek(frame_idx)
+                frames.append(gif.copy())
+                
+                # Get original duration
+                original_duration = gif.info.get('duration', 100)
+                if isinstance(original_duration, list):
+                    original_duration = original_duration[frame_idx] if frame_idx < len(original_duration) else 100
+                
+                # Apply speed multiplier
+                new_duration = int(original_duration / multiplier)
+                new_duration = max(1, new_duration)  # Minimum 1ms
+                
+                durations.append(new_duration)
+            
+            # Create new GIF
+            if frames:
+                output_gif = frames[0].copy()
+                output_gif.save(
+                    output_path,
+                    save_all=True,
+                    append_images=frames[1:],
+                    duration=durations,
+                    loop=gif.info.get('loop', 0),
+                    disposal=2,
+                    transparency=0,
+                    optimize=False
+                )
+            
+            return Path(output_path)
+            
+    except Exception as e:
+        raise ValidationError(f"Speed control failed: {e}")
 
 
 def slow_down_gif(input_path: Union[str, Path],
