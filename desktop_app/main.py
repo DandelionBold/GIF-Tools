@@ -645,8 +645,8 @@ class GifToolsApp:
                     input_path=settings.get('input_path', input_path),
                     output_path=output_path,
                     multiplier=settings.get('multiplier', 1.0),
-                    min_duration=0.01,  # Fixed minimum duration
-                    max_duration=5.0,   # Fixed maximum duration
+                    min_duration=0.001,  # Very low minimum (1ms)
+                    max_duration=10.0,   # High maximum (10s)
                     quality=settings.get('quality', 85)
                 )
             elif tool_name == 'filter_effects':

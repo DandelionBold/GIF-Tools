@@ -71,7 +71,7 @@ class SpeedControlPanel:
         speed_scale = ttk.Scale(
             self.multiplier_frame,
             from_=0.1,
-            to=5.0,
+            to=10.0,
             variable=self.speed_var,
             orient=tk.HORIZONTAL,
             length=300,
@@ -93,7 +93,8 @@ class SpeedControlPanel:
             ("0.5x (Half Speed)", 0.5),
             ("1.0x (Normal)", 1.0),
             ("2.0x (Double Speed)", 2.0),
-            ("4.0x (Fast)", 4.0),
+            ("5.0x (Fast)", 5.0),
+            ("10.0x (Ultra Fast)", 10.0),
         ]
         
         for i, (text, value) in enumerate(presets):
@@ -209,14 +210,18 @@ class SpeedControlPanel:
     def update_speed_label(self, value):
         """Update the speed label when scale changes."""
         speed = float(value)
-        if speed < 1.0:
+        if speed < 0.5:
+            label = f"{speed:.1f}x (Very Slow)"
+        elif speed < 1.0:
             label = f"{speed:.1f}x (Slow)"
         elif speed == 1.0:
             label = f"{speed:.1f}x (Normal Speed)"
         elif speed <= 2.0:
             label = f"{speed:.1f}x (Fast)"
-        else:
+        elif speed <= 5.0:
             label = f"{speed:.1f}x (Very Fast)"
+        else:
+            label = f"{speed:.1f}x (Ultra Fast)"
         
         self.speed_label.config(text=label)
     

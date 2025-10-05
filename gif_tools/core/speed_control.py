@@ -299,11 +299,8 @@ class GifSpeedController:
                 # Calculate new duration
                 new_duration_ms = original_duration / multiplier
                 
-                # Apply duration limits
-                min_duration_ms = min_duration * 1000  # Convert to milliseconds
-                max_duration_ms = max_duration * 1000  # Convert to milliseconds
-                
-                new_duration_ms = max(min_duration_ms, min(new_duration_ms, max_duration_ms))
+                # Ensure minimum duration of 1ms to prevent zero duration
+                new_duration_ms = max(1, new_duration_ms)
                 
                 durations.append(int(new_duration_ms))
             
