@@ -165,28 +165,35 @@ pytest
 flake8 gif_tools desktop_app web_api tests
 ```
 
-## 🛠️ Usage
+## 🛠️ Usage (GUI)
 
-### Desktop Application
+1) Launch the app
 
-```bash
-python -m desktop_app.main
+```powershell
+python run_gui.py
 ```
 
-### Python Library
+2) Pick an input and output folder
+- Use the dashboard to select the current GIF/video
+- Set the Output Directory (all tools will save there)
 
-```python
-from gif_tools import video_to_gif, resize, rotate
+3) Open a tool (from tabs or menu)
 
-# Convert video to GIF
-video_to_gif.convert('input.mp4', 'output.gif', fps=10)
+- Video → GIF: convert videos with auto‑optimization
+- Resize: change dimensions (maintain aspect)
+- Rotate: rotate 90°/180°/270°
+- Crop: drag to select; choose aspect ratio
+- Split: move the timeline head; split at point or extract a range
+- Merge: add multiple files; choose horizontal/vertical/sequential
+- Rearrange: select frames; drag to reorder; export
+- Reverse: one‑click reverse (or ping‑pong)
+- Speed Control: slower/faster playback; timing kept per frame
+- Filter Effects: apply effects like blur/sharpen/brightness/contrast
+- Extract Frames: export frames (PNG/JPG) + CSV metadata
+- Combine Frames: rebuild a GIF from a CSV (original timing)
+- Free Play: layer multiple GIFs; click‑to‑place with anchor options
 
-# Resize GIF
-resize.resize_gif('input.gif', 'output.gif', width=500, height=300)
-
-# Rotate GIF
-rotate.rotate_gif('input.gif', 'output.gif', angle=90)
-```
+Tip: All exports use transparency‑safe settings to avoid glitches.
 
 ## 🏗️ Project Structure
 
