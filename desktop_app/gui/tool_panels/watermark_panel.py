@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Optional, Callable, Any
 import threading
 
-from gif_tools.core.watermark import add_text_watermark, add_image_watermark
+from gif_tools.core.watermark import add_text_watermark_to_gif, add_image_watermark_to_gif
 
 
 class WatermarkPanel:
