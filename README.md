@@ -131,25 +131,22 @@ All writers use transparency‑safe parameters (e.g., `disposal=2`, `optimize=Fa
 
 ### Quick Start
 
-```bash
+```powershell
 # Clone the repository
 git clone https://github.com/DandelionBold/GIF-Tools.git
 cd GIF-Tools
 
-# Create virtual environment
+# Create a virtual environment
 python -m venv venv
 
-# Activate virtual environment
-# Windows:
-venv\Scripts\activate
-# macOS/Linux:
-source venv/bin/activate
+# Activate (Windows PowerShell)
+./venv/Scripts/Activate.ps1
 
-# Install dependencies
-pip install -r requirements.txt
+# Install desktop dependencies
+pip install -r requirements/desktop.txt
 
 # Run the desktop application
-python -m desktop_app.main
+python run_gui.py
 ```
 
 ### Development Installation
