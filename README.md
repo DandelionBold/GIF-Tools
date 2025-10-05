@@ -226,6 +226,16 @@ frame_number,filename,original_frame_index,file_path,duration_ms,disposal_method
 
 The Combine step restores original timing (per‑frame duration) and key GIF properties (loop, background, transparency).
 
+## 🧼 Output quality & transparency
+
+- All tools write with transparency‑safe settings to avoid trails/ghosting:
+  - `disposal=2` (clear to background between frames)
+  - `optimize=False` (prevents palette merges that break alpha)
+  - `transparency` index preserved when applicable
+- Sequential merge centers each source on a common canvas to prevent jumpy alignment.
+- Free Play and layered exports composite in RGBA before saving to GIF palette.
+- Speed and Reverse preserve per‑frame durations; single‑frame GIFs are handled cleanly.
+
 ## 🏗️ Project Structure
 
 ```
