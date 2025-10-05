@@ -142,7 +142,45 @@ class CombineFramesPanel:
         )
         if csv_file:
             self.csv_file_var.set(csv_file)
-            self.status_label.config(text=f"CSV loaded: {Path(csv_file).name}", foreground="green")
+            self.load_csv_metadata(csv_file)
+    
+    def load_csv_metadata(self, csv_file: str):
+        """Load and display CSV metadata."""
+        try:
+            import csv
+            from pathlib import Path
+            
+            gif_metadata = {}
+            
+            with open(csv_file, 'r', newline='', encoding='utf-8') as csvfile:
+                reader = csv.reader(csvfile)
+                
+                # Read GIF metadata section
+                for row in reader:
+                    if row and row[0] == '# GIF Metadata':
+                        # Read metadata rows
+                        for meta_row in reader:
+                            if not meta_row or meta_row[0] == '':
+                                break
+                            if len(meta_row) >= 2:
+                                gif_metadata[meta_row[0]] = meta_row[1]
+                        break
+            
+            # Update status with metadata info
+            if gif_metadata:
+                frames = gif_metadata.get('total_frames', 'Unknown')
+                duration = gif_metadata.get('duration_total_ms', 'Unknown')
+                fps = gif_metadata.get('fps', 'Unknown')
+                size = f"{gif_metadata.get('width', '?')}x{gif_metadata.get('height', '?')}"
+                loop = gif_metadata.get('loop_count', 'Unknown')
+                
+                status_text = f"CSV loaded: {Path(csv_file).name} | Frames: {frames}, Duration: {duration}ms, FPS: {fps}, Size: {size}, Loop: {loop}"
+                self.status_label.config(text=status_text, foreground="green")
+            else:
+                self.status_label.config(text=f"CSV loaded: {Path(csv_file).name}", foreground="green")
+                
+        except Exception as e:
+            self.status_label.config(text=f"CSV loaded: {Path(csv_file).name} (metadata unavailable)", foreground="orange")
     
     def browse_output_gif(self):
         """Browse for output GIF file."""

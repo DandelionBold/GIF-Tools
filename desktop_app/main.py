@@ -747,37 +747,108 @@ class GifToolsApp:
             return None
     
     def _export_frame_csv(self, settings: dict, extracted_files: list):
-        """Export frame information to CSV file."""
+        """Export frame information to CSV file with detailed GIF metadata."""
         try:
             import csv
             from pathlib import Path
+            from PIL import Image
             
             output_dir = Path(settings.get('output_dir', 'frames_output'))
             csv_path = output_dir / 'frame_list.csv'
+            input_path = Path(settings.get('input_path'))
+            
+            # Get GIF metadata
+            gif_info = {}
+            frame_durations = []
+            
+            try:
+                with Image.open(input_path) as gif:
+                    gif_info = {
+                        'total_frames': getattr(gif, 'n_frames', 1),
+                        'is_animated': getattr(gif, 'is_animated', False),
+                        'size': gif.size,
+                        'mode': gif.mode,
+                        'format': gif.format,
+                        'loop_count': gif.info.get('loop', 0),
+                        'background': gif.info.get('background', 0),
+                        'transparency': gif.info.get('transparency', 0),
+                        'duration_total': 0
+                    }
+                    
+                    # Get frame durations
+                    if gif_info['is_animated']:
+                        for frame_idx in range(gif_info['total_frames']):
+                            gif.seek(frame_idx)
+                            duration = gif.info.get('duration', 100)
+                            frame_durations.append(duration)
+                            gif_info['duration_total'] += duration
+                        
+                        gif_info['fps'] = 1000 / (gif_info['duration_total'] / gif_info['total_frames']) if gif_info['total_frames'] > 0 else 10
+                    else:
+                        frame_durations = [100]  # Default for single frame
+                        gif_info['fps'] = 10
+                        
+            except Exception as e:
+                print(f"Warning: Could not read GIF metadata: {e}")
+                gif_info = {
+                    'total_frames': len(extracted_files),
+                    'is_animated': False,
+                    'size': (0, 0),
+                    'mode': 'RGB',
+                    'format': 'GIF',
+                    'loop_count': 0,
+                    'background': 0,
+                    'transparency': 0,
+                    'duration_total': len(extracted_files) * 100,
+                    'fps': 10
+                }
+                frame_durations = [100] * len(extracted_files)
             
             with open(csv_path, 'w', newline='', encoding='utf-8') as csvfile:
                 writer = csv.writer(csvfile)
                 
-                # Write header
-                writer.writerow(['frame_number', 'filename', 'original_frame_index', 'file_path'])
+                # Write GIF metadata header
+                writer.writerow(['# GIF Metadata'])
+                writer.writerow(['total_frames', gif_info['total_frames']])
+                writer.writerow(['is_animated', gif_info['is_animated']])
+                writer.writerow(['width', gif_info['size'][0]])
+                writer.writerow(['height', gif_info['size'][1]])
+                writer.writerow(['mode', gif_info['mode']])
+                writer.writerow(['format', gif_info['format']])
+                writer.writerow(['loop_count', gif_info['loop_count']])
+                writer.writerow(['background', gif_info['background']])
+                writer.writerow(['transparency', gif_info['transparency']])
+                writer.writerow(['duration_total_ms', gif_info['duration_total']])
+                writer.writerow(['fps', round(gif_info['fps'], 2)])
+                writer.writerow([''])  # Empty row separator
+                
+                # Write frame data header
+                writer.writerow(['# Frame Data'])
+                writer.writerow(['frame_number', 'filename', 'original_frame_index', 'file_path', 'duration_ms', 'disposal_method'])
                 
                 # Write frame data
                 for i, file_path in enumerate(extracted_files):
                     filename = Path(file_path).name
+                    duration = frame_durations[i] if i < len(frame_durations) else 100
+                    disposal = 2  # Default disposal method
+                    
                     writer.writerow([
                         i + 1,  # Frame number (1-based)
                         filename,
                         i,  # Original frame index (0-based)
-                        str(file_path)
+                        str(file_path),
+                        duration,
+                        disposal
                     ])
             
-            print(f"DEBUG: CSV exported to {csv_path}")
+            print(f"DEBUG: Enhanced CSV exported to {csv_path}")
+            print(f"DEBUG: GIF Info - Frames: {gif_info['total_frames']}, Duration: {gif_info['duration_total']}ms, FPS: {gif_info['fps']:.2f}")
             
         except Exception as e:
             print(f"DEBUG: CSV export failed: {e}")
     
     def _combine_frames_from_csv(self, settings: dict):
-        """Combine frames from CSV file into a GIF."""
+        """Combine frames from CSV file into a GIF using original timing and metadata."""
         try:
             import csv
             from pathlib import Path
@@ -790,45 +861,80 @@ class GifToolsApp:
             if not csv_file.exists():
                 raise FileNotFoundError(f"CSV file not found: {csv_file}")
             
-            # Read CSV file
+            # Read CSV file and parse metadata
+            gif_metadata = {}
             frames = []
             durations = []
+            disposal_methods = []
             
             with open(csv_file, 'r', newline='', encoding='utf-8') as csvfile:
-                reader = csv.DictReader(csvfile)
+                reader = csv.reader(csvfile)
+                
+                # Read GIF metadata section
                 for row in reader:
-                    frame_path = Path(row['file_path'])
+                    if row and row[0] == '# GIF Metadata':
+                        # Read metadata rows
+                        for meta_row in reader:
+                            if not meta_row or meta_row[0] == '':
+                                break
+                            if len(meta_row) >= 2:
+                                gif_metadata[meta_row[0]] = meta_row[1]
+                        break
+                
+                # Skip to frame data section
+                for row in reader:
+                    if row and row[0] == '# Frame Data':
+                        # Skip header row
+                        next(reader)
+                        break
+                
+                # Read frame data
+                for row in reader:
+                    if not row or len(row) < 6:
+                        continue
+                    
+                    frame_path = Path(row[3])  # file_path column
                     if frame_path.exists():
                         frames.append(Image.open(frame_path))
-                        # Use a default duration (100ms = 10 FPS)
-                        durations.append(100)
+                        durations.append(int(row[4]))  # duration_ms column
+                        disposal_methods.append(int(row[5]))  # disposal_method column
                     else:
                         print(f"Warning: Frame file not found: {frame_path}")
             
             if not frames:
                 raise ValueError("No valid frames found in CSV file")
             
-            # Create GIF from frames
+            # Use original GIF metadata if available
+            loop_count = int(gif_metadata.get('loop_count', 0))
+            background = int(gif_metadata.get('background', 0))
+            transparency = int(gif_metadata.get('transparency', 0))
+            
+            print(f"DEBUG: Using original timing - {len(frames)} frames, durations: {durations[:5]}...")
+            print(f"DEBUG: GIF metadata - Loop: {loop_count}, Background: {background}, Transparency: {transparency}")
+            
+            # Create GIF from frames with original timing
             if len(frames) == 1:
                 # Single frame
                 frames[0].save(
                     output_path,
                     format='GIF',
                     quality=quality,
-                    disposal=2,
-                    transparency=0,
+                    disposal=disposal_methods[0] if disposal_methods else 2,
+                    transparency=transparency,
+                    background=background,
                     optimize=False
                 )
             else:
-                # Multiple frames
+                # Multiple frames with original timing
                 frames[0].save(
                     output_path,
                     save_all=True,
                     append_images=frames[1:],
                     duration=durations,
-                    loop=0,  # Infinite loop
-                    disposal=2,
-                    transparency=0,
+                    loop=loop_count,
+                    disposal=disposal_methods[0] if disposal_methods else 2,
+                    transparency=transparency,
+                    background=background,
                     optimize=False
                 )
             
@@ -836,7 +942,7 @@ class GifToolsApp:
             for frame in frames:
                 frame.close()
             
-            print(f"DEBUG: Combined {len(frames)} frames into {output_path}")
+            print(f"DEBUG: Combined {len(frames)} frames into {output_path} with original timing")
             return output_path
             
         except Exception as e:
