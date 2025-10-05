@@ -43,7 +43,7 @@ from desktop_app.gui.tool_panels import (
     OptimizePanel,
     SpeedControlPanel,
     FilterEffectsPanel,
-    ExtractFramesPanel,
+    CombineFramesPanel,
     LoopSettingsPanel
 )
 from gif_tools.utils import validate_animated_file, get_supported_extensions
@@ -215,6 +215,7 @@ class GifToolsApp:
         # Create tool buttons
         tools = [
             ("Extract Frames", self.open_extract_frames_dialog),
+            ("Combine Frames", self.open_combine_frames_dialog),
             ("Loop Settings", self.open_loop_settings_dialog),
         ]
         
@@ -271,6 +272,7 @@ class GifToolsApp:
         advanced_menu.add_command(label="Speed Control", command=self.open_speed_control_dialog)
         advanced_menu.add_command(label="Filter Effects", command=self.open_filter_dialog)
         advanced_menu.add_command(label="Extract Frames", command=self.open_extract_frames_dialog)
+        advanced_menu.add_command(label="Combine Frames", command=self.open_combine_frames_dialog)
         advanced_menu.add_command(label="Loop Settings", command=self.open_loop_settings_dialog)
         
         # Help menu
@@ -1184,6 +1186,19 @@ class GifToolsApp:
         
         # Auto-load the current GIF
         extract_panel.auto_load_gif(self.current_file)
+    
+    def open_combine_frames_dialog(self):
+        """Open combine frames dialog."""
+        # Create dialog window
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Combine Frames from CSV")
+        dialog.geometry("700x500")
+        dialog.resizable(True, True)
+        dialog.minsize(600, 400)
+        
+        # Create combine frames panel
+        combine_panel = CombineFramesPanel(dialog, self.process_tool, str(self.output_dir))
+        combine_panel.get_widget().pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
     
     def open_loop_settings_dialog(self):
         """Open loop settings dialog."""
